@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOVE Dashboard - Estadísticas en Vivo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .last-update {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            border: none;
+            background: none;
+            font-size: 1.1em;
+        }
+        
+        .tab:hover {
+            background: #e8e8e8;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+            animation: fadeIn 0.5s;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        
+        canvas {
+            max-height: 300px;
+            margin: 20px 0;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .badge-excellent { background: #10b981; color: white; }
+        .badge-good { background: #3b82f6; color: white; }
+        .badge-acceptable { background: #f59e0b; color: white; }
+        .badge-poor { background: #ef4444; color: white; }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #667eea;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .tab {
+                font-size: 0.9em;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>📊 MOVE Dashboard</h1>
+        <p>Estadísticas en vivo de satisfacción y deserción</p>
+        <div class="last-update" id="lastUpdate">Actualizando datos...</div>
+    </header>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('welcome')">📋 Encuesta Activa</button>
+        <button class="tab" onclick="switchTab('churn')">⚠️ Análisis de Bajas</button>
+    </div>
+    
+    <div id="welcomeTab" class="tab-content active">
+        <div class="stats-grid">
+            <div class="card">
+                <h3>🎯 NPS por Profesional</h3>
+                <canvas id="npsByProfesionalChart"></canvas>
+                <div class="metric">
+                    <div class="metric-value" id="globalNPS">-</div>
+                    <div class="metric-label">NPS Global MOVE</div>
+                    <div id="npsInterpretation" style="margin-top: 10px;"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>⭐ Experiencia Promedio por Horario</h3>
+                <canvas id="experienceByHorarioChart"></canvas>
+            </div>
+            
+            <div class="card">
+                <h3>🏆 Índice de Servicio MOVE</h3>
+                <canvas id="serviceIndexChart" style="max-height: 200px;"></canvas>
+                <div class="metric">
+                    <div class="metric-value" id="serviceIndex">-</div>
+                    <div class="metric-label">Calidad de Servicio (0-100)</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>👨‍🏫 Top Profesionales por Experiencia</h3>
+                <canvas id="profesoresExperienciaChart"></canvas>
+            </div>
+            
+            <div class="card">
+                <h3>📍 NPS por Sede</h3>
+                <canvas id="npsBySedeChart"></canvas>
+            </div>
+            
+            <div class="card">
+                <h3>💬 ¿Qué hace bien MOVE?</h3>
+                <div id="wordCloud" style="min-height: 200px; padding: 20px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="churnTab" class="tab-content">
+        <div class="stats-grid">
+            <div class="card">
+                <h3>📉 NPS de Ex-Socios</h3>
+                <canvas id="churnNPSChart"></canvas>
+                <div class="metric">
+                    <div class="metric-value" id="churnNPSValue">-</div>
+                    <div class="metric-label">NPS de quienes se fueron</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>🎯 Índice de Deserción Controlable</h3>
+                <canvas id="controlableChurnChart" style="max-height: 200px;"></canvas>
+                <div class="metric" id="churnControlableMetric"></div>
+            </div>
+            
+            <div class="card">
+                <h3>⚠️ Motivos Principales de Baja</h3>
+                <canvas id="churnMotivosChart"></canvas>
+            </div>
+            
+            <div class="card">
+                <h3>⏱️ Tiempo hasta la Baja</h3>
+                <canvas id="churnTiempoChart"></canvas>
+            </div>
+            
+            <div class="card">
+                <h3>📊 Satisfacción por Dimensión (ex-socios)</h3>
+                <canvas id="churnDimensionesChart"></canvas>
+            </div>
+            
+            <div class="card">
+                <h3>🔍 Áreas de Mejora (textos)</h3>
+                <div id="mejoraTexts" style="max-height: 300px; overflow-y: auto; padding: 10px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Mapeo de profesores a sedes
+    const profesorSede = {
+        'Enzo Lega': 'El Bolson',
+        'Belen Juarez': 'El Bolson',
+        'Fernando Sebrie': 'El Bolson',
+        'Javier Larramendy': 'Puelo',
+        'Valeria Ortiz': 'Puelo',
+        'Facundo Soberon': 'Puelo',
+        'Luz Nubile': 'Puelo',
+        'Emanuel Lezcano': 'Ambas',
+        'Leonardo Alfaro': 'Puelo',
+        'Federico Avalos': 'El Bolson',
+        'Francisco Simcic': 'El Bolson',
+        'Agustina Ostarriecht': 'Puelo'
+    };
+    
+    let welcomeData = [];
+    let churnData = [];
+    
+    // Cargar datos desde Google Sheets
+    async function loadData() {
+        const sheetId = '1GhDYhMnueahKDbX1Ezx9eLlawmfQ-NCXA1ZiLe_r_SY';
+        
+        try {
+            // Cargar pestaña Bienvenida (asumiendo que está en gid=0 o 839375428)
+            const welcomeUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Bienvenida`;
+            const churnUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Baja`;
+            
+            const [welcomeCsv, churnCsv] = await Promise.all([
+                fetch(welcomeUrl).then(r => r.text()),
+                fetch(churnUrl).then(r => r.text())
+            ]);
+            
+            welcomeData = parseCSV(welcomeCsv);
+            churnData = parseCSV(churnCsv);
+            
+            document.getElementById('lastUpdate').innerHTML = `Última actualización: ${new Date().toLocaleString()} | ${welcomeData.length} encuestas activas | ${churnData.length} bajas registradas`;
+            
+            renderWelcomeDashboard();
+            renderChurnDashboard();
+        } catch (error) {
+            console.error('Error cargando datos:', error);
+            document.getElementById('lastUpdate').innerHTML = '⚠️ Error al cargar datos. Verifica que la hoja sea pública.';
+            mostrarDatosEjemplo();
+        }
+    }
+    
+    function parseCSV(csvText) {
+        const lines = csvText.split('\n');
+        if (lines.length < 2) return [];
+        
+        const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+        const data = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            
+            // Parseo simple de CSV respetando comillas
+            const row = [];
+            let inQuote = false;
+            let currentCell = '';
+            
+            for (let char of lines[i]) {
+                if (char === '"') {
+                    inQuote = !inQuote;
+                } else if (char === ',' && !inQuote) {
+                    row.push(currentCell.trim());
+                    currentCell = '';
+                } else {
+                    currentCell += char;
+                }
+            }
+            row.push(currentCell.trim());
+            
+            const obj = {};
+            headers.forEach((header, idx) => {
+                obj[header] = row[idx] || '';
+            });
+            data.push(obj);
+        }
+        return data;
+    }
+    
+    function getSedeFromProfesor(profesor) {
+        for (let [key, sede] of Object.entries(profesorSede)) {
+            if (profesor && profesor.includes(key)) return sede;
+        }
+        return 'No especificada';
+    }
+    
+    function calcularNPS(respuestas) {
+        let promotores = 0, detractores = 0;
+        respuestas.forEach(r => {
+            const nota = parseFloat(r['¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?']);
+            if (!isNaN(nota)) {
+                if (nota >= 9) promotores++;
+                else if (nota <= 6) detractores++;
+            }
+        });
+        const total = respuestas.length;
+        if (total === 0) return 0;
+        return Math.round(((promotores - detractores) / total) * 100);
+    }
+    
+    function interpretarNPS(nps) {
+        if (nps >= 50) return { text: '🔥 Excelente', class: 'badge-excellent' };
+        if (nps >= 30) return { text: '👍 Muy bueno', class: 'badge-good' };
+        if (nps >= 10) return { text: '📊 Aceptable', class: 'badge-acceptable' };
+        return { text: '⚠️ Mejorable', class: 'badge-poor' };
+    }
+    
+    function renderWelcomeDashboard() {
+        if (welcomeData.length === 0) {
+            document.querySelector('#welcomeTab .stats-grid').innerHTML = '<div class="error">No hay datos disponibles. Verifica que la pestaña "Bienvenida" tenga respuestas.</div>';
+            return;
+        }
+        
+        // 1. NPS por profesional
+        const npsPorProfesor = {};
+        const experienciaPorProfesor = {};
+        
+        welcomeData.forEach(row => {
+            const prof = row['¿Con qué profesor/a entrenabas habitualmente?'];
+            const recomienda = parseFloat(row['¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?']);
+            const experiencia = parseFloat(row['¿Cómo calificarías tu experiencia general en MOVE?']);
+            
+            if (prof && !isNaN(recomienda)) {
+                if (!npsPorProfesor[prof]) npsPorProfesor[prof] = [];
+                npsPorProfesor[prof].push(recomienda);
+            }
+            if (prof && !isNaN(experiencia)) {
+                if (!experienciaPorProfesor[prof]) experienciaPorProfesor[prof] = [];
+                experienciaPorProfesor[prof].push(experiencia);
+            }
+        });
+        
+        const profesores = Object.keys(npsPorProfesor);
+        const npsValues = profesores.map(prof => {
+            const respuestas = npsPorProfesor[prof];
+            let promotores = respuestas.filter(n => n >= 9).length;
+            let detractores = respuestas.filter(n => n <= 6).length;
+            return Math.round(((promotores - detractores) / respuestas.length) * 100);
+        });
+        
+        new Chart(document.getElementById('npsByProfesionalChart'), {
+            type: 'bar',
+            data: { labels: profesores, datasets: [{ label: 'NPS', data: npsValues, backgroundColor: '#667eea' }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
+        });
+        
+        // NPS Global
+        const todasRecomendaciones = welcomeData.map(r => parseFloat(r['¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?'])).filter(n => !isNaN(n));
+        const npsGlobal = calcularNPS(welcomeData);
+        document.getElementById('globalNPS').innerHTML = npsGlobal;
+        const npsInterp = interpretarNPS(npsGlobal);
+        document.getElementById('npsInterpretation').innerHTML = `<span class="badge ${npsInterp.class}">${npsInterp.text}</span>`;
+        
+        // 2. Experiencia por horario
+        const expPorHorario = { 'Mañana': [], 'Mediodía': [], 'Tarde': [], 'Noche': [], 'Horarios variables': [] };
+        welcomeData.forEach(row => {
+            const horario = row['¿En qué horario solías entrenar?'];
+            const exp = parseFloat(row['¿Cómo calificarías tu experiencia general en MOVE?']);
+            if (expPorHorario[horario] && !isNaN(exp)) expPorHorario[horario].push(exp);
+        });
+        
+        new Chart(document.getElementById('experienceByHorarioChart'), {
+            type: 'radar',
+            data: { labels: Object.keys(expPorHorario), datasets: [{ label: 'Experiencia promedio', data: Object.values(expPorHorario).map(arr => arr.reduce((a,b) => a+b,0)/(arr.length||1)), backgroundColor: 'rgba(102, 126, 234, 0.2)', borderColor: '#667eea' }] },
+            options: { responsive: true, scales: { r: { min: 0, max: 10 } } }
+        });
+        
+        // 3. Índice de Servicio (promedio de: acompañamiento + claridad + atencion)
+        let sumaServicio = 0, countServicio = 0;
+        welcomeData.forEach(row => {
+            const acompaniamiento = parseFloat(row['¿Cómo evaluarías el acompañamiento del profesional en estos primeros días?']);
+            const claridad = parseFloat(row['Claridad del plan de entrenamiento.\n¿Qué tan claro te resultó el plan de entrenamiento que te propusimos?']);
+            const atencion = parseFloat(row['Evaluación de la entrevista inicial\n¿Qué tan escuchado/a te sentiste durante tu evaluación inicial?']);
+            if (!isNaN(acompaniamiento) && !isNaN(claridad) && !isNaN(atencion)) {
+                sumaServicio += (acompaniamiento + claridad + atencion) / 3;
+                countServicio++;
+            }
+        });
+        const serviceIndex = countServicio > 0 ? (sumaServicio / countServicio) * 20 : 0;
+        document.getElementById('serviceIndex').innerHTML = serviceIndex.toFixed(1);
+        
+        new Chart(document.getElementById('serviceIndexChart'), {
+            type: 'doughnut',
+            data: { labels: ['Índice de Servicio', 'Restante'], datasets: [{ data: [serviceIndex, 100-serviceIndex], backgroundColor: ['#10b981', '#e5e7eb'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+        
+        // 4. Top profesores por experiencia
+        const expPromedioProf = Object.entries(experienciaPorProfesor).map(([prof, exps]) => ({ prof, promedio: exps.reduce((a,b)=>a+b,0)/exps.length }));
+        expPromedioProf.sort((a,b) => b.promedio - a.promedio);
+        
+        new Chart(document.getElementById('profesoresExperienciaChart'), {
+            type: 'bar',
+            data: { labels: expPromedioProf.slice(0,5).map(p => p.prof), datasets: [{ label: 'Experiencia (1-10)', data: expPromedioProf.slice(0,5).map(p => p.promedio), backgroundColor: '#f59e0b' }] },
+            options: { responsive: true, scales: { y: { max: 10 } } }
+        });
+        
+        // 5. NPS por sede
+        const npsPorSede = { 'El Bolson': [], 'Puelo': [], 'Ambas': [] };
+        welcomeData.forEach(row => {
+            const prof = row['¿Con qué profesor/a entrenabas habitualmente?'];
+            const recomienda = parseFloat(row['¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?']);
+            if (prof && !isNaN(recomienda)) {
+                const sede = getSedeFromProfesor(prof);
+                if (npsPorSede[sede]) npsPorSede[sede].push(recomienda);
+            }
+        });
+        
+        const sedesNPS = Object.keys(npsPorSede).map(sede => {
+            const resp = npsPorSede[sede];
+            let pro = resp.filter(n => n >= 9).length;
+            let det = resp.filter(n => n <= 6).length;
+            return resp.length ? Math.round(((pro - det) / resp.length) * 100) : 0;
+        });
+        
+        new Chart(document.getElementById('npsBySedeChart'), {
+            type: 'bar',
+            data: { labels: Object.keys(npsPorSede), datasets: [{ label: 'NPS por Sede', data: sedesNPS, backgroundColor: '#764ba2' }] },
+            options: { responsive: true }
+        });
+        
+        // 6. Word cloud simple
+        const cosasBien = welcomeData.map(r => r['¿Qué aspectos del espacio destacarías o creés que influyen más en tu experiencia?\n(Podés elegir más de una)']).filter(t => t);
+        const frecuencias = {};
+        cosasBien.forEach(texto => {
+            const palabras = texto.toLowerCase().split(/[ ,]+/);
+            palabras.forEach(pal => {
+                if (pal.length > 3 && !['que','con','las','para','una','los','las','por','del','más','estás'].includes(pal)) {
+                    frecuencias[pal] = (frecuencias[pal] || 0) + 1;
+                }
+            });
+        });
+        const topPalabras = Object.entries(frecuencias).sort((a,b) => b[1] - a[1]).slice(0,15);
+        const wordCloudDiv = document.getElementById('wordCloud');
+        wordCloudDiv.innerHTML = topPalabras.map(([pal, freq]) => `<span style="display:inline-block; margin:5px; padding:8px; background:#f0f0f0; border-radius:20px; font-size:${12+freq}px;">${pal} (${freq})</span>`).join('');
+    }
+    
+    function renderChurnDashboard() {
+        if (churnData.length === 0) {
+            document.querySelector('#churnTab .stats-grid').innerHTML = '<div class="error">No hay datos de bajas disponibles.</div>';
+            return;
+        }
+        
+        // NPS de ex-socios
+        const recomendacionesBaja = churnData.map(r => parseFloat(r['¿Recomendarías MOVE a un amigo o familiar?'])).filter(n => !isNaN(n));
+        let promotores = recomendacionesBaja.filter(n => n >= 9).length;
+        let detractores = recomendacionesBaja.filter(n => n <= 6).length;
+        const npsChurn = Math.round(((promotores - detractores) / recomendacionesBaja.length) * 100);
+        document.getElementById('churnNPSValue').innerHTML = npsChurn;
+        
+        new Chart(document.getElementById('churnNPSChart'), {
+            type: 'bar',
+            data: { labels: ['Promotores (9-10)', 'Pasivos (7-8)', 'Detractores (0-6)'], datasets: [{ data: [promotores, recomendacionesBaja.length - promotores - detractores, detractores], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+        
+        // Índice de Deserción Controlable
+        const motivos = churnData.map(r => r['¿Cuál fue el motivo PRINCIPAL por el cual decidiste darte de baja?']);
+        const motivosInternos = motivos.filter(m => m && (m.includes('expectativas') || m.includes('Prefiero') || m.includes('opción'))).length;
+        const desercionControlable = Math.round((motivosInternos / motivos.length) * 100);
+        
+        new Chart(document.getElementById('controlableChurnChart'), {
+            type: 'doughnut',
+            data: { labels: ['Deserción Controlable', 'Contexto Externo'], datasets: [{ data: [desercionControlable, 100-desercionControlable], backgroundColor: ['#ef4444', '#10b981'] }] },
+            options: { responsive: true }
+        });
+        
+        let interpretacion = '';
+        if (desercionControlable >= 50) interpretacion = '⚠️ ALERTA: Más del 50% se va por problemas internos mejorables.';
+        else if (desercionControlable >= 30) interpretacion = '📊 Mixto: Mitad contexto externo, mitad interno.';
+        else interpretacion = '✅ Buena señal: La mayoría se va por contexto externo (cambio de ciudad, horarios, etc.)';
+        
+        document.getElementById('churnControlableMetric').innerHTML = `<div class="metric-value">${desercionControlable}%</div><div class="metric-label">${interpretacion}</div>`;
+        
+        // Motivos de baja
+        const freqMotivos = {};
+        motivos.forEach(m => { if(m) freqMotivos[m] = (freqMotivos[m] || 0) + 1; });
+        
+        new Chart(document.getElementById('churnMotivosChart'), {
+            type: 'pie',
+            data: { labels: Object.keys(freqMotivos), datasets: [{ data: Object.values(freqMotivos), backgroundColor: ['#667eea', '#764ba2', '#f59e0b', '#10b981', '#ef4444'] }] },
+            options: { responsive: true }
+        });
+        
+        // Tiempo hasta baja
+        const tiempos = churnData.map(r => r['¿Cuánto tiempo entrenaste en MOVE?']).filter(t => t);
+        const freqTiempos = {};
+        tiempos.forEach(t => { freqTiempos[t] = (freqTiempos[t] || 0) + 1; });
+        
+        new Chart(document.getElementById('churnTiempoChart'), {
+            type: 'bar',
+            data: { labels: Object.keys(freqTiempos), datasets: [{ label: 'Cantidad de socios', data: Object.values(freqTiempos), backgroundColor: '#f59e0b' }] },
+            options: { responsive: true }
+        });
+        
+        // Satisfacción por dimensión
+        const dimensiones = ['Atención y trato humano', 'Profesionalismo del equipo', 'Acompañamiento y seguimiento', 'Organización y comunicación', 'Ambiente del gimnasio'];
+        const promedios = dimensiones.map(dim => {
+            const valores = churnData.map(r => parseFloat(r[dim])).filter(v => !isNaN(v));
+            return valores.length ? valores.reduce((a,b)=>a+b,0)/valores.length : 0;
+        });
+        
+        new Chart(document.getElementById('churnDimensionesChart'), {
+            type: 'radar',
+            data: { labels: dimensiones, datasets: [{ label: 'Puntaje promedio (1-10)', data: promedios, backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: '#ef4444' }] },
+            options: { responsive: true, scales: { r: { min: 0, max: 10 } } }
+        });
+        
+        // Textos de mejora
+        const mejoras = churnData.map(r => r['¿Qué creés que MOVE debería mejorar para que personas como vos sigan entrenando?']).filter(t => t && t.length > 5);
+        const mejorasDiv = document.getElementById('mejoraTexts');
+        mejorasDiv.innerHTML = mejoras.map(texto => `<div style="padding: 10px; margin: 5px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #ef4444;">"${texto}"</div>`).join('');
+        if (mejoras.length === 0) mejorasDiv.innerHTML = '<p>No hay comentarios de mejora registrados.</p>';
+    }
+    
+    function mostrarDatosEjemplo() {
+        // Datos de ejemplo para mostrar la interfaz
+        welcomeData = [
+            {'¿Con qué profesor/a entrenabas habitualmente?': 'Enzo Lega', '¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?': '9', '¿Cómo calificarías tu experiencia general en MOVE?': '9', '¿En qué horario solías entrenar?': 'Mañana', '¿Cómo evaluarías el acompañamiento del profesional en estos primeros días?': '5', 'Claridad del plan de entrenamiento.\n¿Qué tan claro te resultó el plan de entrenamiento que te propusimos?': '5', 'Evaluación de la entrevista inicial\n¿Qué tan escuchado/a te sentiste durante tu evaluación inicial?': '5', '¿Qué aspectos del espacio destacarías o creés que influyen más en tu experiencia?\n(Podés elegir más de una)': 'Limpieza, Orden, Ambiente'},
+            {'¿Con qué profesor/a entrenabas habitualmente?': 'Belen Juarez', '¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?': '10', '¿Cómo calificarías tu experiencia general en MOVE?': '10', '¿En qué horario solías entrenar?': 'Tarde', '¿Cómo evaluarías el acompañamiento del profesional en estos primeros días?': '5', 'Claridad del plan de entrenamiento.\n¿Qué tan claro te resultó el plan de entrenamiento que te propusimos?': '5', 'Evaluación de la entrevista inicial\n¿Qué tan escuchado/a te sentiste durante tu evaluación inicial?': '5', '¿Qué aspectos del espacio destacarías o creés que influyen más en tu experiencia?\n(Podés elegir más de una)': 'Trato del staff, Ambiente'}
+        ];
+        churnData = [
+            {'¿Recomendarías MOVE a un amigo o familiar?': '7', '¿Cuál fue el motivo PRINCIPAL por el cual decidiste darte de baja?': 'Falta de tiempo', '¿Cuánto tiempo entrenaste en MOVE?': '1 a 3 meses', 'Atención y trato humano': '8', 'Profesionalismo del equipo': '9', '¿Qué creés que MOVE debería mejorar para que personas como vos sigan entrenando?': 'Más flexibilidad de horarios'},
+            {'¿Recomendarías MOVE a un amigo o familiar?': '5', '¿Cuál fue el motivo PRINCIPAL por el cual decidiste darte de baja?': 'No cumplió mis expectativas', '¿Cuánto tiempo entrenaste en MOVE?': 'Menos de 1 mes', 'Atención y trato humano': '6', 'Profesionalismo del equipo': '5', '¿Qué creés que MOVE debería mejorar para que personas como vos sigan entrenando?': 'Mejor seguimiento'}
+        ];
+        renderWelcomeDashboard();
+        renderChurnDashboard();
+        document.getElementById('lastUpdate').innerHTML = '⚠️ Usando datos de ejemplo. Verifica que tu Google Sheets sea público.';
+    }
+    
+    function switchTab(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        if (tab === 'welcome') {
+            document.querySelector('.tab').classList.add('active');
+            document.getElementById('welcomeTab').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            document.getElementById('churnTab').classList.add('active');
+        }
+    }
+    
+    // Iniciar
+    loadData();
+</script>
+</body>
+</html>
