@@ -7,27 +7,26 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #f5f5f5;
             color: #1a1a1a;
         }
-
+        
         .container { max-width: 1400px; margin: 0 auto; }
-
-        /* Colores MOVE: Negro, Gris claro, Verde */
+        
         header {
             background: #1a1a1a;
             color: white;
             padding: 30px 40px;
             border-bottom: 4px solid #4ade80;
         }
-
+        
         header h1 { font-size: 2.2em; font-weight: 700; }
         header h1 span { color: #4ade80; }
         .last-update { font-size: 0.85em; color: #888; margin-top: 15px; }
-
+        
         .refresh-btn {
             background: #4ade80;
             color: #1a1a1a;
@@ -40,14 +39,14 @@
             transition: all 0.3s;
         }
         .refresh-btn:hover { background: #22c55e; transform: scale(1.02); }
-
+        
         .tabs {
             display: flex;
             background: white;
             border-bottom: 2px solid #e0e0e0;
             padding: 0 40px;
         }
-
+        
         .tab {
             padding: 16px 28px;
             cursor: pointer;
@@ -57,32 +56,32 @@
             color: #666;
             border-bottom: 3px solid transparent;
         }
-
+        
         .tab.active {
             color: #1a1a1a;
             border-bottom-color: #4ade80;
         }
-
+        
         .tab-content {
             display: none;
             padding: 30px 40px;
             animation: fadeIn 0.4s ease;
         }
-
+        
         .tab-content.active { display: block; }
-
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
+        
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
             gap: 25px;
             margin-bottom: 30px;
         }
-
+        
         .card {
             background: white;
             border-radius: 16px;
@@ -90,7 +89,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             border: 1px solid #eaeaea;
         }
-
+        
         .card h3 {
             color: #1a1a1a;
             font-size: 1.25em;
@@ -99,9 +98,9 @@
             padding-bottom: 12px;
             border-bottom: 2px solid #4ade80;
         }
-
-        canvas { max-height: 280px; margin: 15px 0; }
-
+        
+        canvas { max-height: 280px; margin: 15px 0; width: 100% !important; }
+        
         .metric-large {
             text-align: center;
             padding: 20px;
@@ -109,13 +108,13 @@
             border-radius: 12px;
             margin: 15px 0;
         }
-
+        
         .metric-value {
             font-size: 3em;
             font-weight: 800;
             color: #1a1a1a;
         }
-
+        
         .interpretation {
             font-size: 0.9em;
             padding: 14px;
@@ -124,7 +123,7 @@
             background: #f8f8f8;
             border-left: 3px solid #4ade80;
         }
-
+        
         .error-box {
             background: #fef2f2;
             border: 1px solid #fecaca;
@@ -134,9 +133,9 @@
             margin: 20px;
             text-align: center;
         }
-
+        
         .loading { text-align: center; padding: 60px; color: #666; }
-
+        
         footer {
             background: #1a1a1a;
             color: #888;
@@ -144,10 +143,10 @@
             padding: 20px;
             font-size: 0.8em;
         }
-
+        
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: 1fr; }
-            .tab { padding: 12px 16px; }
+            .tab { padding: 12px 16px; font-size: 0.85em; }
             .tab-content { padding: 20px; }
         }
     </style>
@@ -160,30 +159,34 @@
         <div class="last-update" id="lastUpdate">🔄 Conectando con Google Sheets...</div>
         <button class="refresh-btn" onclick="cargarDatos()">⟳ Actualizar datos</button>
     </header>
-
+    
     <div class="tabs">
         <button class="tab active" onclick="switchTab('welcome')">📊 Encuesta Activa</button>
         <button class="tab" onclick="switchTab('churn')">⚠️ Análisis de Bajas</button>
     </div>
-
+    
     <div id="welcomeTab" class="tab-content active">
         <div id="welcomeContent"><div class="loading">Cargando encuestas activas...</div></div>
     </div>
-
+    
     <div id="churnTab" class="tab-content">
         <div id="churnContent"><div class="loading">Cargando datos de bajas...</div></div>
     </div>
-
+    
     <footer>
         <p>📊 Datos en vivo desde Google Sheets · Actualización automática</p>
     </footer>
 </div>
 
 <script>
-    // URLs CORRECTAS con los gids específicos
-    const WELCOME_URL = 'https://docs.google.com/spreadsheets/d/1GhDYhMnueahKDbX1Ezx9eLlawmfQ-NCXA1ZiLe_r_SY/gviz/tq?tqx=out:csv&gid=1563858316';
-    const CHURN_URL = 'https://docs.google.com/spreadsheets/d/1GhDYhMnueahKDbX1Ezx9eLlawmfQ-NCXA1ZiLe_r_SY/gviz/tq?tqx=out:csv&gid=839375428';
-
+    // CONFIGURACIÓN - Usando proxy para evitar CORS
+    const SHEET_ID = '1GhDYhMnueahKDbX1Ezx9eLlawmfQ-NCXA1ZiLe_r_SY';
+    const GID_WELCOME = '1563858316';
+    const GID_CHURN = '839375428';
+    
+    // Usar un proxy público que permite CORS
+    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+    
     // Mapeo de profesores a sedes
     const profesorSede = {
         'Enzo Lega': 'El Bolson', 'Belen Juarez': 'El Bolson', 'Fernando Sebrie': 'El Bolson',
@@ -191,74 +194,85 @@
         'Luz Nubile': 'Puelo', 'Emanuel Lezcano': 'Ambas', 'Leonardo Alfaro': 'Puelo',
         'Federico Avalos': 'El Bolson', 'Francisco Simcic': 'El Bolson', 'Agustina Ostarriecht': 'Puelo'
     };
-
+    
     let welcomeData = [];
     let churnData = [];
     let charts = {};
-
+    
     async function cargarDatos() {
         document.getElementById('lastUpdate').innerHTML = '🔄 Actualizando...';
+        
         try {
+            const welcomeUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_WELCOME}`;
+            const churnUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_CHURN}`;
+            
+            // Usar proxy para evitar CORS
             const [welcomeResp, churnResp] = await Promise.all([
-                fetch(WELCOME_URL),
-                fetch(CHURN_URL)
+                fetch(PROXY_URL + encodeURIComponent(welcomeUrl)),
+                fetch(PROXY_URL + encodeURIComponent(churnUrl))
             ]);
-
+            
+            if (!welcomeResp.ok || !churnResp.ok) {
+                throw new Error('Error al cargar datos');
+            }
+            
             const welcomeText = await welcomeResp.text();
             const churnText = await churnResp.text();
-
+            
             welcomeData = parseCSV(welcomeText);
             churnData = parseCSV(churnText);
-
+            
             document.getElementById('lastUpdate').innerHTML = `✅ Actualizado: ${new Date().toLocaleString()} | ${welcomeData.length} activas | ${churnData.length} bajas`;
-
+            
             renderWelcomeDashboard();
             renderChurnDashboard();
-
+            
         } catch (error) {
             console.error('Error:', error);
-            document.getElementById('lastUpdate').innerHTML = `❌ Error: ${error.message}`;
+            document.getElementById('lastUpdate').innerHTML = `❌ Error: ${error.message}. Usando datos de ejemplo.`;
             mostrarDatosEjemplo();
         }
     }
-
+    
     function parseCSV(csvText) {
         const lines = csvText.split(/\r?\n/);
         if (lines.length < 2) return [];
-
-        let headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
-
+        
+        let headers = parseCSVLine(lines[0]);
+        
         const data = [];
         for (let i = 1; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
-
-            const values = [];
-            let inQuotes = false;
-            let current = '';
-
-            for (let char of lines[i]) {
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    values.push(current.trim());
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-            values.push(current.trim());
-
+            const values = parseCSVLine(lines[i]);
             const row = {};
             headers.forEach((header, idx) => {
-                let val = values[idx] || '';
-                val = val.replace(/^"|"$/g, '');
-                row[header] = val;
+                row[header] = values[idx] || '';
             });
             data.push(row);
         }
         return data;
     }
-
+    
+    function parseCSVLine(line) {
+        const result = [];
+        let inQuotes = false;
+        let current = '';
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current.trim());
+        return result.map(v => v.replace(/^"|"$/g, ''));
+    }
+    
     function getSedeFromProfesor(profesor) {
         if (!profesor) return 'No especificada';
         for (let [key, sede] of Object.entries(profesorSede)) {
@@ -266,42 +280,42 @@
         }
         return 'No especificada';
     }
-
+    
     function calcularNPS(respuestas) {
         if (!respuestas.length) return 0;
         let promotores = respuestas.filter(n => n >= 9).length;
         let detractores = respuestas.filter(n => n <= 6).length;
         return Math.round(((promotores - detractores) / respuestas.length) * 100);
     }
-
+    
     function interpretarNPS(nps) {
         if (nps >= 50) return `🔥 ${nps}% → EXCELENTE NIVEL DE RECOMENDACIÓN. MOVE genera vínculo emocional fuerte y promotores activos.`;
         if (nps >= 30) return `👍 ${nps}% → MUY BUENO. Predominan promotores, pero hay puntos de fricción detectables.`;
         if (nps >= 10) return `⚖️ ${nps}% → ACEPTABLE. Equilibrio entre promotores y pasivos.`;
         return `🚨 ${nps}% → BAJO. Hay detractores activos. Se requiere intervención directa.`;
     }
-
+    
     function interpretarDesercionControlable(valor) {
         if (valor >= 50) return `🚨 ${valor}% → ALTA RESPONSABILIDAD INTERNA. Más del 50% de las bajas son atribuibles a factores gestionables.`;
         if (valor >= 30) return `⚖️ ${valor}% → ESCENARIO MIXTO. Parte de la deserción es interna y parte externa.`;
         return `🌎 ${valor}% → BAJA RESPONSABILIDAD INTERNA. La mayoría responde a contexto externo. El foco debe estar en captación y adaptación estratégica.`;
     }
-
+    
     function interpretarServicio(valor) {
         if (valor >= 90) return `🏆 ${valor}% → SERVICIO PREMIUM CONSOLIDADO. La ejecución del modelo MOVE es consistente.`;
         if (valor >= 80) return `💪 ${valor}% → MUY BUEN SERVICIO. Existen micro oportunidades de mejora.`;
         if (valor >= 70) return `⚖️ ${valor}% → SERVICIO ACEPTABLE. Aún no se percibe excelencia diferencial.`;
         return `🚨 ${valor}% → PROBLEMA ESTRUCTURAL. Requiere revisión profunda.`;
     }
-
+    
     function renderWelcomeDashboard() {
         const container = document.getElementById('welcomeContent');
-
+        
         if (!welcomeData.length) {
             container.innerHTML = '<div class="error-box">📭 No hay datos en la pestaña "Bienvenida". Las respuestas aparecerán automáticamente cuando lleguen.</div>';
             return;
         }
-
+        
         container.innerHTML = `
             <div class="stats-grid">
                 <div class="card"><h3>🎯 NPS por Profesional</h3><canvas id="npsProfesionalChart"></canvas><div class="metric-large"><div class="metric-value" id="globalNPS">--</div><div class="metric-label">NPS Global MOVE</div></div><div id="npsInterpretation" class="interpretation"></div></div>
@@ -312,17 +326,17 @@
                 <div class="card"><h3>💬 Lo que más valoran</h3><div id="wordCloud" style="min-height:200px"></div></div>
             </div>
         `;
-
+        
         const npsPorProfesor = {};
         const experienciaPorProfesor = {};
         const expPorHorario = { 'Mañana': [], 'Mediodía': [], 'Tarde': [], 'Noche': [], 'Horarios variables': [] };
-
+        
         welcomeData.forEach(row => {
             const prof = row['¿Con qué profesor/a entrenabas habitualmente?'];
             const recomienda = parseFloat(row['¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?']);
             const experiencia = parseFloat(row['¿Cómo calificarías tu experiencia general en MOVE?']);
             const horario = row['¿En qué horario solías entrenar?'];
-
+            
             if (prof && !isNaN(recomienda)) {
                 if (!npsPorProfesor[prof]) npsPorProfesor[prof] = [];
                 npsPorProfesor[prof].push(recomienda);
@@ -335,12 +349,12 @@
                 expPorHorario[horario].push(experiencia);
             }
         });
-
+        
         const todasRecomendaciones = welcomeData.map(r => parseFloat(r['¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?'])).filter(n => !isNaN(n));
         const npsGlobal = calcularNPS(todasRecomendaciones);
         document.getElementById('globalNPS').innerHTML = npsGlobal;
         document.getElementById('npsInterpretation').innerHTML = interpretarNPS(npsGlobal);
-
+        
         const profesores = Object.keys(npsPorProfesor);
         const npsValues = profesores.map(prof => {
             const resp = npsPorProfesor[prof];
@@ -348,20 +362,20 @@
             let det = resp.filter(n => n <= 6).length;
             return Math.round(((pro - det) / resp.length) * 100);
         });
-
+        
         if (charts.npsProfesional) charts.npsProfesional.destroy();
         charts.npsProfesional = new Chart(document.getElementById('npsProfesionalChart'), {
             type: 'bar', data: { labels: profesores, datasets: [{ label: 'NPS', data: npsValues, backgroundColor: '#4ade80', borderRadius: 8 }] },
             options: { responsive: true, maintainAspectRatio: true }
         });
-
+        
         const horarioData = Object.values(expPorHorario).map(arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0);
         if (charts.horario) charts.horario.destroy();
         charts.horario = new Chart(document.getElementById('horarioChart'), {
             type: 'radar', data: { labels: Object.keys(expPorHorario), datasets: [{ label: 'Experiencia (1-10)', data: horarioData, backgroundColor: 'rgba(74, 222, 128, 0.2)', borderColor: '#4ade80' }] },
             options: { responsive: true, scales: { r: { min: 0, max: 10 } } }
         });
-
+        
         let sumaServicio = 0, countServicio = 0;
         welcomeData.forEach(row => {
             const acompaniamiento = parseFloat(row['¿Cómo evaluarías el acompañamiento del profesional en estos primeros días?']);
@@ -375,13 +389,13 @@
         const serviceIndex = countServicio > 0 ? Math.round(sumaServicio / countServicio) : 0;
         document.getElementById('serviceIndex').innerHTML = serviceIndex;
         document.getElementById('serviceInterpretation').innerHTML = interpretarServicio(serviceIndex);
-
+        
         if (charts.service) charts.service.destroy();
         charts.service = new Chart(document.getElementById('serviceChart'), {
             type: 'doughnut', data: { labels: ['Índice MOVE', 'Restante'], datasets: [{ data: [serviceIndex, 100-serviceIndex], backgroundColor: ['#4ade80', '#e5e7eb'] }] },
             options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
-
+        
         const expPromedioProf = Object.entries(experienciaPorProfesor).map(([prof, exps]) => ({ prof, promedio: exps.reduce((a,b)=>a+b,0)/exps.length }));
         expPromedioProf.sort((a,b) => b.promedio - a.promedio);
         if (charts.topProfesores) charts.topProfesores.destroy();
@@ -389,7 +403,7 @@
             type: 'bar', data: { labels: expPromedioProf.slice(0,5).map(p => p.prof), datasets: [{ label: 'Experiencia (1-10)', data: expPromedioProf.slice(0,5).map(p => p.promedio), backgroundColor: '#1a1a1a', borderRadius: 8 }] },
             options: { responsive: true, scales: { y: { max: 10 } } }
         });
-
+        
         const npsPorSede = { 'El Bolson': [], 'Puelo': [], 'Ambas': [] };
         welcomeData.forEach(row => {
             const prof = row['¿Con qué profesor/a entrenabas habitualmente?'];
@@ -409,7 +423,7 @@
             type: 'bar', data: { labels: Object.keys(npsPorSede), datasets: [{ label: 'NPS', data: sedesNPS, backgroundColor: '#4ade80' }] },
             options: { responsive: true }
         });
-
+        
         const aspectos = welcomeData.map(r => r['¿Qué aspectos del espacio destacarías o creés que influyen más en tu experiencia?\n(Podés elegir más de una)']).filter(t => t);
         const frecuencias = {};
         aspectos.forEach(texto => {
@@ -419,15 +433,15 @@
         const topItems = Object.entries(frecuencias).sort((a,b) => b[1] - a[1]).slice(0,10);
         document.getElementById('wordCloud').innerHTML = topItems.map(([item, freq]) => `<span style="display:inline-block; margin:5px; padding:6px 12px; background:#f0f0f0; border-radius:20px; font-size:${12+freq}px;">${item} (${freq})</span>`).join('');
     }
-
+    
     function renderChurnDashboard() {
         const container = document.getElementById('churnContent');
-
+        
         if (!churnData.length) {
             container.innerHTML = '<div class="error-box">📭 No hay datos de bajas en la pestaña "Baja".</div>';
             return;
         }
-
+        
         container.innerHTML = `
             <div class="stats-grid">
                 <div class="card"><h3>📉 NPS de Ex-Socios</h3><canvas id="churnNPSChart"></canvas><div class="metric-large"><div class="metric-value" id="churnNPSValue">--</div><div class="metric-label">NPS · ¿Recomendarías MOVE?</div></div><div id="churnNPSInterpretation" class="interpretation"></div></div>
@@ -439,38 +453,38 @@
             </div>
             <div class="card" style="margin-top:20px"><h3>🔍 ¿Qué debería mejorar MOVE?</h3><div id="mejoraTexts"></div></div>
         `;
-
+        
         const recomendacionesBaja = churnData.map(r => {
             const val = parseFloat(r['¿Recomendarías MOVE a un amigo o familiar?']);
             return isNaN(val) ? null : val;
         }).filter(n => n !== null);
-
+        
         const npsChurn = calcularNPS(recomendacionesBaja);
         document.getElementById('churnNPSValue').innerHTML = npsChurn;
         document.getElementById('churnNPSInterpretation').innerHTML = interpretarNPS(npsChurn);
-
+        
         let promotores = recomendacionesBaja.filter(n => n >= 9).length;
         let detractores = recomendacionesBaja.filter(n => n <= 6).length;
         let pasivos = recomendacionesBaja.length - promotores - detractores;
-
+        
         if (charts.churnNPS) charts.churnNPS.destroy();
         charts.churnNPS = new Chart(document.getElementById('churnNPSChart'), {
             type: 'bar', data: { labels: ['Promotores (9-10)', 'Pasivos (7-8)', 'Detractores (0-6)'], datasets: [{ data: [promotores, pasivos, detractores], backgroundColor: ['#4ade80', '#fbbf24', '#ef4444'] }] },
             options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
-
+        
         const motivos = churnData.map(r => r['¿Cuál fue el motivo PRINCIPAL por el cual decidiste darte de baja?']);
         const motivosInternos = motivos.filter(m => m && (m.includes('Motivos económicos') || m.includes('No cumplió') || m.includes('Prefiero') || m.includes('otra opción'))).length;
         const desercionControlable = motivos.length ? Math.round((motivosInternos / motivos.length) * 100) : 0;
         document.getElementById('controlableValue').innerHTML = desercionControlable + '%';
         document.getElementById('controlableInterpretation').innerHTML = interpretarDesercionControlable(desercionControlable);
-
+        
         if (charts.controlable) charts.controlable.destroy();
         charts.controlable = new Chart(document.getElementById('controlableChart'), {
             type: 'doughnut', data: { labels: ['Deserción Controlable', 'Contexto Externo'], datasets: [{ data: [desercionControlable, 100-desercionControlable], backgroundColor: ['#ef4444', '#4ade80'] }] },
             options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
-
+        
         let sumaServicio = 0, countServicio = 0;
         churnData.forEach(row => {
             const expGeneral = parseFloat(row['¿Cómo calificarías tu experiencia general en MOVE?']);
@@ -489,13 +503,13 @@
         const serviceChurn = countServicio > 0 ? Math.round(sumaServicio / countServicio) : 0;
         document.getElementById('churnServiceValue').innerHTML = serviceChurn;
         document.getElementById('churnServiceInterpretation').innerHTML = interpretarServicio(serviceChurn);
-
+        
         if (charts.churnService) charts.churnService.destroy();
         charts.churnService = new Chart(document.getElementById('churnServiceChart'), {
             type: 'doughnut', data: { labels: ['Índice MOVE', 'Restante'], datasets: [{ data: [serviceChurn, 100-serviceChurn], backgroundColor: ['#4ade80', '#e5e7eb'] }] },
             options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
-
+        
         const freqMotivos = {};
         motivos.forEach(m => { if(m) freqMotivos[m] = (freqMotivos[m] || 0) + 1; });
         if (charts.motivos) charts.motivos.destroy();
@@ -503,7 +517,7 @@
             type: 'pie', data: { labels: Object.keys(freqMotivos), datasets: [{ data: Object.values(freqMotivos), backgroundColor: ['#1a1a1a', '#4ade80', '#fbbf24', '#ef4444', '#8b5cf6'] }] },
             options: { responsive: true, plugins: { legend: { position: 'right' } } }
         });
-
+        
         const tiempos = churnData.map(r => r['¿Cuánto tiempo entrenaste en MOVE?']).filter(t => t);
         const freqTiempos = {};
         tiempos.forEach(t => { freqTiempos[t] = (freqTiempos[t] || 0) + 1; });
@@ -512,7 +526,7 @@
             type: 'bar', data: { labels: Object.keys(freqTiempos), datasets: [{ label: 'Cantidad', data: Object.values(freqTiempos), backgroundColor: '#fbbf24', borderRadius: 8 }] },
             options: { responsive: true }
         });
-
+        
         const dimensiones = ['Atención y trato humano', 'Profesionalismo del equipo', 'Acompañamiento y seguimiento', 'Organización y comunicación', 'Ambiente del gimnasio'];
         const promedios = dimensiones.map(dim => {
             const valores = churnData.map(r => parseFloat(r[dim])).filter(v => !isNaN(v));
@@ -523,11 +537,11 @@
             type: 'radar', data: { labels: dimensiones, datasets: [{ label: 'Puntaje (1-10)', data: promedios, backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: '#ef4444' }] },
             options: { responsive: true, scales: { r: { min: 0, max: 10 } } }
         });
-
+        
         const mejoras = churnData.map(r => r['¿Qué creés que MOVE debería mejorar para que personas como vos sigan entrenando?']).filter(t => t && t.length > 5);
         document.getElementById('mejoraTexts').innerHTML = mejoras.length ? mejoras.map(texto => `<div style="padding:10px; margin:8px 0; background:#f8f9fa; border-radius:8px; border-left:3px solid #4ade80;">💬 "${texto}"</div>`).join('') : '<p style="color:#999;">No hay comentarios de mejora registrados.</p>';
     }
-
+    
     function mostrarDatosEjemplo() {
         welcomeData = [
             {'¿Con qué profesor/a entrenabas habitualmente?': 'Enzo Lega', '¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?': '9', '¿Cómo calificarías tu experiencia general en MOVE?': '9', '¿En qué horario solías entrenar?': 'Mañana', '¿Cómo evaluarías el acompañamiento del profesional en estos primeros días?': '5', 'Claridad del plan de entrenamiento.\n¿Qué tan claro te resultó el plan de entrenamiento que te propusimos?': '5', 'Evaluación de la entrevista inicial\n¿Qué tan escuchado/a te sentiste durante tu evaluación inicial?': '5', '¿Qué aspectos del espacio destacarías o creés que influyen más en tu experiencia?\n(Podés elegir más de una)': 'Limpieza, Orden'},
@@ -539,9 +553,9 @@
         ];
         renderWelcomeDashboard();
         renderChurnDashboard();
-        document.getElementById('lastUpdate').innerHTML = '⚠️ Usando datos de ejemplo. Verifica que tu Google Sheets sea público.';
+        document.getElementById('lastUpdate').innerHTML = '⚠️ Usando datos de ejemplo. Verifica la conexión con Google Sheets.';
     }
-
+    
     function switchTab(tab) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -553,7 +567,7 @@
             document.getElementById('churnTab').classList.add('active');
         }
     }
-
+    
     cargarDatos();
 </script>
 </body>
