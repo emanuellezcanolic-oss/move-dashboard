@@ -191,6 +191,58 @@ tr:hover td{background:#fafbfc;}
 /* ── SIDEBAR OVERLAY ── */
 #sbOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:190;}
 
+/* ── EXPERT BANNER ── */
+.insight-banner{
+    background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
+    border-radius:14px;padding:16px 22px;margin-bottom:22px;
+    display:flex;align-items:center;gap:16px;
+    border:1px solid rgba(16,185,129,.25);
+    box-shadow:0 4px 24px rgba(16,185,129,.08);
+}
+.ib-icon{font-size:2.2rem;flex-shrink:0;line-height:1;}
+.ib-title{font-size:.62rem;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;}
+.ib-sub{font-size:.88rem;color:#fff;font-weight:500;line-height:1.6;}
+
+/* ── EXPERT ANALYSIS CARD ── */
+.expert-card{
+    background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
+    border-radius:16px;padding:22px 24px;margin-bottom:18px;
+    border:1px solid rgba(16,185,129,.2);
+    box-shadow:0 4px 24px rgba(0,0,0,.15);
+}
+.expert-title{font-size:.84rem;font-weight:700;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.expert-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.expert-col{padding:14px 16px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);}
+.expert-col-title{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.expert-col ul{list-style:none;padding:0;margin:0;}
+.expert-col ul li{font-size:.79rem;line-height:1.65;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.78);}
+.expert-col ul li:last-child{border:none;}
+.col-green .expert-col-title{color:#10b981;}
+.col-amber .expert-col-title{color:#f59e0b;}
+.col-blue  .expert-col-title{color:#818cf8;}
+
+/* ── NPS DIST DETAIL ── */
+.nps-seg{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
+.nps-seg:last-child{border:none;}
+.nps-seg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.nps-seg-label{font-size:.79rem;color:var(--muted);flex:1;}
+.nps-seg-pct{font-size:.95rem;font-weight:800;color:var(--text);}
+.nps-seg-n{font-size:.72rem;color:#b0bec5;margin-left:2px;}
+
+/* ── INTERNAL/EXTERNAL LEGEND ── */
+.ie-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);}
+.ie-row:last-child{border:none;}
+.ie-dot{width:13px;height:13px;border-radius:4px;flex-shrink:0;}
+.ie-label{font-size:.82rem;color:var(--text);font-weight:600;flex:1;}
+.ie-pct{font-size:1.3rem;font-weight:800;}
+.ie-n{font-size:.72rem;color:var(--muted);}
+
+/* ── CARD BADGE ── */
+.card-badge{font-size:.67rem;color:#94a3b8;background:#f1f5f9;padding:3px 9px;border-radius:20px;font-weight:600;white-space:nowrap;}
+
+/* ── BENCH PILL ── */
+.bench-pill{display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:2px 9px;font-size:.66rem;font-weight:700;color:#166534;margin-top:4px;}
+
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
     #sidebar{transform:translateX(-100%);}
@@ -202,6 +254,7 @@ tr:hover td{background:#fafbfc;}
     #content{padding:16px;}
     .kpi-grid{grid-template-columns:repeat(2,1fr);}
     #topbar{padding:0 16px;}
+    .expert-cols{grid-template-columns:1fr;}
 }
 @media(max-width:480px){
     .kpi-grid{grid-template-columns:1fr;}
@@ -467,7 +520,16 @@ tr:hover td{background:#fafbfc;}
         <!-- ═══ SECTION: BAJAS ═══ -->
         <div class="section" id="section-bajas">
 
-            <!-- Summary KPIs -->
+            <!-- Expert headline banner -->
+            <div class="insight-banner">
+                <div class="ib-icon">🏋️</div>
+                <div>
+                    <div class="ib-title">Diagn&oacute;stico Experto &middot; Mercado Fitness Global</div>
+                    <div class="ib-sub" id="b-expert-headline">Analizando datos de bajas...</div>
+                </div>
+            </div>
+
+            <!-- KPIs -->
             <div class="kpi-grid">
                 <div class="kpi-card">
                     <div class="kpi-label">Respuestas Baja</div>
@@ -477,45 +539,82 @@ tr:hover td{background:#fafbfc;}
                 <div class="kpi-card">
                     <div class="kpi-label">NPS Ex-Socios</div>
                     <div class="kpi-value" id="b-nps">--</div>
-                    <div class="kpi-sub">Net Promoter Score</div>
+                    <div class="kpi-sub" id="b-nps-lbl">Net Promoter Score</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-label">Tasa Deserci&oacute;n</div>
-                    <div class="kpi-value" id="b-tasa">--</div>
-                    <div class="kpi-sub">Bajas / Total encuestados</div>
+                    <div class="kpi-label">% Promotores</div>
+                    <div class="kpi-value" style="color:#10b981" id="b-prom">--</div>
+                    <div class="kpi-sub">Ex-socios que recomendar&iacute;an</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Experiencia Prom.</div>
+                    <div class="kpi-value" id="b-exp">--</div>
+                    <div class="kpi-sub">Calificaci&oacute;n / 10</div>
                 </div>
             </div>
 
             <!-- 3 Gauges with interpretation -->
             <div class="row c3">
                 <div class="card">
-                    <div class="card-hd">
+                    <div class="card-hd" style="flex-direction:column;align-items:flex-start;gap:4px;">
                         <div class="card-title"><i class="fas fa-star"></i> NPS Ex-Socios</div>
+                        <div class="bench-pill">🌍 Benchmark fitness: 30&ndash;45</div>
                     </div>
                     <div id="gaugeNPS"></div>
                     <div id="interpNPS"></div>
                 </div>
                 <div class="card">
-                    <div class="card-hd">
+                    <div class="card-hd" style="flex-direction:column;align-items:flex-start;gap:4px;">
                         <div class="card-title"><i class="fas fa-crosshairs"></i> &Iacute;ndice Deserci&oacute;n Controlable</div>
                     </div>
                     <div id="gaugeDeserc"></div>
                     <div id="interpDeserc"></div>
                 </div>
                 <div class="card">
-                    <div class="card-hd">
+                    <div class="card-hd" style="flex-direction:column;align-items:flex-start;gap:4px;">
                         <div class="card-title"><i class="fas fa-trophy"></i> &Iacute;ndice Servicio MOVE</div>
+                        <div class="bench-pill">🌍 Benchmark fitness: 70&ndash;80%</div>
                     </div>
                     <div id="gaugeServicio"></div>
                     <div id="interpServicio"></div>
                 </div>
             </div>
 
-            <!-- Professor ranking -->
-            <div class="card" style="margin-bottom:18px">
+            <!-- NPS Distribution + Internal vs External -->
+            <div class="row c2">
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-chart-bar"></i> Distribuci&oacute;n NPS Ex-Socios</div>
+                        <span class="card-badge">Promotores &middot; Pasivos &middot; Detractores</span>
+                    </div>
+                    <canvas id="chNpsDist" style="max-height:72px !important;margin-bottom:14px;"></canvas>
+                    <div id="npsDistDetail"></div>
+                </div>
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-balance-scale"></i> Causas: Internas vs Externas</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:20px;padding:6px 0;">
+                        <canvas id="chIntExt" style="max-width:140px;max-height:140px !important;flex-shrink:0;"></canvas>
+                        <div id="intExtLegend" style="flex:1;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motivos horizontal bar - full width -->
+            <div class="card">
+                <div class="card-hd">
+                    <div class="card-title"><i class="fas fa-list-ul"></i> Motivos de Baja &mdash; Ranking</div>
+                    <span class="card-badge" id="motivosBadge"></span>
+                </div>
+                <canvas id="chMotivos" style="max-height:320px !important;"></canvas>
+            </div>
+
+            <!-- Ranking por profesional -->
+            <div class="card">
                 <div class="card-hd">
                     <div class="card-title"><i class="fas fa-medal"></i> Ranking por Profesional</div>
-                    <span style="font-size:.74rem;color:#94a3b8">Calculado desde encuestas de baja</span>
+                    <span style="font-size:.74rem;color:#94a3b8">Desde encuestas de baja</span>
                 </div>
                 <div class="tw">
                     <table>
@@ -533,26 +632,10 @@ tr:hover td{background:#fafbfc;}
                 </div>
             </div>
 
-            <!-- Motivos chart + resumen -->
-            <div class="row c2">
-                <div class="card">
-                    <div class="card-hd">
-                        <div class="card-title"><i class="fas fa-chart-pie"></i> Motivos de Baja</div>
-                    </div>
-                    <canvas id="chMotivos"></canvas>
-                </div>
-                <div class="card">
-                    <div class="card-hd">
-                        <div class="card-title"><i class="fas fa-info-circle"></i> Resumen</div>
-                    </div>
-                    <div style="padding:8px">
-                        <p style="color:#64748b;font-size:.875rem;line-height:1.75">
-                            El <strong>NPS de Ex-Socios</strong> mide qu&eacute; tan probable es que recomienden MOVE a pesar de haberse dado de baja.<br><br>
-                            El <strong>&Iacute;ndice de Deserci&oacute;n Controlable</strong> indica qu&eacute; porcentaje de los motivos de baja son atribuibles a factores internos de MOVE (calidad, servicio, profesional) vs externos (econom&iacute;a, tiempo, contexto personal).<br><br>
-                            El <strong>&Iacute;ndice de Servicio MOVE</strong> refleja la calidad percibida del servicio: experiencia general + atenci&oacute;n y trato, escalado a 0&ndash;100%.
-                        </p>
-                    </div>
-                </div>
+            <!-- Expert Strategic Analysis -->
+            <div class="expert-card">
+                <div class="expert-title"><i class="fas fa-brain"></i> Diagn&oacute;stico Estrat&eacute;gico &middot; Fitness Expert</div>
+                <div class="expert-cols" id="expertAnalysis"></div>
             </div>
 
         </div><!-- /section-bajas -->
@@ -653,6 +736,8 @@ function barSimple(id,labels,data,colors){if(CH[id])CH[id].destroy();CH[id]=new 
 function doughnut(id,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{datasets:[{data,backgroundColor:colors,borderWidth:0}]},options:{cutout:'72%',responsive:true,plugins:{legend:{display:false},tooltip:{enabled:false}}}});}
 function pie(id,labels,data){if(CH[id])CH[id].destroy();const pal=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#3b82f6','#f97316','#06b6d4'];CH[id]=new Chart(document.getElementById(id),{type:'pie',data:{labels,datasets:[{data,backgroundColor:pal.slice(0,labels.length)}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{boxWidth:11,font:{size:11}}}}}});}
 function radar(id,labels,data){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'radar',data:{labels,datasets:[{label:'Experiencia (1-10)',data,backgroundColor:'rgba(99,102,241,.15)',borderColor:'#6366f1',pointBackgroundColor:'#6366f1'}]},options:{responsive:true,scales:{r:{min:0,max:10,ticks:{stepSize:2}}}}});}
+function hbar(id,labels,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:5,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} resp.`}}},scales:{x:{beginAtZero:true,grid:{color:'#f1f5f9'},ticks:{font:{size:11}}},y:{grid:{display:false},ticks:{font:{size:11},color:'#374151'}}}}});}
+function npsDistBar(id,pPct,nPct,dPct){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:[''],datasets:[{label:'Promotores (9-10)',data:[pPct],backgroundColor:'#10b981'},{label:'Pasivos (7-8)',data:[nPct],backgroundColor:'#f59e0b'},{label:'Detractores (0-6)',data:[dPct],backgroundColor:'#ef4444'}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}},tooltip:{callbacks:{label:ctx=>` ${ctx.raw}%`}}},scales:{x:{stacked:true,min:0,max:100,grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'%',font:{size:11}}},y:{stacked:true,display:false}}}});}
 
 // ══════════════════════════════════════════════════
 // UTILS
@@ -859,79 +944,139 @@ function renderEnc(){
     });
     document.getElementById('encTabBody').innerHTML=tb;
 
-    // === BAJAS ===
-    set('b-total',C.length);
+    // ═══ BAJAS ═══
+    set('b-total', C.length);
 
-    const recsC=C.map(r=>parseFloat(r['\u00bfRecomendar\u00edas MOVE a un amigo o familiar?'])).filter(n=>!isNaN(n));
-    const recsExp=C.map(r=>parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?'])).filter(n=>!isNaN(n));
-    const npsC=recsC.length?calcNPS(recsC):(recsExp.length?calcNPS(recsExp):0);
-    const tot=W.length+C.length;
-    set('b-nps',npsC);
-    set('b-tasa',tot>0?Math.round((C.length/tot)*100)+'%':'--');
+    const recsC   = C.map(r=>parseFloat(r['\u00bfRecomendar\u00edas MOVE a un amigo o familiar?'])).filter(n=>!isNaN(n));
+    const recsExp  = C.map(r=>parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?'])).filter(n=>!isNaN(n));
+    const npsRecs  = recsC.length ? recsC : recsExp;
+    const npsC     = npsRecs.length ? calcNPS(npsRecs) : 0;
 
-    // Indice Desercion Controlable
-    const internals=C.filter(r=>classifyMotivo(r['\u00bfCu\u00e1l fue el motivo PRINCIPAL por el cual decidiste darte de baja?'])==='internal').length;
-    const desCtrl=C.length>0?Math.round(internals/C.length*100):0;
+    // NPS breakdown: promotores / pasivos / detractores
+    const totalNps   = npsRecs.length || 1;
+    const nProm      = npsRecs.filter(n=>n>=9).length;
+    const nPas       = npsRecs.filter(n=>n>=7&&n<=8).length;
+    const nDet       = npsRecs.filter(n=>n<=6).length;
+    const pPct       = Math.round(nProm/totalNps*100);
+    const nPct       = Math.round(nPas/totalNps*100);
+    const dPct       = Math.max(0, 100 - pPct - nPct);
+    const avgExpB    = recsExp.length ? (recsExp.reduce((a,b)=>a+b)/recsExp.length).toFixed(1) : '--';
 
-    // Indice Servicio MOVE
-    let sumS=0,cntS=0;
+    set('b-nps', npsC);
+    set('b-nps-lbl', npsC>=50?'\uD83D\uDD25 Excelente \u00b7 Top 10% fitness mundial':npsC>=30?'\uD83D\uDC4D Muy bueno \u00b7 Sobre el benchmark':'\u26A0\uFE0F A mejorar \u00b7 Bajo el benchmark');
+    set('b-prom', pPct+'%');
+    set('b-exp', avgExpB+'/10');
+
+    // Expert headline
+    const hl = npsC>=50
+        ? `NPS ${npsC} \u2192 MOVE est\u00e1 en el top 10% del fitness mundial. ${pPct}% de ex-socios siguen siendo promotores activos \u2014 activo estrat\u00e9gico de captaci\u00f3n de alto valor.`
+        : npsC>=30
+        ? `NPS ${npsC} \u2192 Por encima del benchmark fitness global (30\u201345). Buena base para activar programa de referidos.`
+        : `NPS ${npsC} \u2192 Oportunidad de mejora en experiencia del cliente. Foco en los primeros 60 d\u00edas de membres\u00eda.`;
+    set('b-expert-headline', hl);
+
+    // \u00cdndice Deserci\u00f3n Controlable
+    const internals = C.filter(r=>classifyMotivo(r['\u00bfCu\u00e1l fue el motivo PRINCIPAL por el cual decidiste darte de baja?'])==='internal').length;
+    const externals = C.length - internals;
+    const desCtrl   = C.length>0 ? Math.round(internals/C.length*100) : 0;
+
+    // \u00cdndice Servicio MOVE
+    let sumS=0, cntS=0;
     C.forEach(r=>{
-        const exp=parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
+        const exp =parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
         const aten=parseFloat(r['Atenci\u00f3n y trato humano']);
         if(!isNaN(exp)&&!isNaN(aten)){sumS+=(exp+aten)/2*10;cntS++;}
         else if(!isNaN(exp)){sumS+=exp*10;cntS++;}
     });
-    const servIdx=cntS>0?Math.round(sumS/cntS):0;
+    const servIdx = cntS>0 ? Math.round(sumS/cntS) : 0;
 
-    // Draw 3 gauges + interpretation cards
-    const ni=npsInfo(npsC),di=desercInfo(desCtrl),si=servicioInfo(servIdx);
-    svgGauge('gaugeNPS',npsC,-100,100,ni.color,ni.badge);
-    svgGauge('gaugeDeserc',desCtrl,0,100,di.color,di.badge,'%');
-    svgGauge('gaugeServicio',servIdx,0,100,si.color,si.badge,'%');
-    document.getElementById('interpNPS').innerHTML=makeInterpCard(ni);
-    document.getElementById('interpDeserc').innerHTML=makeInterpCard(di);
-    document.getElementById('interpServicio').innerHTML=makeInterpCard(si);
+    // 3 gauges + interpretation
+    const ni=npsInfo(npsC), di=desercInfo(desCtrl), si=servicioInfo(servIdx);
+    svgGauge('gaugeNPS',     npsC,   -100, 100, ni.color, ni.badge);
+    svgGauge('gaugeDeserc',  desCtrl, 0,   100, di.color, di.badge, '%');
+    svgGauge('gaugeServicio',servIdx, 0,   100, si.color, si.badge, '%');
+    document.getElementById('interpNPS').innerHTML     = makeInterpCard(ni);
+    document.getElementById('interpDeserc').innerHTML  = makeInterpCard(di);
+    document.getElementById('interpServicio').innerHTML= makeInterpCard(si);
 
-    // Motivos pie
+    // NPS Distribution stacked bar
+    npsDistBar('chNpsDist', pPct, nPct, dPct);
+    document.getElementById('npsDistDetail').innerHTML =
+        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#10b981"></div><div class="nps-seg-label">Promotores (9\u201310)</div><div class="nps-seg-pct">${pPct}%</div><span class="nps-seg-n">${nProm} resp.</span></div>`+
+        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#f59e0b"></div><div class="nps-seg-label">Pasivos (7\u20138)</div><div class="nps-seg-pct">${nPct}%</div><span class="nps-seg-n">${nPas} resp.</span></div>`+
+        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#ef4444"></div><div class="nps-seg-label">Detractores (0\u20136)</div><div class="nps-seg-pct">${dPct}%</div><span class="nps-seg-n">${nDet} resp.</span></div>`;
+
+    // Internal vs External donut + legend
+    doughnut('chIntExt', [internals, externals], ['#ef4444bb','#10b981bb']);
+    document.getElementById('intExtLegend').innerHTML =
+        `<div class="ie-row"><div class="ie-dot" style="background:#ef4444"></div><div class="ie-label">Causas Internas</div><div style="text-align:right"><div class="ie-pct" style="color:#ef4444">${desCtrl}%</div><div class="ie-n">${internals} socios</div></div></div>`+
+        `<div class="ie-row"><div class="ie-dot" style="background:#10b981"></div><div class="ie-label">Causas Externas</div><div style="text-align:right"><div class="ie-pct" style="color:#10b981">${100-desCtrl}%</div><div class="ie-n">${externals} socios</div></div></div>`;
+
+    // Motivos horizontal bar (sorted, color-coded by internal=red / external=green)
     const mot={};
     C.forEach(r=>{const m=r['\u00bfCu\u00e1l fue el motivo PRINCIPAL por el cual decidiste darte de baja?'];if(m)mot[m]=(mot[m]||0)+1;});
-    pie('chMotivos',Object.keys(mot),Object.values(mot));
+    const motSorted = Object.entries(mot).sort((a,b)=>b[1]-a[1]);
+    const motLabels = motSorted.map(([k])=>k.length>42?k.substring(0,42)+'\u2026':k);
+    const motData   = motSorted.map(([,v])=>v);
+    const motColors = motSorted.map(([k])=>classifyMotivo(k)==='internal'?'#ef444499':'#10b98199');
+    const motCount  = motSorted.length;
+    set('motivosBadge', motCount+' razones \u00b7 \uD83D\uDD34 internas \u00b7 \uD83D\uDFE2 externas');
+    const motCanvas = document.getElementById('chMotivos');
+    if(motCanvas) motCanvas.style.maxHeight = Math.max(180, motCount*36)+'px';
+    hbar('chMotivos', motLabels, motData, motColors);
 
-    // Per-professor ranking from baja data
+    // Per-professor ranking
     const bajaPorProf={};
     C.forEach(r=>{
-        const p=r['\u00bfCon qu\u00e9 profesor/a entrenabas habitualmente?'];
-        const exp=parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
+        const p   =r['\u00bfCon qu\u00e9 profesor/a entrenabas habitualmente?'];
+        const exp =parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
         const aten=parseFloat(r['Atenci\u00f3n y trato humano']);
-        const recom=parseFloat(r['\u00bfRecomendar\u00edas MOVE a un amigo o familiar?']);
+        const rec =parseFloat(r['\u00bfRecomendar\u00edas MOVE a un amigo o familiar?']);
         if(!p)return;
         if(!bajaPorProf[p])bajaPorProf[p]={exp:[],aten:[],recom:[]};
-        if(!isNaN(exp))bajaPorProf[p].exp.push(exp);
+        if(!isNaN(exp)) bajaPorProf[p].exp.push(exp);
         if(!isNaN(aten))bajaPorProf[p].aten.push(aten);
-        if(!isNaN(recom))bajaPorProf[p].recom.push(recom);
+        if(!isNaN(rec)) bajaPorProf[p].recom.push(rec);
     });
     let rankRows='';
     Object.entries(bajaPorProf)
         .map(([nombre,data])=>{
-            const avgExp=data.exp.length?data.exp.reduce((a,b)=>a+b)/data.exp.length:0;
-            const avgAten=data.aten.length?data.aten.reduce((a,b)=>a+b)/data.aten.length:avgExp;
-            const si=Math.round((avgExp+avgAten)/2*10);
-            const nps=calcNPS(data.recom.length?data.recom:data.exp);
-            return{nombre,si,nps,n:data.exp.length,avgExp:avgExp.toFixed(1)};
+            const avgE=data.exp.length?data.exp.reduce((a,b)=>a+b)/data.exp.length:0;
+            const avgA=data.aten.length?data.aten.reduce((a,b)=>a+b)/data.aten.length:avgE;
+            const siP=Math.round((avgE+avgA)/2*10);
+            const npsP=calcNPS(data.recom.length?data.recom:data.exp);
+            return{nombre,si:siP,nps:npsP,n:data.exp.length,avgExp:avgE.toFixed(1)};
         })
         .sort((a,b)=>b.si-a.si)
         .forEach((p,i)=>{
-            const siCls=p.si>=90?'bg':p.si>=80?'bb':p.si>=70?'by':'br';
+            const siCls =p.si>=90?'bg':p.si>=80?'bb':p.si>=70?'by':'br';
             const npsCls=p.nps>=50?'bg':p.nps>=30?'bb':p.nps>=10?'by':'br';
-            rankRows+=`<tr>
-                <td><span class="rank-num">${i+1}</span> <b>${p.nombre}</b></td>
-                <td>${p.avgExp}/10</td>
-                <td><span class="badge ${npsCls}">${p.nps}</span></td>
-                <td><span class="badge ${siCls}">${p.si}%</span></td>
-                <td style="color:#94a3b8;font-size:.8rem">${p.n} resp.</td>
-            </tr>`;
+            rankRows+=`<tr><td><span class="rank-num">${i+1}</span> <b>${p.nombre}</b></td><td>${p.avgExp}/10</td><td><span class="badge ${npsCls}">${p.nps}</span></td><td><span class="badge ${siCls}">${p.si}%</span></td><td style="color:#94a3b8;font-size:.8rem">${p.n} resp.</td></tr>`;
         });
-    document.getElementById('bajaProfTab').innerHTML=rankRows||'<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Sin datos suficientes por profesional</td></tr>';
+    document.getElementById('bajaProfTab').innerHTML=rankRows||'<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">Sin datos suficientes por profesional</td></tr>';
+
+    // Expert Strategic Analysis
+    const fortalezas=[],oportunidades=[],recomendaciones=[];
+    if(npsC>=50){fortalezas.push(`\uD83D\uDD25 NPS ${npsC} \u2014 Top 10% fitness mundial. Benchmark industria: 30\u201345.`);fortalezas.push(`\uD83D\uDC9A ${pPct}% de ex-socios siguen siendo promotores activos.`);}
+    else if(npsC>=30)fortalezas.push(`\uD83D\uDC4D NPS ${npsC} \u2014 Por encima del promedio fitness global (30\u201345).`);
+    else oportunidades.push(`\u26A0\uFE0F NPS ${npsC} \u2014 Bajo el benchmark. Revisar experiencia en primeros 60 d\u00edas.`);
+    if(servIdx>=90)fortalezas.push(`\uD83C\uDFC6 Servicio ${servIdx}% \u2014 Ejecuci\u00f3n de clase mundial seg\u00fan ex-socios.`);
+    else if(servIdx>=80)fortalezas.push(`\uD83D\uDCAA Servicio ${servIdx}% \u2014 Muy por encima del sector (benchmark 70\u201380%).`);
+    else oportunidades.push(`\uD83D\uDD27 Servicio ${servIdx}% \u2014 Hay mejora disponible en la ejecuci\u00f3n operativa.`);
+    if(desCtrl<30)fortalezas.push(`\uD83C\uDF0E Solo ${desCtrl}% causas internas \u2014 MOVE no es el problema; el contexto lo es.`);
+    else if(desCtrl<50)oportunidades.push(`\uD83D\uDD36 ${desCtrl}% causas internas \u2014 Hay factores internos concretos a resolver.`);
+    else oportunidades.push(`\uD83D\uDD34 ${desCtrl}% causas internas \u2014 Problema prioritario: revisar modelo de servicio.`);
+    if(avgExpB!=='--'&&parseFloat(avgExpB)>=8)fortalezas.push(`\u2B50 Experiencia ${avgExpB}/10 \u2014 Alta incluso en ex-socios. Indicador de marca fuerte.`);
+    else if(avgExpB!=='--')oportunidades.push(`\uD83D\uDCCA Experiencia ${avgExpB}/10 \u2014 Hay margen de mejora en la experiencia percibida.`);
+    if(npsC>=50&&desCtrl<30)recomendaciones.push('\uD83C\uDFAF Activar programa de referidos: ex-socios recomiendan MOVE \u2014 monetiz\u00e1 esa energ\u00eda con incentivos concretos.');
+    if(servIdx>=90)recomendaciones.push('\uD83D\uDCCB Documentar y certificar el protocolo de servicio actual como est\u00e1ndar de la marca MOVE.');
+    recomendaciones.push('\uD83D\uDD0D Cruzar motivo de baja con tiempo de membres\u00eda para detectar el "punto de fuga" cr\u00edtico (mes 2\u20133?).');
+    if(desCtrl<30)recomendaciones.push('\uD83D\uDCA1 El problema principal es econom\u00eda/contexto. Explorar planes flexibles, pausas y planes familia.');
+    recomendaciones.push('\uD83D\uDCF1 Implementar NPS autom\u00e1tico en d\u00eda 30 y 60 para detecci\u00f3n temprana de detractores antes de que se den de baja.');
+    document.getElementById('expertAnalysis').innerHTML=`
+        <div class="expert-col col-green"><div class="expert-col-title">\u2705 Fortalezas</div><ul>${fortalezas.map(f=>`<li>${f}</li>`).join('')||'<li style="color:rgba(255,255,255,.3)">Sin datos suficientes</li>'}</ul></div>
+        <div class="expert-col col-amber"><div class="expert-col-title">\uD83C\uDFAF Oportunidades</div><ul>${(oportunidades.length?oportunidades:['<span style="color:rgba(255,255,255,.35);font-size:.75rem">\u2714\uFE0F Sin alertas cr\u00edticas detectadas</span>']).map(f=>`<li>${f}</li>`).join('')}</ul></div>
+        <div class="expert-col col-blue"><div class="expert-col-title">\uD83D\uDCA1 Recomendaciones</div><ul>${recomendaciones.map(f=>`<li>${f}</li>`).join('')}</ul></div>`;
 }
 
 // ══════════════════════════════════════════════════
