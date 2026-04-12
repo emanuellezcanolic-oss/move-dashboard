@@ -279,7 +279,7 @@
 // CONFIGURACIÓN  ← EDITÁ ESTAS DOS LÍNEAS
 // ================================================================
 const SHEET_ENC_ID  = '1GhDYhMnueahKDbX1Ezx9eLlawmfQ-NCXA1ZiLe_r_SY';
-const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbwcx9RMGIDjZ5gu14Ir5ExOTiY4XXhpukZNZJtVacbU3kGoLdbOc-Lq3GADoQHwEl3e/exec';
+const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbyQQ8v-cxcbncGh4E9iJGr5_9FwfQ03FJ_GdjbTpq-YVhk_FkzRNTcxwbJbzZiGKWBX/exec';
 
 // ================================================================
 const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
@@ -344,7 +344,7 @@ function loadPlanillas() {
             planData = demoData(); renderPlanillas(); return resolve();
         }
         const cb = 'moveCB_' + Date.now();
-        const timer = setTimeout(() => { if (window[cb]) { delete window[cb]; planData = demoData(); renderPlanillas(); resolve(); } }, 14000);
+        const timer = setTimeout(() => { if (window[cb]) { delete window[cb]; planData = demoData(); renderPlanillas(); resolve(); } }, 60000);
         window[cb] = d => {
             clearTimeout(timer); delete window[cb];
             const el = document.getElementById('jsonpEl'); if (el) el.remove();
