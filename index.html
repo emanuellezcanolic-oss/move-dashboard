@@ -381,7 +381,7 @@ function renderPlanillas() {
     const a25    = d.profes.reduce((s,p) => s+p.histAltas25.reduce((a,b)=>a+b,0), 0);
     const pct    = a25 > 0 ? Math.round(((a26-a25)/a25)*100) : 0;
     const desArr = d.profes.flatMap(p => p.histDeserc26.filter(v=>v>0));
-    const avgD   = desArr.length ? (desArr.reduce((a,b)=>a+b)/desArr.length).toFixed(1) : '--';
+    const avgD   = desArr.length ? (desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1) : '--';
 
     set('k-activos', totAct||'--');
     set('k-altas26', a26);
@@ -434,7 +434,7 @@ function renderProfe(i) {
     set('pnAltas',  p.nombre);
     set('pnDeserc', p.nombre);
     line('chProfAltas',  MESES, [{l:'Altas 2025',d:p.histAltas25,c:'#94a3b8'},{l:'Altas 2026',d:p.histAltas26,c:'#4ade80'}]);
-    line('chProfDeserc', MESES, [{l:'% Deserc 2026',d:p.histDeserc26,c:'#ef4444'}]);
+    line('chProfDeserc', MESES, [{l:'% Deserc 2026',d:p.histDeserc26.map(v=>+(v*100).toFixed(1)),c:'#ef4444'}]);
     const a26=p.histAltas26.reduce((a,b)=>a+b,0), a25=p.histAltas25.reduce((a,b)=>a+b,0);
     const pct=a25>0?Math.round(((a26-a25)/a25)*100):0;
     document.getElementById('profeKpis').innerHTML = `
