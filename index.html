@@ -1,294 +1,579 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOVE Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box;}
-        :root{--sb:260px;--green:#4ade80;--dark:#1a1a1a;--bg:#f0f2f5;--white:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;}
-        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MOVE Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+    --sb:260px;
+    --accent:#10b981;
+    --accent2:#6366f1;
+    --sidebar-bg:#0f172a;
+    --bg:#f1f5f9;
+    --card:#ffffff;
+    --text:#0f172a;
+    --muted:#64748b;
+    --border:#e2e8f0;
+    --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 20px rgba(0,0,0,.04);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px;}
 
-        /* SIDEBAR */
-        .sidebar{width:var(--sb);background:var(--dark);min-height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;z-index:200;transition:transform .3s;}
-        .sb-logo{padding:22px 18px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px;}
-        .logo-sq{width:38px;height:38px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--dark);font-size:1.1rem;}
-        .sb-logo h3{color:#fff;font-size:1.25rem;font-weight:700;line-height:1.1;}
-        .sb-logo span{color:#64748b;font-size:.72rem;}
-        .sb-nav{flex:1;padding:12px 0;overflow-y:auto;}
-        .nav-sec{padding:10px 20px 3px;color:#475569;font-size:.62rem;text-transform:uppercase;letter-spacing:1px;font-weight:600;}
-        .nav-item{padding:9px 18px;display:flex;align-items:center;gap:11px;color:#94a3b8;cursor:pointer;transition:all .18s;margin:2px 8px;border-radius:8px;font-size:.875rem;}
-        .nav-item:hover{background:rgba(255,255,255,.05);color:#fff;}
-        .nav-item.active{background:rgba(74,222,128,.15);color:var(--green);}
-        .nav-item i{width:17px;font-size:.875rem;}
-        .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);color:#475569;font-size:.72rem;}
+/* ── LOADING OVERLAY ── */
+#loadOv{position:fixed;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;}
+#loadOv .spin-logo{width:60px;height:60px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:800;color:#fff;animation:pulse 1.4s ease-in-out infinite;}
+#loadOv p{color:var(--muted);font-size:.9rem;font-weight:500;letter-spacing:.2px;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.7;transform:scale(.93);}}
 
-        /* MAIN */
-        .main{margin-left:var(--sb);flex:1;}
-        .topbar{background:#fff;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
-        .topbar-l{display:flex;align-items:center;gap:14px;}
-        .topbar-l h2{font-size:1.15rem;font-weight:600;}
-        .topbar-l p{color:var(--muted);font-size:.78rem;}
-        .btn{padding:7px 15px;border-radius:8px;border:none;cursor:pointer;font-size:.83rem;font-weight:500;transition:all .18s;display:flex;align-items:center;gap:6px;}
-        .btn-dark{background:var(--dark);color:#fff;}
-        .btn-dark:hover{background:#2d2d2d;}
-        .hamburger{display:none;background:none;border:none;cursor:pointer;font-size:1.25rem;color:var(--dark);}
+/* ── SIDEBAR ── */
+#sidebar{
+    position:fixed;top:0;left:0;width:var(--sb);height:100vh;
+    background:var(--sidebar-bg);display:flex;flex-direction:column;
+    z-index:200;overflow-y:auto;transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+.sb-logo{padding:28px 20px 20px;border-bottom:1px solid rgba(255,255,255,.07);}
+.sb-logo-inner{display:flex;align-items:center;gap:12px;}
+.sb-m{
+    width:44px;height:44px;background:var(--accent);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.5rem;font-weight:800;color:#fff;flex-shrink:0;
+    box-shadow:0 4px 12px rgba(16,185,129,.4);
+}
+.sb-brand{display:flex;flex-direction:column;}
+.sb-brand-name{font-size:1.15rem;font-weight:800;color:#fff;letter-spacing:.4px;}
+.sb-brand-sub{font-size:.65rem;color:rgba(255,255,255,.3);font-weight:500;letter-spacing:1.3px;text-transform:uppercase;margin-top:2px;}
+.sb-nav{flex:1;padding:16px 10px;}
+.sb-group{margin-bottom:4px;}
+.sb-group-label{
+    font-size:.58rem;font-weight:700;color:rgba(255,255,255,.22);
+    letter-spacing:1.5px;text-transform:uppercase;padding:10px 12px 4px;
+}
+.nav-item{
+    display:flex;align-items:center;gap:10px;padding:9px 12px;
+    border-radius:9px;color:rgba(255,255,255,.5);font-weight:500;
+    font-size:.82rem;cursor:pointer;transition:all .16s;margin:1px 0;user-select:none;
+}
+.nav-item i{width:15px;text-align:center;font-size:.82rem;flex-shrink:0;}
+.nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);}
+.nav-item.active{background:rgba(16,185,129,.14);color:var(--accent);font-weight:600;}
+.nav-item.active i{color:var(--accent);}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.06);}
+#lastUpd{font-size:.67rem;color:rgba(255,255,255,.22);line-height:1.7;}
 
-        /* CONTENT */
-        .content{padding:26px 28px;}
-        .section{display:none;animation:fadeIn .25s ease;}
-        .section.active{display:block;}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* ── MAIN ── */
+#main{margin-left:var(--sb);flex:1;display:flex;flex-direction:column;min-width:0;}
 
-        /* CARDS */
-        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px;margin-bottom:24px;}
-        .kpi-card{background:#fff;border-radius:14px;padding:18px;border:1px solid var(--border);}
-        .kpi-label{color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;font-weight:600;}
-        .kpi-value{font-size:1.9rem;font-weight:700;line-height:1;}
-        .kpi-sub{color:var(--muted);font-size:.72rem;margin-top:5px;}
-        .green{color:#16a34a;} .red{color:#dc2626;} .blue{color:#1d4ed8;}
+/* ── TOPBAR ── */
+#topbar{
+    background:#fff;border-bottom:1px solid var(--border);
+    padding:0 28px;height:64px;display:flex;align-items:center;
+    justify-content:space-between;position:sticky;top:0;z-index:100;
+    box-shadow:0 1px 0 var(--border);
+}
+#hamburger{display:none;background:none;border:none;font-size:1.2rem;color:var(--text);cursor:pointer;padding:6px 8px;border-radius:6px;}
+#hamburger:hover{background:var(--bg);}
+.topbar-title{display:flex;flex-direction:column;}
+.topbar-title span:first-child{font-size:.98rem;font-weight:700;color:var(--text);}
+.topbar-title span:last-child{font-size:.7rem;color:var(--muted);font-weight:400;margin-top:1px;}
+.btn-refresh{
+    display:flex;align-items:center;gap:7px;background:var(--accent);color:#fff;
+    border:none;border-radius:9px;padding:9px 18px;font-size:.82rem;font-weight:600;
+    cursor:pointer;transition:opacity .16s;font-family:inherit;
+    box-shadow:0 2px 8px rgba(16,185,129,.3);
+}
+.btn-refresh:hover{opacity:.88;}
 
-        .row{display:grid;gap:18px;margin-bottom:18px;}
-        .c2{grid-template-columns:repeat(2,1fr);}
-        .c3{grid-template-columns:repeat(3,1fr);}
-        .span2{grid-column:span 2;}
-        .card{background:#fff;border-radius:14px;padding:18px;border:1px solid var(--border);}
-        .card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
-        .card-title{font-weight:600;display:flex;align-items:center;gap:8px;font-size:.92rem;}
-        .card-title i{color:var(--green);}
-        canvas{max-height:255px;width:100%!important;}
+/* ── CONTENT ── */
+#content{padding:28px;flex:1;}
+.section{display:none;}
+.section.active{display:block;}
 
-        /* TABLE */
-        .tw{overflow-x:auto;}
-        table{width:100%;border-collapse:collapse;font-size:.855rem;}
-        th{padding:9px 13px;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;border-bottom:2px solid var(--border);text-align:left;}
-        td{padding:11px 13px;border-bottom:1px solid var(--border);}
-        tr:last-child td{border-bottom:none;}
-        tr:hover td{background:#f8fafc;}
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:16px;margin-bottom:20px;}
+.kpi-card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:20px;box-shadow:var(--shadow);transition:box-shadow .18s;
+}
+.kpi-card:hover{box-shadow:0 4px 24px rgba(0,0,0,.08);}
+.kpi-label{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.9px;margin-bottom:6px;}
+.kpi-value{font-size:2rem;font-weight:800;color:var(--text);line-height:1.1;}
+.kpi-sub{font-size:.71rem;color:var(--muted);margin-top:5px;}
 
-        /* BADGES */
-        .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:700;}
-        .bg{background:#dcfce7;color:#16a34a;}
-        .bb{background:#dbeafe;color:#1d4ed8;}
-        .by{background:#fef9c3;color:#854d0e;}
-        .br{background:#fee2e2;color:#dc2626;}
+/* ── CARD ── */
+.card{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-bottom:18px;
+}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:6px;}
+.card-title{font-size:.84rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.card-title i{color:var(--accent);font-size:.78rem;}
 
-        /* TABS */
-        .tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px;}
-        .tab{padding:7px 15px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:.83rem;transition:all .18s;}
-        .tab.active,.tab:hover{background:var(--dark);color:#fff;border-color:var(--dark);}
+/* ── ROW LAYOUTS ── */
+.row{display:grid;gap:18px;margin-bottom:18px;}
+.c2{grid-template-columns:repeat(2,1fr);}
+.c3{grid-template-columns:repeat(3,1fr);}
 
-        /* LOADING */
-        .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:150;}
-        .overlay.open{display:block;}
+/* ── CANVAS ── */
+canvas{max-height:260px !important;}
 
-        @media(max-width:900px){
-            .sidebar{transform:translateX(-100%);}
-            .sidebar.open{transform:translateX(0);}
-            .main{margin-left:0;}
-            .hamburger{display:block;}
-            .c2,.c3{grid-template-columns:1fr;}
-            .span2{grid-column:span 1;}
-            .content{padding:14px;}
-        }
-    </style>
+/* ── TABLE ── */
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+thead tr{background:#f8fafc;}
+th{
+    padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);
+    font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;
+    border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafbfc;}
+
+/* ── BADGES ── */
+.badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:700;
+}
+.bg{background:#d1fae5;color:#065f46;}
+.bb{background:#dbeafe;color:#1e40af;}
+.by{background:#fef3c7;color:#92400e;}
+.br{background:#fee2e2;color:#991b1b;}
+
+/* ── TABS ── */
+#profesTabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
+.tab{
+    padding:7px 16px;border-radius:8px;background:var(--bg);border:1px solid var(--border);
+    font-size:.8rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .16s;
+}
+.tab:hover{background:var(--border);color:var(--text);}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ── INTERPRETATION ── */
+.iblock{background:#f8fafc;border-radius:10px;padding:14px;margin:14px 0 8px;}
+.ihead{font-size:.62rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.9px;margin-bottom:8px;}
+.ir{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:6px;margin:2px 0;gap:8px;}
+.ir-active{background:rgba(16,185,129,.1);}
+.ir-active .irv{color:#10b981;font-weight:700;}
+.irv{font-size:.76rem;font-weight:600;color:#94a3b8;white-space:nowrap;}
+.irl{font-size:.76rem;color:#64748b;text-align:right;}
+.obsblock{
+    background:#fffbeb;border-left:3px solid #f59e0b;
+    border-radius:0 8px 8px 0;padding:11px 14px;
+    font-size:.79rem;color:#78350f;line-height:1.65;margin-top:4px;
+}
+.rank-num{
+    display:inline-flex;width:20px;height:20px;background:#0f172a;color:#fff;
+    border-radius:50%;font-size:.68rem;font-weight:700;
+    align-items:center;justify-content:center;margin-right:4px;flex-shrink:0;
+}
+
+/* ── ALERT ── */
+.alert{
+    background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;
+    padding:12px 16px;font-size:.79rem;color:#1e40af;margin-bottom:18px;
+    display:flex;align-items:flex-start;gap:10px;line-height:1.5;
+}
+.alert i{margin-top:2px;flex-shrink:0;}
+
+/* ── NPS DIAL ── */
+.nps-dial-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;}
+
+/* ── GAUGE CONTAINERS ── */
+#gaugeNPS,#gaugeDeserc,#gaugeServicio{
+    min-height:116px;display:flex;align-items:center;justify-content:center;padding:4px 0;
+}
+
+/* ── SIDEBAR OVERLAY ── */
+#sbOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:190;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+    #sidebar{transform:translateX(-100%);}
+    #sidebar.open{transform:translateX(0);}
+    #sbOverlay.open{display:block;}
+    #main{margin-left:0;}
+    #hamburger{display:block;}
+    .c2,.c3{grid-template-columns:1fr;}
+    #content{padding:16px;}
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    #topbar{padding:0 16px;}
+}
+@media(max-width:480px){
+    .kpi-grid{grid-template-columns:1fr;}
+}
+</style>
 </head>
 <body>
 
-<!-- Loading -->
-<div class="loading-ov" id="loadOv">
-    <div class="spin"></div>
-    <p style="color:#64748b;font-size:.9rem">Cargando MOVE Dashboard...</p>
+<!-- LOADING OVERLAY -->
+<div id="loadOv">
+    <div class="spin-logo">M</div>
+    <p>Cargando datos...</p>
 </div>
 
-<!-- Mobile overlay -->
-<div class="overlay" id="overlay" onclick="toggleSB()"></div>
+<!-- SIDEBAR OVERLAY -->
+<div id="sbOverlay" onclick="closeSb()"></div>
 
 <!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
+<nav id="sidebar">
     <div class="sb-logo">
-        <div class="logo-sq">M</div>
-        <div><h3>MOVE</h3><span>Dashboard Analytics</span></div>
-    </div>
-    <nav class="sb-nav">
-        <div class="nav-sec">General</div>
-        <div class="nav-item active" onclick="go('overview')"><i class="fas fa-tachometer-alt"></i> Overview</div>
-        <div class="nav-sec">Planillas</div>
-        <div class="nav-item" onclick="go('sedes')"><i class="fas fa-building"></i> Por Sede</div>
-        <div class="nav-item" onclick="go('profes')"><i class="fas fa-users"></i> Por Profesional</div>
-        <div class="nav-sec">Encuestas</div>
-        <div class="nav-item" onclick="go('encuestas')"><i class="fas fa-poll"></i> NPS & Satisfacción</div>
-        <div class="nav-item" onclick="go('bajas')"><i class="fas fa-user-minus"></i> Análisis de Bajas</div>
-    </nav>
-    <div class="sb-foot" id="lastUpd">—</div>
-</aside>
-
-<!-- MAIN -->
-<main class="main">
-    <div class="topbar">
-        <div class="topbar-l">
-            <button class="hamburger" onclick="toggleSB()"><i class="fas fa-bars"></i></button>
-            <div>
-                <h2 id="pgTitle">Overview</h2>
-                <p id="pgSub">Resumen general MOVE</p>
+        <div class="sb-logo-inner">
+            <div class="sb-m">M</div>
+            <div class="sb-brand">
+                <span class="sb-brand-name">MOVE</span>
+                <span class="sb-brand-sub">Dashboard</span>
             </div>
         </div>
-        <button class="btn btn-dark" onclick="cargarTodo()">
-            <i class="fas fa-sync-alt" id="refreshIco"></i> Actualizar
+    </div>
+    <div class="sb-nav">
+        <div class="sb-group">
+            <div class="sb-group-label">General</div>
+            <div class="nav-item active" onclick="go('overview')">
+                <i class="fas fa-chart-line"></i> Overview
+            </div>
+        </div>
+        <div class="sb-group">
+            <div class="sb-group-label">Planillas</div>
+            <div class="nav-item" onclick="go('sedes')">
+                <i class="fas fa-map-marker-alt"></i> Por Sede
+            </div>
+            <div class="nav-item" onclick="go('profes')">
+                <i class="fas fa-user-tie"></i> Por Profesional
+            </div>
+        </div>
+        <div class="sb-group">
+            <div class="sb-group-label">Encuestas</div>
+            <div class="nav-item" onclick="go('encuestas')">
+                <i class="fas fa-star"></i> NPS &amp; Satisfacci&oacute;n
+            </div>
+            <div class="nav-item" onclick="go('bajas')">
+                <i class="fas fa-door-open"></i> An&aacute;lisis de Bajas
+            </div>
+        </div>
+    </div>
+    <div class="sb-footer">
+        <div id="lastUpd">Sin actualizar</div>
+    </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+
+    <!-- TOPBAR -->
+    <div id="topbar">
+        <div style="display:flex;align-items:center;gap:14px;">
+            <button id="hamburger" onclick="toggleSb()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="topbar-title">
+                <span id="topTitle">Overview</span>
+                <span id="topSub">Visi&oacute;n general de MOVE</span>
+            </div>
+        </div>
+        <button class="btn-refresh" onclick="cargarTodo()">
+            <i id="refreshIco" class="fas fa-sync-alt"></i> Actualizar
         </button>
     </div>
 
-    <div class="content">
+    <!-- CONTENT -->
+    <div id="content">
 
-        <!-- ===== OVERVIEW ===== -->
+        <!-- ═══ SECTION: OVERVIEW ═══ -->
         <div class="section active" id="section-overview">
             <div class="kpi-grid">
-                <div class="kpi-card"><div class="kpi-label">Total Activos</div><div class="kpi-value" id="k-activos">--</div><div class="kpi-sub">Alumnos activos</div></div>
-                <div class="kpi-card"><div class="kpi-label">Altas 2026</div><div class="kpi-value green" id="k-altas26">--</div><div class="kpi-sub" id="k-altas-sub">vs 2025</div></div>
-                <div class="kpi-card"><div class="kpi-label">NPS Global</div><div class="kpi-value" id="k-nps">--</div><div class="kpi-sub" id="k-nps-sub">Net Promoter Score</div></div>
-                <div class="kpi-card"><div class="kpi-label">Deserción Prom.</div><div class="kpi-value red" id="k-deserc">--</div><div class="kpi-sub">% promedio profes</div></div>
-            </div>
-            <div class="row c2">
-                <div class="card span2">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-chart-line"></i> Altas Totales — Ambas Sedes 2025 vs 2026</div></div>
-                    <canvas id="chOvTotal"></canvas>
+                <div class="kpi-card">
+                    <div class="kpi-label">Alumnos Activos</div>
+                    <div class="kpi-value" id="k-activos">--</div>
+                    <div class="kpi-sub">Total activos en el sistema</div>
                 </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Altas 2026</div>
+                    <div class="kpi-value" style="color:#10b981" id="k-altas26">--</div>
+                    <div class="kpi-sub" id="k-altas-sub">vs 2025</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">NPS Bienvenida</div>
+                    <div class="kpi-value" id="k-nps">--</div>
+                    <div class="kpi-sub" id="k-nps-sub">Net Promoter Score</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Tasa Deserci&oacute;n</div>
+                    <div class="kpi-value" style="color:#ef4444" id="k-deserc">--</div>
+                    <div class="kpi-sub">Promedio mensual</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-hd">
+                    <div class="card-title"><i class="fas fa-chart-area"></i> Altas Totales &mdash; Ambas Sedes</div>
+                </div>
+                <canvas id="chOvTotal"></canvas>
             </div>
             <div class="row c2">
                 <div class="card">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-map-marker-alt"></i> El Bolsón</div></div>
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-mountain"></i> El Bols&oacute;n</div>
+                    </div>
                     <canvas id="chOvBolson"></canvas>
                 </div>
                 <div class="card">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-map-marker-alt"></i> Lago Puelo</div></div>
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-water"></i> Lago Puelo</div>
+                    </div>
                     <canvas id="chOvPuelo"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- ===== SEDES ===== -->
+        <!-- ═══ SECTION: SEDES ═══ -->
         <div class="section" id="section-sedes">
             <div class="row c2">
                 <div class="card">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-chart-bar"></i> El Bolsón — Altas por mes</div></div>
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-chart-bar"></i> Altas El Bols&oacute;n</div>
+                    </div>
                     <canvas id="chSedBolson"></canvas>
                 </div>
                 <div class="card">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-chart-bar"></i> Lago Puelo — Altas por mes</div></div>
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-chart-bar"></i> Altas Lago Puelo</div>
+                    </div>
                     <canvas id="chSedPuelo"></canvas>
                 </div>
             </div>
             <div class="card">
-                <div class="card-hd"><div class="card-title"><i class="fas fa-table"></i> Tabla Comparativa por Mes</div></div>
+                <div class="card-hd">
+                    <div class="card-title"><i class="fas fa-table"></i> Comparativo Mensual por Sede</div>
+                </div>
                 <div class="tw">
                     <table>
-                        <thead><tr><th>Mes</th><th>Bolsón 2025</th><th>Bolsón 2026</th><th>Δ Bolsón</th><th>Puelo 2025</th><th>Puelo 2026</th><th>Δ Puelo</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Mes</th>
+                                <th>Bols&oacute;n 25</th>
+                                <th>Bols&oacute;n 26</th>
+                                <th>Var.</th>
+                                <th>Puelo 25</th>
+                                <th>Puelo 26</th>
+                                <th>Var.</th>
+                            </tr>
+                        </thead>
                         <tbody id="sedesTab"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- ===== PROFES ===== -->
+        <!-- ═══ SECTION: PROFESIONALES ═══ -->
         <div class="section" id="section-profes">
-            <div class="tabs" id="profesTabs"></div>
+            <div id="profesTabs"></div>
             <div class="row c2">
                 <div class="card">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-arrow-up"></i> Altas — <span id="pnAltas"></span></div></div>
+                    <div class="card-hd">
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i> Altas &mdash; <span id="pnAltas"></span>
+                        </div>
+                    </div>
                     <canvas id="chProfAltas"></canvas>
                 </div>
                 <div class="card">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-exclamation-circle"></i> % Deserción — <span id="pnDeserc"></span></div></div>
+                    <div class="card-hd">
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i> Deserci&oacute;n &mdash; <span id="pnDeserc"></span>
+                        </div>
+                    </div>
                     <canvas id="chProfDeserc"></canvas>
                 </div>
             </div>
             <div class="kpi-grid" id="profeKpis"></div>
         </div>
 
-        <!-- ===== ENCUESTAS ===== -->
+        <!-- ═══ SECTION: ENCUESTAS ═══ -->
         <div class="section" id="section-encuestas">
-            <div class="alert alert-info"><i class="fas fa-info-circle"></i> Datos de encuestas de bienvenida desde Google Sheets público.</div>
-            <div class="alert alert-warn" id="encWarn" style="display:none"></div>
+            <div class="alert">
+                <i class="fas fa-info-circle"></i>
+                <span>Datos de encuestas de bienvenida. El NPS mide la probabilidad de recomendaci&oacute;n (0&ndash;10). Promotores: 9&ndash;10. Detractores: 0&ndash;6.</span>
+            </div>
+            <div id="encWarn" style="display:none" class="alert"></div>
             <div class="kpi-grid">
-                <div class="kpi-card"><div class="kpi-label">NPS Global</div><div class="kpi-value" id="e-nps">--</div><div class="kpi-sub" id="e-nps-lbl">--</div></div>
-                <div class="kpi-card"><div class="kpi-label">Respuestas</div><div class="kpi-value" id="e-total">--</div><div class="kpi-sub">Encuestas bienvenida</div></div>
-                <div class="kpi-card"><div class="kpi-label">Índice Servicio</div><div class="kpi-value" id="e-serv">--</div><div class="kpi-sub">Prom. acompañamiento</div></div>
-                <div class="kpi-card"><div class="kpi-label">Exp. Promedio</div><div class="kpi-value" id="e-exp">--</div><div class="kpi-sub">Calificación /10</div></div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Respuestas</div>
+                    <div class="kpi-value" id="e-total">--</div>
+                    <div class="kpi-sub">Total encuestas recibidas</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">NPS</div>
+                    <div class="kpi-value" id="e-nps">--</div>
+                    <div class="kpi-sub" id="e-nps-lbl">Net Promoter Score</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">&Iacute;ndice Servicio</div>
+                    <div class="kpi-value" id="e-serv">--</div>
+                    <div class="kpi-sub">Acompa&ntilde;amiento + Plan + Entrevista</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Experiencia</div>
+                    <div class="kpi-value" id="e-exp">--</div>
+                    <div class="kpi-sub">Promedio (0&ndash;10)</div>
+                </div>
             </div>
             <div class="row c2">
                 <div class="card">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-tachometer-alt"></i> NPS Bienvenida</div></div>
-                    <canvas id="chNpsDial" style="max-height:190px"></canvas>
-                    <div style="text-align:center;font-size:1.6rem;font-weight:700;margin-top:6px" id="npsDialVal">--</div>
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-tachometer-alt"></i> NPS General</div>
+                    </div>
+                    <div class="nps-dial-wrap">
+                        <canvas id="chNpsDial" style="max-width:180px;max-height:180px !important;"></canvas>
+                        <div style="margin-top:-58px;text-align:center;pointer-events:none;">
+                            <div style="font-size:2rem;font-weight:800;color:#0f172a;" id="npsDialVal">--</div>
+                            <div style="font-size:.7rem;color:#94a3b8;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;">NPS</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="card">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-chart-bar"></i> NPS por Profesional</div></div>
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-user-tie"></i> NPS por Profesional</div>
+                    </div>
                     <canvas id="chNpsProf"></canvas>
                 </div>
             </div>
             <div class="card">
-                <div class="card-hd"><div class="card-title"><i class="fas fa-clock"></i> Experiencia por Horario</div></div>
-                <canvas id="chHorario" style="max-height:290px"></canvas>
+                <div class="card-hd">
+                    <div class="card-title"><i class="fas fa-clock"></i> Experiencia por Horario</div>
+                </div>
+                <canvas id="chHorario"></canvas>
             </div>
-            <div class="card" style="margin-top:18px">
-                <div class="card-hd"><div class="card-title"><i class="fas fa-trophy"></i> Ranking Profesionales</div></div>
+            <div class="card">
+                <div class="card-hd">
+                    <div class="card-title"><i class="fas fa-list"></i> Detalle por Profesional</div>
+                </div>
                 <div class="tw">
                     <table>
-                        <thead><tr><th>Profesional</th><th>Sede</th><th>NPS</th><th>Exp. Prom.</th><th>Estado</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Profesional</th><th>Sede</th><th>NPS</th><th>Exp. Gral</th><th>Estado</th>
+                            </tr>
+                        </thead>
                         <tbody id="encTabBody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- ===== BAJAS ===== -->
+        <!-- ═══ SECTION: BAJAS ═══ -->
         <div class="section" id="section-bajas">
+
+            <!-- Summary KPIs -->
             <div class="kpi-grid">
-                <div class="kpi-card"><div class="kpi-label">Encuestas Baja</div><div class="kpi-value" id="b-total">--</div><div class="kpi-sub">Respuestas recibidas</div></div>
-                <div class="kpi-card"><div class="kpi-label">NPS Ex-Socios</div><div class="kpi-value" id="b-nps">--</div><div class="kpi-sub">Net Promoter Score</div></div>
-                <div class="kpi-card"><div class="kpi-label">Tasa Deserción</div><div class="kpi-value red" id="b-tasa">--</div><div class="kpi-sub">Bajas / (Bajas + Welcome)</div></div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Respuestas Baja</div>
+                    <div class="kpi-value" id="b-total">--</div>
+                    <div class="kpi-sub">Ex-socios encuestados</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">NPS Ex-Socios</div>
+                    <div class="kpi-value" id="b-nps">--</div>
+                    <div class="kpi-sub">Net Promoter Score</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Tasa Deserci&oacute;n</div>
+                    <div class="kpi-value" id="b-tasa">--</div>
+                    <div class="kpi-sub">Bajas / Total encuestados</div>
+                </div>
             </div>
+
+            <!-- 3 Gauges with interpretation -->
+            <div class="row c3">
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-star"></i> NPS Ex-Socios</div>
+                    </div>
+                    <div id="gaugeNPS"></div>
+                    <div id="interpNPS"></div>
+                </div>
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-crosshairs"></i> &Iacute;ndice Deserci&oacute;n Controlable</div>
+                    </div>
+                    <div id="gaugeDeserc"></div>
+                    <div id="interpDeserc"></div>
+                </div>
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-trophy"></i> &Iacute;ndice Servicio MOVE</div>
+                    </div>
+                    <div id="gaugeServicio"></div>
+                    <div id="interpServicio"></div>
+                </div>
+            </div>
+
+            <!-- Professor ranking -->
+            <div class="card" style="margin-bottom:18px">
+                <div class="card-hd">
+                    <div class="card-title"><i class="fas fa-medal"></i> Ranking por Profesional</div>
+                    <span style="font-size:.74rem;color:#94a3b8">Calculado desde encuestas de baja</span>
+                </div>
+                <div class="tw">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Profesional</th>
+                                <th>Exp. Gral</th>
+                                <th>NPS</th>
+                                <th>&Iacute;nd. Servicio</th>
+                                <th>Muestra</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bajaProfTab"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Motivos chart + resumen -->
             <div class="row c2">
                 <div class="card">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-chart-pie"></i> Motivos de Baja</div></div>
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-chart-pie"></i> Motivos de Baja</div>
+                    </div>
                     <canvas id="chMotivos"></canvas>
                 </div>
                 <div class="card">
-                    <div class="card-hd"><div class="card-title"><i class="fas fa-tachometer-alt"></i> NPS Ex-Socios</div></div>
-                    <canvas id="chBajaDial" style="max-height:190px"></canvas>
-                    <div style="text-align:center;font-size:2rem;font-weight:700;margin-top:6px" id="bajaNpsVal">--</div>
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-info-circle"></i> Resumen</div>
+                    </div>
+                    <div style="padding:8px">
+                        <p style="color:#64748b;font-size:.875rem;line-height:1.75">
+                            El <strong>NPS de Ex-Socios</strong> mide qu&eacute; tan probable es que recomienden MOVE a pesar de haberse dado de baja.<br><br>
+                            El <strong>&Iacute;ndice de Deserci&oacute;n Controlable</strong> indica qu&eacute; porcentaje de los motivos de baja son atribuibles a factores internos de MOVE (calidad, servicio, profesional) vs externos (econom&iacute;a, tiempo, contexto personal).<br><br>
+                            El <strong>&Iacute;ndice de Servicio MOVE</strong> refleja la calidad percibida del servicio: experiencia general + atenci&oacute;n y trato, escalado a 0&ndash;100%.
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
+
+        </div><!-- /section-bajas -->
 
     </div><!-- /content -->
-</main>
+</div><!-- /main -->
 
 <script>
-// ================================================================
-// CONFIGURACIÓN  ← EDITÁ ESTAS DOS LÍNEAS
-// ================================================================
+// ══════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════
 const SHEET_ENC_ID  = '1GhDYhMnueahKDbX1Ezx9eLlawmfQ-NCXA1ZiLe_r_SY';
 const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbyQQ8v-cxcbncGh4E9iJGr5_9FwfQ03FJ_GdjbTpq-YVhk_FkzRNTcxwbJbzZiGKWBX/exec';
-
-// ================================================================
 const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 const SEDE_MAP = {
-    'Enzo':'El Bolsón','Belen':'El Bolsón','Fernando':'El Bolsón','Francisco':'El Bolsón',
+    'Enzo':'El Bols\u00f3n','Belen':'El Bols\u00f3n','Fernando':'El Bols\u00f3n','Francisco':'El Bols\u00f3n',
     'Javier':'Lago Puelo','Valeria':'Lago Puelo','Facundo':'Lago Puelo',
     'Luz':'Lago Puelo','Agustina':'Lago Puelo','Emanuel':'Ambas'
 };
-const META = {
-    overview:{t:'Overview',s:'Resumen general MOVE'},
-    sedes:   {t:'Por Sede',s:'El Bolsón vs Lago Puelo'},
-    profes:  {t:'Por Profesional',s:'Estadísticas individuales'},
-    encuestas:{t:'NPS & Satisfacción',s:'Encuestas de bienvenida'},
-    bajas:   {t:'Análisis de Bajas',s:'Motivos y NPS ex-socios'},
-};
 
-// Intercept Google's default gviz response format using reqId matching
+// Intercept Google gviz format
 const _sheetCBs = {};
 window.google = { visualization: { Query: { setResponse: function(data) {
     const cb = _sheetCBs[data.reqId];
@@ -297,32 +582,9 @@ window.google = { visualization: { Query: { setResponse: function(data) {
 
 let CH = {}, planData = null, wData = [], cData = [];
 
-// ================================================================
-// NAV
-// ================================================================
-function go(id) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('section-' + id).classList.add('active');
-    document.querySelector(`[onclick="go('${id}')"]`).classList.add('active');
-    document.getElementById('pgTitle').textContent = META[id].t;
-    document.getElementById('pgSub').textContent   = META[id].s;
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('overlay').classList.remove('open');
-}
-function toggleSB() {
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('overlay').classList.toggle('open');
-}
-
-// ================================================================
-// LOAD ALL
-// ================================================================
+// cargarTodo with 10s safety timeout
 async function cargarTodo() {
-    // Safety net: always hide loading after 10s no matter what
-    const hideTimer = setTimeout(() => {
-        document.getElementById('loadOv').style.display = 'none';
-    }, 10000);
+    const hideTimer = setTimeout(() => { document.getElementById('loadOv').style.display='none'; }, 10000);
     document.getElementById('refreshIco').className = 'fas fa-spinner fa-spin';
     await Promise.allSettled([loadPlanillas(), loadEncuestas()]);
     clearTimeout(hideTimer);
@@ -331,284 +593,350 @@ async function cargarTodo() {
     document.getElementById('loadOv').style.display = 'none';
 }
 
-// ================================================================
-// PLANILLAS (Apps Script JSONP)
-// ================================================================
+// loadPlanillas with 60s timeout, falls back to demoData
 function loadPlanillas() {
     return new Promise(resolve => {
-        if (!SCRIPT_URL || SCRIPT_URL === 'TU_URL_AQUI') {
-            planData = demoData(); renderPlanillas(); return resolve();
-        }
-        const cb = 'moveCB_' + Date.now();
-        const timer = setTimeout(() => { if (window[cb]) { delete window[cb]; planData = demoData(); renderPlanillas(); resolve(); } }, 60000);
-        window[cb] = d => {
-            clearTimeout(timer); delete window[cb];
-            const el = document.getElementById('jsonpEl'); if (el) el.remove();
-            planData = d; renderPlanillas(); resolve();
-        };
-        const s = document.createElement('script');
-        s.id = 'jsonpEl';
-        s.onerror = () => { clearTimeout(timer); delete window[cb]; planData = demoData(); renderPlanillas(); resolve(); };
-        s.src = SCRIPT_URL + '?callback=' + cb;
+        if (!SCRIPT_URL || SCRIPT_URL === 'TU_URL_AQUI') { planData=demoData(); renderPlanillas(); return resolve(); }
+        const cb = 'moveCB_'+Date.now();
+        const timer = setTimeout(()=>{ if(window[cb]){delete window[cb]; planData=demoData(); renderPlanillas(); resolve();} },60000);
+        window[cb] = d=>{ clearTimeout(timer); delete window[cb]; const el=document.getElementById('jsonpEl'); if(el)el.remove(); planData=d; renderPlanillas(); resolve(); };
+        const s=document.createElement('script');
+        s.id='jsonpEl';
+        s.onerror=()=>{ clearTimeout(timer); delete window[cb]; planData=demoData(); renderPlanillas(); resolve(); };
+        s.src=SCRIPT_URL+'?callback='+cb;
         document.body.appendChild(s);
     });
 }
 
 function demoData() {
-    const r12 = () => Array.from({length:12}, () => Math.floor(Math.random()*12+1));
-    return {
-        profes:[
-            {nombre:'Belu', histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:45,estadoActivos:'OK'},
-            {nombre:'Fer',  histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:38,estadoActivos:'OK'},
-            {nombre:'Enzo', histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:52,estadoActivos:'OK'},
-            {nombre:'Javi', histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:41,estadoActivos:'OK'},
-            {nombre:'Agus', histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:29,estadoActivos:'OK'},
-        ],
-        histBolson25:r12(),histBolson26:r12(),histPuelo25:r12(),histPuelo26:r12()
-    };
+    const r12=()=>Array.from({length:12},()=>Math.floor(Math.random()*12+1));
+    return { profes:[
+        {nombre:'Belu',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:45,estadoActivos:'\uD83D\uDFE2 Ideal'},
+        {nombre:'Fer', histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:38,estadoActivos:'\uD83D\uDFE2 Ideal'},
+        {nombre:'Enzo',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:52,estadoActivos:'\uD83D\uDFE2 Ideal'},
+        {nombre:'Javi',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:41,estadoActivos:'\uD83D\uDFE2 Ideal'},
+        {nombre:'Agus',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:29,estadoActivos:'\uD83D\uDFE2 Ideal'},
+    ], histBolson25:r12(),histBolson26:r12(),histPuelo25:r12(),histPuelo26:r12() };
 }
 
-function renderPlanillas() {
-    const d = planData;
-
-    // KPIs overview
-    const totAct = d.profes.reduce((s,p) => s+(p.activos||0), 0);
-    const a26    = d.profes.reduce((s,p) => s+p.histAltas26.reduce((a,b)=>a+b,0), 0);
-    const a25    = d.profes.reduce((s,p) => s+p.histAltas25.reduce((a,b)=>a+b,0), 0);
-    const pct    = a25 > 0 ? Math.round(((a26-a25)/a25)*100) : 0;
-    const desArr = d.profes.flatMap(p => p.histDeserc26.filter(v=>v>0));
-    const avgD   = desArr.length ? (desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1) : '--';
-
-    set('k-activos', totAct||'--');
-    set('k-altas26', a26);
-    set('k-altas-sub', (pct>=0?'+':'')+pct+'% vs 2025 ('+a25+')');
-    set('k-deserc', avgD+'%');
-
-    // Overview charts
-    const tot25 = MESES.map((_,i) => (d.histBolson25[i]||0)+(d.histPuelo25[i]||0));
-    const tot26 = MESES.map((_,i) => (d.histBolson26[i]||0)+(d.histPuelo26[i]||0));
-    line('chOvTotal',  MESES, [{l:'2025',d:tot25,c:'#94a3b8'},{l:'2026',d:tot26,c:'#4ade80'}]);
-    line('chOvBolson', MESES, [{l:'2025',d:d.histBolson25,c:'#94a3b8'},{l:'2026',d:d.histBolson26,c:'#4ade80'}]);
-    line('chOvPuelo',  MESES, [{l:'2025',d:d.histPuelo25,c:'#94a3b8'},{l:'2026',d:d.histPuelo26,c:'#3b82f6'}]);
-
-    // Sedes charts
-    bar('chSedBolson', MESES, [{l:'Bolsón 2025',d:d.histBolson25,c:'#94a3b8'},{l:'Bolsón 2026',d:d.histBolson26,c:'#4ade80'}]);
-    bar('chSedPuelo',  MESES, [{l:'Puelo 2025', d:d.histPuelo25, c:'#94a3b8'},{l:'Puelo 2026', d:d.histPuelo26, c:'#3b82f6'}]);
-
-    // Sedes table
-    let rows = '';
-    MESES.forEach((m,i) => {
-        const b25=d.histBolson25[i]||0, b26=d.histBolson26[i]||0;
-        const p25=d.histPuelo25[i]||0,  p26=d.histPuelo26[i]||0;
-        const db=b26-b25, dp=p26-p25;
-        rows += `<tr><td><b>${m}</b></td><td>${b25}</td><td>${b26}</td>
-            <td><span class="badge ${db>=0?'bg':'br'}">${db>=0?'+':''}${db}</span></td>
-            <td>${p25}</td><td>${p26}</td>
-            <td><span class="badge ${dp>=0?'bg':'br'}">${dp>=0?'+':''}${dp}</span></td></tr>`;
-    });
-    document.getElementById('sedesTab').innerHTML = rows;
-
-    // Profes tabs
-    const tabs = document.getElementById('profesTabs');
-    tabs.innerHTML = '';
-    d.profes.forEach((p,i) => {
-        const t = document.createElement('div');
-        t.className = 'tab'+(i===0?' active':'');
-        t.textContent = p.nombre;
-        t.onclick = () => {
-            document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-            t.classList.add('active');
-            renderProfe(i);
-        };
-        tabs.appendChild(t);
-    });
-    renderProfe(0);
-}
-
-function renderProfe(i) {
-    const p = planData.profes[i];
-    set('pnAltas',  p.nombre);
-    set('pnDeserc', p.nombre);
-    line('chProfAltas',  MESES, [{l:'Altas 2025',d:p.histAltas25,c:'#94a3b8'},{l:'Altas 2026',d:p.histAltas26,c:'#4ade80'}]);
-    line('chProfDeserc', MESES, [{l:'% Deserc 2026',d:p.histDeserc26.map(v=>+(v*100).toFixed(1)),c:'#ef4444'}]);
-    const a26=p.histAltas26.reduce((a,b)=>a+b,0), a25=p.histAltas25.reduce((a,b)=>a+b,0);
-    const pct=a25>0?Math.round(((a26-a25)/a25)*100):0;
-    document.getElementById('profeKpis').innerHTML = `
-        <div class="kpi-card"><div class="kpi-label">Activos</div><div class="kpi-value">${p.activos||'--'}</div><div class="kpi-sub">Alumnos activos</div></div>
-        <div class="kpi-card"><div class="kpi-label">Altas 2026</div><div class="kpi-value green">${a26}</div><div class="kpi-sub">${pct>=0?'+':''}${pct}% vs 2025 (${a25})</div></div>
-        <div class="kpi-card"><div class="kpi-label">Estado</div><div class="kpi-value" style="font-size:1rem">${p.estadoActivos||'--'}</div><div class="kpi-sub">Estado activos</div></div>`;
-}
-
-// ================================================================
-// ENCUESTAS (Google Sheets gviz JSONP)
-// ================================================================
+// loadEncuestas using gid and reqId intercept
 function loadEncuestas() {
     return Promise.all([
         sheetLoad(SHEET_ENC_ID, '1563858316', 'bienvenida'),
         sheetLoad(SHEET_ENC_ID, '839375428',  'baja')
-    ]).then(([w,c]) => { wData=w||[]; cData=c||[]; renderEnc(); });
+    ]).then(([w,c])=>{ wData=w||[]; cData=c||[]; renderEnc(); });
 }
 
 function sheetLoad(id, gid, reqId) {
     return new Promise(resolve => {
-        const timer = setTimeout(() => { delete _sheetCBs[reqId]; resolve([]); }, 10000);
-        _sheetCBs[reqId] = r => { clearTimeout(timer); resolve(parseSheet(r)); };
-        const s = document.createElement('script');
-        s.onerror = () => { clearTimeout(timer); delete _sheetCBs[reqId]; resolve([]); };
+        const timer=setTimeout(()=>{ delete _sheetCBs[reqId]; resolve([]); },10000);
+        _sheetCBs[reqId]=r=>{ clearTimeout(timer); resolve(parseSheet(r)); };
+        const s=document.createElement('script');
+        s.onerror=()=>{ clearTimeout(timer); delete _sheetCBs[reqId]; resolve([]); };
         s.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;reqId:${reqId}&gid=${gid}`;
         document.body.appendChild(s);
     });
 }
 
 function parseSheet(json) {
-    if (!json.table||!json.table.rows) return [];
-    const h = json.table.cols.map(c=>c.label);
-    return json.table.rows.map(r => {
-        const o={}; (r.c||[]).forEach((c,j)=>{ o[h[j]]=c?(c.v??''):''; }); return o;
-    });
+    if(!json.table||!json.table.rows)return[];
+    const h=json.table.cols.map(c=>c.label);
+    return json.table.rows.map(r=>{ const o={}; (r.c||[]).forEach((c,j)=>{ o[h[j]]=c?(c.v??''):''; }); return o; });
 }
 
-function renderEnc() {
-    const W=wData, C=cData;
+// ══════════════════════════════════════════════════
+// CHART HELPERS — keep exactly
+// ══════════════════════════════════════════════════
+function line(id,labels,sets){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,borderColor:s.c,backgroundColor:s.c+'22',borderWidth:2.5,pointRadius:4,tension:.3,fill:false}))},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});}
+function bar(id,labels,sets){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,backgroundColor:s.c+'cc',borderRadius:5,borderSkipped:false}))},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});}
+function barSimple(id,labels,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:7}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{min:-100,max:100,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});}
+function doughnut(id,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{datasets:[{data,backgroundColor:colors,borderWidth:0}]},options:{cutout:'72%',responsive:true,plugins:{legend:{display:false},tooltip:{enabled:false}}}});}
+function pie(id,labels,data){if(CH[id])CH[id].destroy();const pal=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#3b82f6','#f97316','#06b6d4'];CH[id]=new Chart(document.getElementById(id),{type:'pie',data:{labels,datasets:[{data,backgroundColor:pal.slice(0,labels.length)}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{boxWidth:11,font:{size:11}}}}}});}
+function radar(id,labels,data){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'radar',data:{labels,datasets:[{label:'Experiencia (1-10)',data,backgroundColor:'rgba(99,102,241,.15)',borderColor:'#6366f1',pointBackgroundColor:'#6366f1'}]},options:{responsive:true,scales:{r:{min:0,max:10,ticks:{stepSize:2}}}}});}
 
-    // Warn if sheets not accessible
-    const warnEl = document.getElementById('encWarn');
-    if (W.length === 0) {
-        warnEl.style.display = 'block';
-        warnEl.textContent = '⚠️ No se pudieron cargar las encuestas. Verificá que la hoja de cálculo sea pública (Compartir → Cualquier persona con el enlace).';
-    } else {
-        warnEl.style.display = 'none';
-    }
+// ══════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════
+function calcNPS(arr){if(!arr.length)return 0;return Math.round(((arr.filter(n=>n>=9).length-arr.filter(n=>n<=6).length)/arr.length)*100);}
+function getSede(prof){for(const[k,v]of Object.entries(SEDE_MAP)){if(prof.includes(k))return v;}return '\u2014';}
+function set(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
 
-    // KPIs
-    const recs = W.map(r=>parseFloat(r['¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?'])).filter(n=>!isNaN(n));
-    const nps  = calcNPS(recs);
-    const lbl  = nps>=50?'🔥 Excelente':nps>=30?'👍 Bueno':'⚠️ Regular';
-    set('e-total', W.length); set('e-nps', nps); set('e-nps-lbl', lbl);
-    set('k-nps', nps); set('k-nps-sub', lbl);
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+const META = {
+    overview:  {title:'Overview',            sub:'Visi\u00f3n general de MOVE'},
+    sedes:     {title:'Por Sede',             sub:'Comparativo por sede'},
+    profes:    {title:'Por Profesional',      sub:'Desempe\u00f1o individual'},
+    encuestas: {title:'NPS & Satisfacci\u00f3n', sub:'Encuestas de bienvenida'},
+    bajas:     {title:'An\u00e1lisis de Bajas',  sub:'Encuestas de ex-socios'},
+};
+function go(sec){
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    const el=document.getElementById('section-'+sec);
+    if(el)el.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>{
+        const oc=n.getAttribute('onclick')||'';
+        if(oc.includes("'"+sec+"'"))n.classList.add('active');
+    });
+    if(META[sec]){set('topTitle',META[sec].title);set('topSub',META[sec].sub);}
+    closeSb();
+}
+function toggleSb(){
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sbOverlay').classList.toggle('open');
+}
+function closeSb(){
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sbOverlay').classList.remove('open');
+}
 
+// ══════════════════════════════════════════════════
+// RENDER PLANILLAS
+// ══════════════════════════════════════════════════
+function renderPlanillas(){
+    const d=planData;
+    const totAct=d.profes.reduce((s,p)=>s+(p.activos||0),0);
+    const a26=d.profes.reduce((s,p)=>s+p.histAltas26.reduce((a,b)=>a+b,0),0);
+    const a25=d.profes.reduce((s,p)=>s+p.histAltas25.reduce((a,b)=>a+b,0),0);
+    const pct=a25>0?Math.round(((a26-a25)/a25)*100):0;
+    const desArr=d.profes.flatMap(p=>p.histDeserc26.filter(v=>v>0));
+    const avgD=desArr.length?(desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1):'--';
+    set('k-activos',totAct||'--'); set('k-altas26',a26);
+    set('k-altas-sub',(pct>=0?'+':'')+pct+'% vs 2025 ('+a25+')');
+    set('k-deserc',avgD+'%');
+    const tot25=MESES.map((_,i)=>(d.histBolson25[i]||0)+(d.histPuelo25[i]||0));
+    const tot26=MESES.map((_,i)=>(d.histBolson26[i]||0)+(d.histPuelo26[i]||0));
+    line('chOvTotal',MESES,[{l:'2025',d:tot25,c:'#94a3b8'},{l:'2026',d:tot26,c:'#10b981'}]);
+    line('chOvBolson',MESES,[{l:'2025',d:d.histBolson25,c:'#94a3b8'},{l:'2026',d:d.histBolson26,c:'#10b981'}]);
+    line('chOvPuelo',MESES,[{l:'2025',d:d.histPuelo25,c:'#94a3b8'},{l:'2026',d:d.histPuelo26,c:'#6366f1'}]);
+    bar('chSedBolson',MESES,[{l:'Bols\u00f3n 2025',d:d.histBolson25,c:'#94a3b8'},{l:'Bols\u00f3n 2026',d:d.histBolson26,c:'#10b981'}]);
+    bar('chSedPuelo',MESES,[{l:'Puelo 2025',d:d.histPuelo25,c:'#94a3b8'},{l:'Puelo 2026',d:d.histPuelo26,c:'#6366f1'}]);
+    let rows='';
+    MESES.forEach((m,i)=>{
+        const b25=d.histBolson25[i]||0,b26=d.histBolson26[i]||0,p25=d.histPuelo25[i]||0,p26=d.histPuelo26[i]||0;
+        const db=b26-b25,dp=p26-p25;
+        rows+=`<tr><td><b>${m}</b></td><td>${b25}</td><td>${b26}</td><td><span class="badge ${db>=0?'bg':'br'}">${db>=0?'+':''}${db}</span></td><td>${p25}</td><td>${p26}</td><td><span class="badge ${dp>=0?'bg':'br'}">${dp>=0?'+':''}${dp}</span></td></tr>`;
+    });
+    document.getElementById('sedesTab').innerHTML=rows;
+    const tabs=document.getElementById('profesTabs');
+    tabs.innerHTML='';
+    d.profes.forEach((p,i)=>{
+        const t=document.createElement('div');
+        t.className='tab'+(i===0?' active':'');
+        t.textContent=p.nombre;
+        t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); renderProfe(i); };
+        tabs.appendChild(t);
+    });
+    renderProfe(0);
+}
+
+function renderProfe(i){
+    const p=planData.profes[i];
+    set('pnAltas',p.nombre); set('pnDeserc',p.nombre);
+    line('chProfAltas',MESES,[{l:'Altas 2025',d:p.histAltas25,c:'#94a3b8'},{l:'Altas 2026',d:p.histAltas26,c:'#10b981'}]);
+    line('chProfDeserc',MESES,[{l:'% Deserc 2026',d:p.histDeserc26.map(v=>+(v*100).toFixed(1)),c:'#ef4444'}]);
+    const a26=p.histAltas26.reduce((a,b)=>a+b,0),a25=p.histAltas25.reduce((a,b)=>a+b,0);
+    const pct=a25>0?Math.round(((a26-a25)/a25)*100):0;
+    document.getElementById('profeKpis').innerHTML=`
+        <div class="kpi-card"><div class="kpi-label">Activos</div><div class="kpi-value">${p.activos||'--'}</div><div class="kpi-sub">Alumnos activos</div></div>
+        <div class="kpi-card"><div class="kpi-label">Altas 2026</div><div class="kpi-value" style="color:#10b981">${a26}</div><div class="kpi-sub">${pct>=0?'+':''}${pct}% vs 2025 (${a25})</div></div>
+        <div class="kpi-card"><div class="kpi-label">Estado</div><div class="kpi-value" style="font-size:1rem">${p.estadoActivos||'--'}</div><div class="kpi-sub">Estado activos</div></div>`;
+}
+
+// ══════════════════════════════════════════════════
+// RENDER ENCUESTAS
+// ══════════════════════════════════════════════════
+
+// Classification of churn reasons
+function classifyMotivo(m) {
+    if(!m) return 'external';
+    const l=m.toLowerCase();
+    const internal=['equipamiento','calidad','servicio','atenci\u00f3n','atencion','profesional','no cumpl\u00f3','no cumplio','expectativa','no me gust\u00f3','no me gusto','mejorar','valor','precio'];
+    return internal.some(k=>l.includes(k))?'internal':'external';
+}
+
+// SVG Gauge
+function svgGauge(containerId, value, min, max, color, badge, unit) {
+    if(unit===undefined)unit='';
+    const pct=Math.max(0,Math.min(1,(value-min)/(max-min)));
+    const angle=Math.PI*pct;
+    const r=72,cx=100,cy=90;
+    const endX=cx+r*Math.cos(Math.PI-angle);
+    const endY=cy-r*Math.sin(angle);
+    const largeArc=pct>0.5?1:0;
+    const arc=pct>0.01?`<path d="M ${cx-r} ${cy} A ${r} ${r} 0 ${largeArc} 1 ${endX.toFixed(1)} ${endY.toFixed(1)}" fill="none" stroke="${color}" stroke-width="13" stroke-linecap="round"/>`:'';
+    const ticks=[0,0.25,0.5,0.75,1].map(t=>{
+        const a=Math.PI*t;
+        const x1=cx+r*Math.cos(Math.PI-a), y1=cy-r*Math.sin(a);
+        const x2=cx+(r+8)*Math.cos(Math.PI-a), y2=cy-(r+8)*Math.sin(a);
+        return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#e2e8f0" stroke-width="1.5"/>`;
+    }).join('');
+    document.getElementById(containerId).innerHTML=`
+        <svg viewBox="0 0 200 105" style="width:100%;max-width:280px;display:block;margin:0 auto">
+            <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="#e2e8f0" stroke-width="13" stroke-linecap="round"/>
+            ${arc}
+            ${ticks}
+            <text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="26" font-weight="800" fill="#0f172a">${value}${unit}</text>
+            <text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="9" fill="#94a3b8" font-weight="600" letter-spacing="0.5">${badge.toUpperCase()}</text>
+        </svg>`;
+}
+
+// Interpretation helpers
+function npsInfo(v){
+    const base=[{r:'+50',l:'Excelente'},{r:'30 a 50',l:'Muy bueno'},{r:'10 a 30',l:'Aceptable'},{r:'< 10',l:'Bajo'}];
+    if(v>=50)return{color:'#10b981',badge:'Excelente',idx:0,ranges:base,obs:`\uD83D\uDD25 ${v} \u2192 EXCELENTE NIVEL DE RECOMENDACI\u00d3N. MOVE genera v\u00ednculo emocional fuerte y promotores activos. \u26A0\uFE0F No confundas NPS alto con baja deserci\u00f3n: pueden recomendar y aun as\u00ed irse por contexto externo.`};
+    if(v>=30)return{color:'#3b82f6',badge:'Muy bueno',idx:1,ranges:base,obs:`\uD83D\uDC4D ${v} \u2192 MUY BUEN NPS. MOVE supera la media del sector fitness. Continuar construyendo sobre los puntos fuertes actuales.`};
+    if(v>=10)return{color:'#f59e0b',badge:'Aceptable',idx:2,ranges:base,obs:`\u26A0\uFE0F ${v} \u2192 NPS ACEPTABLE. Hay margen de mejora. Identificar los pain points espec\u00edficos de la experiencia.`};
+    return{color:'#ef4444',badge:'Bajo',idx:3,ranges:base,obs:`\uD83D\uDEA8 ${v} \u2192 NPS BAJO. Acci\u00f3n inmediata necesaria en experiencia del cliente.`};
+}
+function desercInfo(v){
+    const base=[{r:'> 50%',l:'El problema es interno (mejorable)'},{r:'30\u201350%',l:'Mixto'},{r:'< 30%',l:'Mayor\u00eda contexto externo'}];
+    if(v>=50)return{color:'#ef4444',badge:'Problema interno',idx:0,ranges:base,obs:`\uD83D\uDD34 ${v}% \u2192 ALTA RESPONSABILIDAD INTERNA. El foco debe estar en mejora del servicio y operaciones internas.`};
+    if(v>=30)return{color:'#f59e0b',badge:'Mixto',idx:1,ranges:base,obs:`\uD83D\uDFE1 ${v}% \u2192 DESERCI\u00d3N MIXTA. Hay factores internos que atender junto con el contexto externo.`};
+    return{color:'#10b981',badge:'Contexto externo',idx:2,ranges:base,obs:`\uD83C\uDF0E ${v}% \u2192 BAJA RESPONSABILIDAD INTERNA. La mayor\u00eda responde a contexto externo. El foco debe estar en captaci\u00f3n y adaptaci\u00f3n estrat\u00e9gica.`};
+}
+function servicioInfo(v){
+    const base=[{r:'90\u2013100%',l:'Servicio premium consolidado'},{r:'80\u201390%',l:'Muy buen servicio'},{r:'70\u201380%',l:'Aceptable pero mejorable'},{r:'< 70%',l:'Problema estructural'}];
+    if(v>=90)return{color:'#10b981',badge:'Premium consolidado',idx:0,ranges:base,obs:`\uD83C\uDFC6 ${v}% \u2192 SERVICIO PREMIUM CONSOLIDADO. La ejecuci\u00f3n del modelo MOVE es consistente y alineada con la propuesta de valor. \u26A0\uFE0F No confundir con marketing: esto mide cumplimiento operativo real del sistema.`};
+    if(v>=80)return{color:'#3b82f6',badge:'Muy buen servicio',idx:1,ranges:base,obs:`\uD83D\uDCAA ${v}% \u2192 MUY BUEN SERVICIO. Alto nivel de ejecuci\u00f3n. Identificar el 10-20% de mejora disponible.`};
+    if(v>=70)return{color:'#f59e0b',badge:'Aceptable',idx:2,ranges:base,obs:`\u26A0\uFE0F ${v}% \u2192 SERVICIO ACEPTABLE. Existen oportunidades claras de mejora en la entrega del servicio.`};
+    return{color:'#ef4444',badge:'Problema estructural',idx:3,ranges:base,obs:`\uD83D\uDEA8 ${v}% \u2192 PROBLEMA ESTRUCTURAL. Revisi\u00f3n profunda del modelo de entrega necesaria.`};
+}
+function makeInterpCard(info){
+    const rows=info.ranges.map((r,i)=>`<div class="ir ${i===info.idx?'ir-active':''}"><span class="irv">${r.r}</span><span class="irl">${r.l}</span></div>`).join('');
+    return `<div class="iblock"><div class="ihead">\uD83C\uDFAF C\u00f3mo interpretar el resultado</div>${rows}</div><div class="obsblock" style="border-color:${info.color}">${info.obs}</div>`;
+}
+
+function renderEnc(){
+    const W=wData,C=cData;
+
+    // === BIENVENIDA ===
+    const recs=W.map(r=>parseFloat(r['\u00bfQu\u00e9 tan probable es que recomiendes nuestra experiencia a un amigo o familiar?'])).filter(n=>!isNaN(n));
+    const nps=calcNPS(recs);
+    const lbl=nps>=50?'\uD83D\uDD25 Excelente':nps>=30?'\uD83D\uDC4D Bueno':'\u26A0\uFE0F Regular';
+    set('e-total',W.length); set('e-nps',nps); set('e-nps-lbl',lbl);
+    set('k-nps',nps); set('k-nps-sub',lbl);
     let sS=0,cS=0,sE=0,cE=0;
     W.forEach(r=>{
-        const e=parseFloat(r['¿Cómo calificarías tu experiencia general en MOVE?']);
+        const e=parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
         if(!isNaN(e)){sE+=e;cE++;}
-        const a=parseFloat(r['¿Cómo evaluarías el acompañamiento del profesional en estos primeros días?']);
-        const cl=parseFloat(r['Claridad del plan de entrenamiento.\n¿Qué tan claro te resultó el plan de entrenamiento que te propusimos?']);
-        const ev=parseFloat(r['Evaluación de la entrevista inicial\n¿Qué tan escuchado/a te sentiste durante tu evaluación inicial?']);
+        const a=parseFloat(r['\u00bfC\u00f3mo evaluar\u00edas el acompa\u00f1amiento del profesional en estos primeros d\u00edas?']);
+        const cl=parseFloat(r['Claridad del plan de entrenamiento.\n\u00bfQu\u00e9 tan claro te result\u00f3 el plan de entrenamiento que te propusimos?']);
+        const ev=parseFloat(r['Evaluaci\u00f3n de la entrevista inicial\n\u00bfQu\u00e9 tan escuchado/a te sentiste durante tu evaluaci\u00f3n inicial?']);
         if(!isNaN(a)&&!isNaN(cl)&&!isNaN(ev)){sS+=((a+cl+ev)/3)*20;cS++;}
     });
-    set('e-serv', cS>0?Math.round(sS/cS):'--');
-    set('e-exp',  cE>0?(sE/cE).toFixed(1):'--');
-
-    // NPS dial
-    const nc = nps>=50?'#4ade80':nps>=30?'#fbbf24':'#ef4444';
-    doughnut('chNpsDial', [Math.max(0,Math.min(100,nps+50)),100-Math.max(0,Math.min(100,nps+50))],[nc,'#e2e8f0']);
-    set('npsDialVal', nps);
-
-    // Bajas KPIs
-    const recsC = C.map(r=>parseFloat(r['¿Recomendarías MOVE a un amigo o familiar?'])).filter(n=>!isNaN(n));
-    const npsC  = calcNPS(recsC);
-    const tot   = W.length+C.length;
-    set('b-total', C.length); set('b-nps', npsC);
-    set('b-tasa', tot>0?Math.round((C.length/tot)*100)+'%':'--');
-
-    const ncC = npsC>=50?'#4ade80':npsC>=30?'#fbbf24':'#ef4444';
-    doughnut('chBajaDial',[Math.max(0,Math.min(100,npsC+50)),100-Math.max(0,Math.min(100,npsC+50))],[ncC,'#e2e8f0']);
-    set('bajaNpsVal', npsC);
-
-    // NPS por prof
-    const byProf={}, expByProf={};
+    set('e-serv',cS>0?Math.round(sS/cS):'--');
+    set('e-exp',cE>0?(sE/cE).toFixed(1):'--');
+    const nc=nps>=50?'#10b981':nps>=30?'#3b82f6':'#ef4444';
+    doughnut('chNpsDial',[Math.max(0,Math.min(100,nps+50)),100-Math.max(0,Math.min(100,nps+50))],[nc,'#e2e8f0']);
+    set('npsDialVal',nps);
+    const byProf={},expByProf={};
     W.forEach(r=>{
-        const p=r['¿Con qué profesor/a entrenabas habitualmente?'];
-        const rc=parseFloat(r['¿Qué tan probable es que recomiendes nuestra experiencia a un amigo o familiar?']);
-        const ex=parseFloat(r['¿Cómo calificarías tu experiencia general en MOVE?']);
+        const p=r['\u00bfCon qu\u00e9 profesor/a entrenabas habitualmente?'];
+        const rc=parseFloat(r['\u00bfQu\u00e9 tan probable es que recomiendes nuestra experiencia a un amigo o familiar?']);
+        const ex=parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
         if(p&&!isNaN(rc)){byProf[p]=byProf[p]||[];byProf[p].push(rc);}
         if(p&&!isNaN(ex)){expByProf[p]=expByProf[p]||[];expByProf[p].push(ex);}
     });
     const profs=Object.keys(byProf);
     const npsV=profs.map(p=>calcNPS(byProf[p]));
-    barSimple('chNpsProf', profs.map(p=>p.split(' ')[0]), npsV, npsV.map(v=>v>=50?'#4ade80cc':v>=30?'#fbbf24cc':'#ef4444cc'));
-
-    // Horario radar
-    const slots={'Mañana':[],'Mediodía':[],'Tarde':[],'Noche':[],'Horarios variables':[]};
-    W.forEach(r=>{const h=r['¿En qué horario solías entrenar?'],e=parseFloat(r['¿Cómo calificarías tu experiencia general en MOVE?']);if(slots[h]&&!isNaN(e))slots[h].push(e);});
-    radar('chHorario', Object.keys(slots), Object.values(slots).map(a=>a.length?a.reduce((x,y)=>x+y)/a.length:0));
-
-    // Motivos baja
-    const mot={};
-    C.forEach(r=>{const m=r['¿Cuál fue el motivo PRINCIPAL por el cual decidiste darte de baja?'];if(m)mot[m]=(mot[m]||0)+1;});
-    pie('chMotivos', Object.keys(mot), Object.values(mot));
-
-    // Tabla profes
+    barSimple('chNpsProf',profs.map(p=>p.split(' ')[0]),npsV,npsV.map(v=>v>=50?'#10b981cc':v>=30?'#3b82f6cc':'#ef4444cc'));
+    const slots={'\uD83C\uDF05 Ma\u00f1ana':[],'\uD83C\uDF1E Mediod\u00eda':[],'\uD83C\uDF07 Tarde':[],'\uD83C\uDF03 Noche':[],'Horarios variables':[]};
+    // Map with original keys for data lookup
+    const slotKeys=['Ma\u00f1ana','Mediod\u00eda','Tarde','Noche','Horarios variables'];
+    const slotData={'Ma\u00f1ana':[],'Mediod\u00eda':[],'Tarde':[],'Noche':[],'Horarios variables':[]};
+    W.forEach(r=>{const h=r['\u00bfEn qu\u00e9 horario sol\u00edas entrenar?'],e=parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);if(slotData[h]!==undefined&&!isNaN(e))slotData[h].push(e);});
+    radar('chHorario',slotKeys,slotKeys.map(k=>slotData[k].length?slotData[k].reduce((x,y)=>x+y)/slotData[k].length:0));
     let tb='';
     profs.forEach((p,i)=>{
-        const nv=npsV[i], ea=expByProf[p]||[];
+        const nv=npsV[i],ea=expByProf[p]||[];
         const ep=ea.length?(ea.reduce((a,b)=>a+b)/ea.length).toFixed(1):'--';
         const sede=getSede(p);
         const cls=nv>=50?'bg':nv>=30?'bb':nv>=10?'by':'br';
-        tb+=`<tr><td><b>${p}</b></td><td>${sede}</td><td><span class="badge ${cls}">${nv}</span></td><td>${ep}/10</td><td>${nv>=50?'🏆 Excelente':nv>=30?'👍 Bueno':'⚠️ Mejorable'}</td></tr>`;
+        tb+=`<tr><td><b>${p}</b></td><td>${sede}</td><td><span class="badge ${cls}">${nv}</span></td><td>${ep}/10</td><td>${nv>=50?'\uD83C\uDFC6 Excelente':nv>=30?'\uD83D\uDC4D Bueno':'\u26A0\uFE0F Mejorable'}</td></tr>`;
     });
-    document.getElementById('encTabBody').innerHTML = tb;
+    document.getElementById('encTabBody').innerHTML=tb;
+
+    // === BAJAS ===
+    set('b-total',C.length);
+
+    const recsC=C.map(r=>parseFloat(r['\u00bfRecomendar\u00edas MOVE a un amigo o familiar?'])).filter(n=>!isNaN(n));
+    const recsExp=C.map(r=>parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?'])).filter(n=>!isNaN(n));
+    const npsC=recsC.length?calcNPS(recsC):(recsExp.length?calcNPS(recsExp):0);
+    const tot=W.length+C.length;
+    set('b-nps',npsC);
+    set('b-tasa',tot>0?Math.round((C.length/tot)*100)+'%':'--');
+
+    // Indice Desercion Controlable
+    const internals=C.filter(r=>classifyMotivo(r['\u00bfCu\u00e1l fue el motivo PRINCIPAL por el cual decidiste darte de baja?'])==='internal').length;
+    const desCtrl=C.length>0?Math.round(internals/C.length*100):0;
+
+    // Indice Servicio MOVE
+    let sumS=0,cntS=0;
+    C.forEach(r=>{
+        const exp=parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
+        const aten=parseFloat(r['Atenci\u00f3n y trato humano']);
+        if(!isNaN(exp)&&!isNaN(aten)){sumS+=(exp+aten)/2*10;cntS++;}
+        else if(!isNaN(exp)){sumS+=exp*10;cntS++;}
+    });
+    const servIdx=cntS>0?Math.round(sumS/cntS):0;
+
+    // Draw 3 gauges + interpretation cards
+    const ni=npsInfo(npsC),di=desercInfo(desCtrl),si=servicioInfo(servIdx);
+    svgGauge('gaugeNPS',npsC,-100,100,ni.color,ni.badge);
+    svgGauge('gaugeDeserc',desCtrl,0,100,di.color,di.badge,'%');
+    svgGauge('gaugeServicio',servIdx,0,100,si.color,si.badge,'%');
+    document.getElementById('interpNPS').innerHTML=makeInterpCard(ni);
+    document.getElementById('interpDeserc').innerHTML=makeInterpCard(di);
+    document.getElementById('interpServicio').innerHTML=makeInterpCard(si);
+
+    // Motivos pie
+    const mot={};
+    C.forEach(r=>{const m=r['\u00bfCu\u00e1l fue el motivo PRINCIPAL por el cual decidiste darte de baja?'];if(m)mot[m]=(mot[m]||0)+1;});
+    pie('chMotivos',Object.keys(mot),Object.values(mot));
+
+    // Per-professor ranking from baja data
+    const bajaPorProf={};
+    C.forEach(r=>{
+        const p=r['\u00bfCon qu\u00e9 profesor/a entrenabas habitualmente?'];
+        const exp=parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
+        const aten=parseFloat(r['Atenci\u00f3n y trato humano']);
+        const recom=parseFloat(r['\u00bfRecomendar\u00edas MOVE a un amigo o familiar?']);
+        if(!p)return;
+        if(!bajaPorProf[p])bajaPorProf[p]={exp:[],aten:[],recom:[]};
+        if(!isNaN(exp))bajaPorProf[p].exp.push(exp);
+        if(!isNaN(aten))bajaPorProf[p].aten.push(aten);
+        if(!isNaN(recom))bajaPorProf[p].recom.push(recom);
+    });
+    let rankRows='';
+    Object.entries(bajaPorProf)
+        .map(([nombre,data])=>{
+            const avgExp=data.exp.length?data.exp.reduce((a,b)=>a+b)/data.exp.length:0;
+            const avgAten=data.aten.length?data.aten.reduce((a,b)=>a+b)/data.aten.length:avgExp;
+            const si=Math.round((avgExp+avgAten)/2*10);
+            const nps=calcNPS(data.recom.length?data.recom:data.exp);
+            return{nombre,si,nps,n:data.exp.length,avgExp:avgExp.toFixed(1)};
+        })
+        .sort((a,b)=>b.si-a.si)
+        .forEach((p,i)=>{
+            const siCls=p.si>=90?'bg':p.si>=80?'bb':p.si>=70?'by':'br';
+            const npsCls=p.nps>=50?'bg':p.nps>=30?'bb':p.nps>=10?'by':'br';
+            rankRows+=`<tr>
+                <td><span class="rank-num">${i+1}</span> <b>${p.nombre}</b></td>
+                <td>${p.avgExp}/10</td>
+                <td><span class="badge ${npsCls}">${p.nps}</span></td>
+                <td><span class="badge ${siCls}">${p.si}%</span></td>
+                <td style="color:#94a3b8;font-size:.8rem">${p.n} resp.</td>
+            </tr>`;
+        });
+    document.getElementById('bajaProfTab').innerHTML=rankRows||'<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Sin datos suficientes por profesional</td></tr>';
 }
 
-// ================================================================
-// CHART HELPERS
-// ================================================================
-function line(id, labels, sets) {
-    if(CH[id])CH[id].destroy();
-    CH[id]=new Chart(document.getElementById(id),{type:'line',
-        data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,borderColor:s.c,backgroundColor:s.c+'22',borderWidth:2.5,pointRadius:4,tension:.3,fill:false}))},
-        options:{responsive:true,interaction:{mode:'index',intersect:false},
-            plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},
-            scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
-}
-function bar(id, labels, sets) {
-    if(CH[id])CH[id].destroy();
-    CH[id]=new Chart(document.getElementById(id),{type:'bar',
-        data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,backgroundColor:s.c+'cc',borderRadius:5,borderSkipped:false}))},
-        options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},
-            scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
-}
-function barSimple(id, labels, data, colors) {
-    if(CH[id])CH[id].destroy();
-    CH[id]=new Chart(document.getElementById(id),{type:'bar',
-        data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:7}]},
-        options:{responsive:true,plugins:{legend:{display:false}},
-            scales:{y:{min:-100,max:100,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});
-}
-function doughnut(id, data, colors) {
-    if(CH[id])CH[id].destroy();
-    CH[id]=new Chart(document.getElementById(id),{type:'doughnut',
-        data:{datasets:[{data,backgroundColor:colors,borderWidth:0}]},
-        options:{cutout:'72%',responsive:true,plugins:{legend:{display:false},tooltip:{enabled:false}}}});
-}
-function pie(id, labels, data) {
-    if(CH[id])CH[id].destroy();
-    const pal=['#1a1a1a','#4ade80','#fbbf24','#ef4444','#8b5cf6','#3b82f6','#f97316','#06b6d4'];
-    CH[id]=new Chart(document.getElementById(id),{type:'pie',
-        data:{labels,datasets:[{data,backgroundColor:pal.slice(0,labels.length)}]},
-        options:{responsive:true,plugins:{legend:{position:'right',labels:{boxWidth:11,font:{size:11}}}}}});
-}
-function radar(id, labels, data) {
-    if(CH[id])CH[id].destroy();
-    CH[id]=new Chart(document.getElementById(id),{type:'radar',
-        data:{labels,datasets:[{label:'Experiencia (1-10)',data,backgroundColor:'rgba(74,222,128,.2)',borderColor:'#4ade80',pointBackgroundColor:'#4ade80'}]},
-        options:{responsive:true,scales:{r:{min:0,max:10,ticks:{stepSize:2}}}}});
-}
-
-// ================================================================
-// UTILS
-// ================================================================
-function calcNPS(arr) {
-    if(!arr.length)return 0;
-    return Math.round(((arr.filter(n=>n>=9).length-arr.filter(n=>n<=6).length)/arr.length)*100);
-}
-function getSede(prof) {
-    for(const[k,v]of Object.entries(SEDE_MAP)){if(prof.includes(k))return v;}
-    return '—';
-}
-function set(id, val) { const el=document.getElementById(id); if(el)el.textContent=val; }
-
+// ══════════════════════════════════════════════════
 // INIT
+// ══════════════════════════════════════════════════
 cargarTodo();
 </script>
 </body>
