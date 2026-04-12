@@ -448,15 +448,16 @@ function renderProfe(i) {
 // ================================================================
 function loadEncuestas() {
     return Promise.all([
-        sheetLoad(SHEET_ENC_ID, 'Bienvenida'),
-        sheetLoad(SHEET_ENC_ID, 'Baja')
+        sheetLoad(SHEET_ENC_ID, 'Bienvenida', '1563858316'),
+        sheetLoad(SHEET_ENC_ID, 'Baja', '839375428')
     ]).then(([w,c]) => { wData=w||[]; cData=c||[]; renderEnc(); });
 }
 
-function sheetLoad(id, sheet) {
+function sheetLoad(id, sheet, gid) {
     return new Promise(resolve => {
         const cb = 'shCB_'+Date.now()+'_'+sheet.replace(/\s/g,'');
-        const timer = setTimeout(() => { if(window[cb]){delete window[cb]; resolve([]); } }, 6000);
+        const param = gid ? 'gid='+gid : 'sheet='+encodeURIComponent(sheet);
+        const timer = setTimeout(() => { if(window[cb]){delete window[cb]; resolve([]); } }, 10000);
         window[cb] = r => {
             clearTimeout(timer); delete window[cb];
             const el=document.getElementById('sh_'+cb); if(el) el.remove();
@@ -465,7 +466,7 @@ function sheetLoad(id, sheet) {
         const s=document.createElement('script');
         s.id='sh_'+cb;
         s.onerror=()=>{ clearTimeout(timer); delete window[cb]; resolve([]); };
-        s.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheet)}&callback=${cb}`;
+        s.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&${param}&callback=${cb}`;
         document.body.appendChild(s);
     });
 }
