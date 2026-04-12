@@ -296,8 +296,12 @@ const META = {
     bajas:   {t:'Análisis de Bajas',s:'Motivos y NPS ex-socios'},
 };
 
-// Prevent "google is not defined" error when Sheets gviz returns its own format
-window.google = window.google || { visualization: { Query: { setResponse: function(){} } } };
+// Intercept Google's default gviz response format using reqId matching
+const _sheetCBs = {};
+window.google = { visualization: { Query: { setResponse: function(data) {
+    const cb = _sheetCBs[data.reqId];
+    if (cb) { delete _sheetCBs[data.reqId]; cb(data); }
+}}}};
 
 let CH = {}, planData = null, wData = [], cData = [];
 
@@ -448,25 +452,18 @@ function renderProfe(i) {
 // ================================================================
 function loadEncuestas() {
     return Promise.all([
-        sheetLoad(SHEET_ENC_ID, 'Bienvenida', '1563858316'),
-        sheetLoad(SHEET_ENC_ID, 'Baja', '839375428')
+        sheetLoad(SHEET_ENC_ID, '1563858316', 'bienvenida'),
+        sheetLoad(SHEET_ENC_ID, '839375428',  'baja')
     ]).then(([w,c]) => { wData=w||[]; cData=c||[]; renderEnc(); });
 }
 
-function sheetLoad(id, sheet, gid) {
+function sheetLoad(id, gid, reqId) {
     return new Promise(resolve => {
-        const cb = 'shCB_'+Date.now()+'_'+sheet.replace(/\s/g,'');
-        const param = gid ? 'gid='+gid : 'sheet='+encodeURIComponent(sheet);
-        const timer = setTimeout(() => { if(window[cb]){delete window[cb]; resolve([]); } }, 10000);
-        window[cb] = r => {
-            clearTimeout(timer); delete window[cb];
-            const el=document.getElementById('sh_'+cb); if(el) el.remove();
-            resolve(parseSheet(r));
-        };
-        const s=document.createElement('script');
-        s.id='sh_'+cb;
-        s.onerror=()=>{ clearTimeout(timer); delete window[cb]; resolve([]); };
-        s.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;handler:${cb}&${param}`;
+        const timer = setTimeout(() => { delete _sheetCBs[reqId]; resolve([]); }, 10000);
+        _sheetCBs[reqId] = r => { clearTimeout(timer); resolve(parseSheet(r)); };
+        const s = document.createElement('script');
+        s.onerror = () => { clearTimeout(timer); delete _sheetCBs[reqId]; resolve([]); };
+        s.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;reqId:${reqId}&gid=${gid}`;
         document.body.appendChild(s);
     });
 }
