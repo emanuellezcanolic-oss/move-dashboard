@@ -520,15 +520,6 @@ tr:hover td{background:#fafbfc;}
         <!-- ═══ SECTION: BAJAS ═══ -->
         <div class="section" id="section-bajas">
 
-            <!-- Expert headline banner -->
-            <div class="insight-banner">
-                <div class="ib-icon">🏋️</div>
-                <div>
-                    <div class="ib-title">Diagn&oacute;stico Experto &middot; Mercado Fitness Global</div>
-                    <div class="ib-sub" id="b-expert-headline">Analizando datos de bajas...</div>
-                </div>
-            </div>
-
             <!-- KPIs -->
             <div class="kpi-grid">
                 <div class="kpi-card">
@@ -587,16 +578,16 @@ tr:hover td{background:#fafbfc;}
                         <div class="card-title"><i class="fas fa-chart-bar"></i> Distribuci&oacute;n NPS Ex-Socios</div>
                         <span class="card-badge">Promotores &middot; Pasivos &middot; Detractores</span>
                     </div>
-                    <canvas id="chNpsDist" style="max-height:72px !important;margin-bottom:14px;"></canvas>
+                    <canvas id="chNpsDist" style="height:110px !important;max-height:110px !important;margin-bottom:16px;"></canvas>
                     <div id="npsDistDetail"></div>
                 </div>
                 <div class="card">
                     <div class="card-hd">
                         <div class="card-title"><i class="fas fa-balance-scale"></i> Causas: Internas vs Externas</div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:20px;padding:6px 0;">
-                        <canvas id="chIntExt" style="max-width:140px;max-height:140px !important;flex-shrink:0;"></canvas>
-                        <div id="intExtLegend" style="flex:1;"></div>
+                    <div style="display:grid;grid-template-columns:150px 1fr;align-items:center;gap:20px;padding:6px 0;">
+                        <canvas id="chIntExt" style="width:150px !important;height:150px !important;max-height:150px !important;"></canvas>
+                        <div id="intExtLegend"></div>
                     </div>
                 </div>
             </div>
@@ -838,8 +829,13 @@ function renderProfe(i){
 function classifyMotivo(m) {
     if(!m) return 'external';
     const l=m.toLowerCase();
-    const internal=['equipamiento','calidad','servicio','atenci\u00f3n','atencion','profesional','no cumpl\u00f3','no cumplio','expectativa','no me gust\u00f3','no me gusto','mejorar','valor','precio'];
+    const internal=['equipamiento','calidad','servicio','atenci\u00f3n','atencion','profesional','no cumpl\u00f3','no cumplio','expectativa','no me gust\u00f3','no me gusto','mejorar','valor','precio','profe','cambio de profe','cambio de profesor'];
     return internal.some(k=>l.includes(k))?'internal':'external';
+}
+// Fuzzy-find a column containing keyword (case-insensitive)
+function getCol(row, keyword) {
+    const k = Object.keys(row).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
+    return k ? (row[k] || '') : '';
 }
 
 // SVG Gauge
@@ -947,8 +943,8 @@ function renderEnc(){
     // ═══ BAJAS ═══
     set('b-total', C.length);
 
-    const recsC   = C.map(r=>parseFloat(r['\u00bfRecomendar\u00edas MOVE a un amigo o familiar?'])).filter(n=>!isNaN(n));
-    const recsExp  = C.map(r=>parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?'])).filter(n=>!isNaN(n));
+    const recsC   = C.map(r=>parseFloat(getCol(r,'recomendar\u00edas') || getCol(r,'recomendar'))).filter(n=>!isNaN(n));
+    const recsExp  = C.map(r=>parseFloat(getCol(r,'experiencia'))).filter(n=>!isNaN(n));
     const npsRecs  = recsC.length ? recsC : recsExp;
     const npsC     = npsRecs.length ? calcNPS(npsRecs) : 0;
 
@@ -967,24 +963,16 @@ function renderEnc(){
     set('b-prom', pPct+'%');
     set('b-exp', avgExpB+'/10');
 
-    // Expert headline
-    const hl = npsC>=50
-        ? `NPS ${npsC} \u2192 MOVE est\u00e1 en el top 10% del fitness mundial. ${pPct}% de ex-socios siguen siendo promotores activos \u2014 activo estrat\u00e9gico de captaci\u00f3n de alto valor.`
-        : npsC>=30
-        ? `NPS ${npsC} \u2192 Por encima del benchmark fitness global (30\u201345). Buena base para activar programa de referidos.`
-        : `NPS ${npsC} \u2192 Oportunidad de mejora en experiencia del cliente. Foco en los primeros 60 d\u00edas de membres\u00eda.`;
-    set('b-expert-headline', hl);
-
-    // \u00cdndice Deserci\u00f3n Controlable
-    const internals = C.filter(r=>classifyMotivo(r['\u00bfCu\u00e1l fue el motivo PRINCIPAL por el cual decidiste darte de baja?'])==='internal').length;
+    // \u00cdndice Deserci\u00f3n Controlable (usa getCol para encontrar la columna de motivo)
+    const internals = C.filter(r=>classifyMotivo(getCol(r,'motivo'))==='internal').length;
     const externals = C.length - internals;
     const desCtrl   = C.length>0 ? Math.round(internals/C.length*100) : 0;
 
     // \u00cdndice Servicio MOVE
     let sumS=0, cntS=0;
     C.forEach(r=>{
-        const exp =parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
-        const aten=parseFloat(r['Atenci\u00f3n y trato humano']);
+        const exp =parseFloat(getCol(r,'experiencia'));
+        const aten=parseFloat(getCol(r,'atenci\u00f3n') || getCol(r,'atencion') || getCol(r,'trato'));
         if(!isNaN(exp)&&!isNaN(aten)){sumS+=(exp+aten)/2*10;cntS++;}
         else if(!isNaN(exp)){sumS+=exp*10;cntS++;}
     });
@@ -1007,36 +995,37 @@ function renderEnc(){
         `<div class="nps-seg"><div class="nps-seg-dot" style="background:#ef4444"></div><div class="nps-seg-label">Detractores (0\u20136)</div><div class="nps-seg-pct">${dPct}%</div><span class="nps-seg-n">${nDet} resp.</span></div>`;
 
     // Internal vs External donut + legend
-    doughnut('chIntExt', [internals, externals], ['#ef4444bb','#10b981bb']);
+    doughnut('chIntExt', [internals||1, externals||1], ['#ef4444cc','#10b981cc']);
     document.getElementById('intExtLegend').innerHTML =
         `<div class="ie-row"><div class="ie-dot" style="background:#ef4444"></div><div class="ie-label">Causas Internas</div><div style="text-align:right"><div class="ie-pct" style="color:#ef4444">${desCtrl}%</div><div class="ie-n">${internals} socios</div></div></div>`+
         `<div class="ie-row"><div class="ie-dot" style="background:#10b981"></div><div class="ie-label">Causas Externas</div><div style="text-align:right"><div class="ie-pct" style="color:#10b981">${100-desCtrl}%</div><div class="ie-n">${externals} socios</div></div></div>`;
 
-    // Motivos horizontal bar (sorted, color-coded by internal=red / external=green)
+    // Motivos horizontal bar — sorted, color-coded (rojo=interno, verde=externo)
     const mot={};
-    C.forEach(r=>{const m=r['\u00bfCu\u00e1l fue el motivo PRINCIPAL por el cual decidiste darte de baja?'];if(m)mot[m]=(mot[m]||0)+1;});
+    C.forEach(r=>{const m=getCol(r,'motivo');if(m)mot[m]=(mot[m]||0)+1;});
     const motSorted = Object.entries(mot).sort((a,b)=>b[1]-a[1]);
-    const motLabels = motSorted.map(([k])=>k.length>42?k.substring(0,42)+'\u2026':k);
+    const motLabels = motSorted.map(([k])=>k.length>44?k.substring(0,44)+'\u2026':k);
     const motData   = motSorted.map(([,v])=>v);
-    const motColors = motSorted.map(([k])=>classifyMotivo(k)==='internal'?'#ef444499':'#10b98199');
+    const motColors = motSorted.map(([k])=>classifyMotivo(k)==='internal'?'#ef4444bb':'#10b981bb');
     const motCount  = motSorted.length;
     set('motivosBadge', motCount+' razones \u00b7 \uD83D\uDD34 internas \u00b7 \uD83D\uDFE2 externas');
     const motCanvas = document.getElementById('chMotivos');
-    if(motCanvas) motCanvas.style.maxHeight = Math.max(180, motCount*36)+'px';
+    if(motCanvas){ motCanvas.style.maxHeight='none'; motCanvas.style.height=Math.max(200,motCount*40)+'px'; }
     hbar('chMotivos', motLabels, motData, motColors);
 
-    // Per-professor ranking
+    // Per-professor ranking — fuzzy column detection
     const bajaPorProf={};
     C.forEach(r=>{
-        const p   =r['\u00bfCon qu\u00e9 profesor/a entrenabas habitualmente?'];
-        const exp =parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
-        const aten=parseFloat(r['Atenci\u00f3n y trato humano']);
-        const rec =parseFloat(r['\u00bfRecomendar\u00edas MOVE a un amigo o familiar?']);
-        if(!p)return;
-        if(!bajaPorProf[p])bajaPorProf[p]={exp:[],aten:[],recom:[]};
-        if(!isNaN(exp)) bajaPorProf[p].exp.push(exp);
-        if(!isNaN(aten))bajaPorProf[p].aten.push(aten);
-        if(!isNaN(rec)) bajaPorProf[p].recom.push(rec);
+        const p   = getCol(r,'profesor') || getCol(r,'profesional') || getCol(r,'profe');
+        const exp = parseFloat(getCol(r,'experiencia'));
+        const aten= parseFloat(getCol(r,'atenci\u00f3n') || getCol(r,'atencion') || getCol(r,'trato'));
+        const rec = parseFloat(getCol(r,'recomendar\u00edas') || getCol(r,'recomendar'));
+        if(!p || p.trim()==='') return;
+        const nombre = p.trim();
+        if(!bajaPorProf[nombre])bajaPorProf[nombre]={exp:[],aten:[],recom:[]};
+        if(!isNaN(exp)) bajaPorProf[nombre].exp.push(exp);
+        if(!isNaN(aten))bajaPorProf[nombre].aten.push(aten);
+        if(!isNaN(rec)) bajaPorProf[nombre].recom.push(rec);
     });
     let rankRows='';
     Object.entries(bajaPorProf)
