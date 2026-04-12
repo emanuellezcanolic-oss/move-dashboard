@@ -466,7 +466,7 @@ function sheetLoad(id, sheet, gid) {
         const s=document.createElement('script');
         s.id='sh_'+cb;
         s.onerror=()=>{ clearTimeout(timer); delete window[cb]; resolve([]); };
-        s.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json&${param}&callback=${cb}`;
+        s.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;handler:${cb}&${param}`;
         document.body.appendChild(s);
     });
 }
