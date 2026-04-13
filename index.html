@@ -185,7 +185,7 @@ tr:hover td{background:#fafbfc;}
 
 /* ── GAUGE CONTAINERS ── */
 #gaugeNPS,#gaugeDeserc,#gaugeServicio{
-    min-height:148px;display:flex;align-items:center;justify-content:center;padding:8px 0;
+    min-height:170px;display:flex;align-items:center;justify-content:center;padding:4px 0;
 }
 
 /* ── SIDEBAR OVERLAY ── */
@@ -856,65 +856,71 @@ function getCol(row, keyword) {
     return k ? (row[k] || '') : '';
 }
 
-// SVG Gauge — velocímetro limpio
+// SVG Gauge — velocímetro limpio sin superposiciones
 function svgGauge(containerId, value, min, max, color, badge, unit) {
     if(unit===undefined) unit='';
-    const W=220, H=130, cx=110, cy=108, R=82, SW=16;
+    // Dimensiones
+    const W=240, H=170, cx=120, cy=125, R=88, SW=18;
     const pct = Math.max(0, Math.min(1, (value - min) / (max - min)));
 
-    // Arco de fondo completo (semicírculo)
+    // Arco de fondo (track gris)
     const bgPath = `M ${cx-R} ${cy} A ${R} ${R} 0 0 1 ${cx+R} ${cy}`;
 
-    // Arco de valor — de izquierda hasta pct
+    // Arco de valor coloreado
     let fgPath = '';
-    if(pct > 0.001) {
-        const a = Math.PI * pct;                           // 0 → π
-        const ex = +(cx - R * Math.cos(a)).toFixed(3);
-        const ey = +(cy - R * Math.sin(a)).toFixed(3);
+    if(pct > 0.005) {
+        const angle = Math.PI * pct;
+        const ex = +(cx - R * Math.cos(angle)).toFixed(2);
+        const ey = +(cy - R * Math.sin(angle)).toFixed(2);
         const lg = pct > 0.5 ? 1 : 0;
         fgPath = `<path d="M ${cx-R} ${cy} A ${R} ${R} 0 ${lg} 1 ${ex} ${ey}"
-                    fill="none" stroke="${color}" stroke-width="${SW}"
-                    stroke-linecap="round"/>`;
+            fill="none" stroke="${color}" stroke-width="${SW}" stroke-linecap="round"
+            filter="url(#glow)"/>`;
     }
 
-    // Aguja — pequeño triángulo desde centro
-    const needleA = Math.PI - Math.PI * pct;              // 0° izq → 180° der
-    const nLen = R - 8;
-    const nx = +(cx + nLen * Math.cos(needleA)).toFixed(2);
-    const ny = +(cy - nLen * Math.sin(needleA)).toFixed(2);
+    // Aguja
+    const needleAngle = Math.PI - Math.PI * pct;
+    const nLen = R - 14;
+    const nx = +(cx + nLen * Math.cos(needleAngle)).toFixed(2);
+    const ny = +(cy - nLen * Math.sin(needleAngle)).toFixed(2);
 
-    // Etiquetas de escala (min, mid, max)
-    const midVal = min + (max - min) / 2;
-    const fmtLbl = v => Number.isInteger(v) ? v : v.toFixed(0);
+    // Color de fondo suave del arco (tint)
+    const tint = color + '18';
 
     document.getElementById(containerId).innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:260px;display:block;margin:0 auto;overflow:visible">
-      <!-- Track -->
-      <path d="${bgPath}" fill="none" stroke="#e8edf3" stroke-width="${SW}" stroke-linecap="round"/>
-      <!-- Value arc -->
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:280px;display:block;margin:0 auto;">
+      <defs>
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Track fondo -->
+      <path d="${bgPath}" fill="none" stroke="#edf0f5" stroke-width="${SW}" stroke-linecap="round"/>
+
+      <!-- Arco de valor -->
       ${fgPath}
-      <!-- Glow ring en el centro del track -->
-      <circle cx="${cx}" cy="${cy}" r="5" fill="${color}" opacity="0.15"/>
+
+      <!-- Zona central con valor — rectángulo redondeado de fondo -->
+      <rect x="${cx-52}" y="${cy-72}" width="104" height="52" rx="10"
+            fill="${tint}"/>
+
+      <!-- Número grande -->
+      <text x="${cx}" y="${cy-30}" text-anchor="middle"
+            font-size="34" font-weight="800" fill="#0f172a"
+            font-family="Inter,system-ui,sans-serif">${value}${unit}</text>
+
       <!-- Aguja -->
       <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}"
-            stroke="${color}" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="${cx}" cy="${cy}" r="6" fill="${color}"/>
-      <circle cx="${cx}" cy="${cy}" r="3" fill="#fff"/>
-      <!-- Valor -->
-      <text x="${cx}" y="${cy-14}" text-anchor="middle"
-            font-size="30" font-weight="800" fill="#0f172a"
-            font-family="Inter,system-ui,sans-serif">${value}${unit}</text>
-      <!-- Badge -->
-      <text x="${cx}" y="${cy+18}" text-anchor="middle"
-            font-size="9.5" font-weight="700" fill="${color}" letter-spacing="1"
+            stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+      <circle cx="${cx}" cy="${cy}" r="7" fill="${color}"/>
+      <circle cx="${cx}" cy="${cy}" r="3.5" fill="#fff"/>
+
+      <!-- Badge debajo del arco, separado -->
+      <text x="${cx}" y="${cy+28}" text-anchor="middle"
+            font-size="10" font-weight="700" fill="${color}" letter-spacing="1.2"
             font-family="Inter,system-ui,sans-serif">${badge.toUpperCase()}</text>
-      <!-- Scale labels -->
-      <text x="${cx-R-4}" y="${cy+14}" text-anchor="end"
-            font-size="9" fill="#b0bec5" font-family="Inter,system-ui,sans-serif">${fmtLbl(min)}</text>
-      <text x="${cx+R+4}" y="${cy+14}" text-anchor="start"
-            font-size="9" fill="#b0bec5" font-family="Inter,system-ui,sans-serif">${fmtLbl(max)}</text>
-      <text x="${cx}" y="${H-2}" text-anchor="middle"
-            font-size="9" fill="#b0bec5" font-family="Inter,system-ui,sans-serif">${fmtLbl(midVal)}</text>
     </svg>`;
 }
 
