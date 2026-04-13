@@ -919,43 +919,61 @@ function makeInterpCard(info){
 function renderEnc(){
     const W=wData,C=cData;
 
-    // === BIENVENIDA ===
-    const recs=W.map(r=>parseFloat(r['\u00bfQu\u00e9 tan probable es que recomiendes nuestra experiencia a un amigo o familiar?'])).filter(n=>!isNaN(n));
-    const nps=calcNPS(recs);
-    const lbl=nps>=50?'\uD83D\uDD25 Excelente':nps>=30?'\uD83D\uDC4D Bueno':'\u26A0\uFE0F Regular';
+    // === BIENVENIDA — usa getCol() para tolerar variaciones en nombres de columna ===
+    // NPS: busca columna con "probable" o "recomiendes" o "recomendar"
+    const recs = W.map(r => parseFloat(
+        getCol(r,'probable') || getCol(r,'recomiendes') || getCol(r,'recomendar')
+    )).filter(n=>!isNaN(n));
+    const nps = calcNPS(recs);
+    const lbl = nps>=50?'\uD83D\uDD25 Excelente':nps>=30?'\uD83D\uDC4D Bueno':'\u26A0\uFE0F Regular';
     set('e-total',W.length); set('e-nps',nps); set('e-nps-lbl',lbl);
     set('k-nps',nps); set('k-nps-sub',lbl);
+
+    // Índice Servicio: acompañamiento + plan + entrevista
     let sS=0,cS=0,sE=0,cE=0;
     W.forEach(r=>{
-        const e=parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
+        const e  = parseFloat(getCol(r,'experiencia'));
         if(!isNaN(e)){sE+=e;cE++;}
-        const a=parseFloat(r['\u00bfC\u00f3mo evaluar\u00edas el acompa\u00f1amiento del profesional en estos primeros d\u00edas?']);
-        const cl=parseFloat(r['Claridad del plan de entrenamiento.\n\u00bfQu\u00e9 tan claro te result\u00f3 el plan de entrenamiento que te propusimos?']);
-        const ev=parseFloat(r['Evaluaci\u00f3n de la entrevista inicial\n\u00bfQu\u00e9 tan escuchado/a te sentiste durante tu evaluaci\u00f3n inicial?']);
+        const a  = parseFloat(getCol(r,'acompa'));          // acompañamiento
+        const cl = parseFloat(getCol(r,'plan'));             // claridad del plan
+        const ev = parseFloat(getCol(r,'escuchado') || getCol(r,'entrevista')); // entrevista inicial
         if(!isNaN(a)&&!isNaN(cl)&&!isNaN(ev)){sS+=((a+cl+ev)/3)*20;cS++;}
+        else if(!isNaN(a)&&!isNaN(cl)){sS+=((a+cl)/2)*20;cS++;}
+        else if(!isNaN(a)){sS+=a*20;cS++;}
     });
-    set('e-serv',cS>0?Math.round(sS/cS):'--');
-    set('e-exp',cE>0?(sE/cE).toFixed(1):'--');
+    set('e-serv', cS>0 ? Math.round(sS/cS) : '--');
+    set('e-exp',  cE>0 ? (sE/cE).toFixed(1) : '--');
+
+    // NPS dial
     const nc=nps>=50?'#10b981':nps>=30?'#3b82f6':'#ef4444';
     doughnut('chNpsDial',[Math.max(0,Math.min(100,nps+50)),100-Math.max(0,Math.min(100,nps+50))],[nc,'#e2e8f0']);
     set('npsDialVal',nps);
+
+    // NPS por profesor (bienvenida)
     const byProf={},expByProf={};
     W.forEach(r=>{
-        const p=r['\u00bfCon qu\u00e9 profesor/a entrenabas habitualmente?'];
-        const rc=parseFloat(r['\u00bfQu\u00e9 tan probable es que recomiendes nuestra experiencia a un amigo o familiar?']);
-        const ex=parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);
+        const p  = getCol(r,'profesor') || getCol(r,'profesional') || getCol(r,'profe');
+        const rc = parseFloat(getCol(r,'probable') || getCol(r,'recomiendes') || getCol(r,'recomendar'));
+        const ex = parseFloat(getCol(r,'experiencia'));
         if(p&&!isNaN(rc)){byProf[p]=byProf[p]||[];byProf[p].push(rc);}
         if(p&&!isNaN(ex)){expByProf[p]=expByProf[p]||[];expByProf[p].push(ex);}
     });
     const profs=Object.keys(byProf);
     const npsV=profs.map(p=>calcNPS(byProf[p]));
     barSimple('chNpsProf',profs.map(p=>p.split(' ')[0]),npsV,npsV.map(v=>v>=50?'#10b981cc':v>=30?'#3b82f6cc':'#ef4444cc'));
-    const slots={'\uD83C\uDF05 Ma\u00f1ana':[],'\uD83C\uDF1E Mediod\u00eda':[],'\uD83C\uDF07 Tarde':[],'\uD83C\uDF03 Noche':[],'Horarios variables':[]};
-    // Map with original keys for data lookup
+
+    // Experiencia por horario
     const slotKeys=['Ma\u00f1ana','Mediod\u00eda','Tarde','Noche','Horarios variables'];
     const slotData={'Ma\u00f1ana':[],'Mediod\u00eda':[],'Tarde':[],'Noche':[],'Horarios variables':[]};
-    W.forEach(r=>{const h=r['\u00bfEn qu\u00e9 horario sol\u00edas entrenar?'],e=parseFloat(r['\u00bfC\u00f3mo calificar\u00edas tu experiencia general en MOVE?']);if(slotData[h]!==undefined&&!isNaN(e))slotData[h].push(e);});
-    radar('chHorario',slotKeys,slotKeys.map(k=>slotData[k].length?slotData[k].reduce((x,y)=>x+y)/slotData[k].length:0));
+    W.forEach(r=>{
+        const h=getCol(r,'horario');
+        const e=parseFloat(getCol(r,'experiencia'));
+        const key=slotKeys.find(k=>h.toLowerCase().includes(k.toLowerCase().split(' ')[0]));
+        if(key&&!isNaN(e))slotData[key].push(e);
+    });
+    radar('chHorario',slotKeys,slotKeys.map(k=>slotData[k].length?+(slotData[k].reduce((x,y)=>x+y)/slotData[k].length).toFixed(2):0));
+
+    // Tabla detalle por profesional
     let tb='';
     profs.forEach((p,i)=>{
         const nv=npsV[i],ea=expByProf[p]||[];
@@ -964,7 +982,7 @@ function renderEnc(){
         const cls=nv>=50?'bg':nv>=30?'bb':nv>=10?'by':'br';
         tb+=`<tr><td><b>${p}</b></td><td>${sede}</td><td><span class="badge ${cls}">${nv}</span></td><td>${ep}/10</td><td>${nv>=50?'\uD83C\uDFC6 Excelente':nv>=30?'\uD83D\uDC4D Bueno':'\u26A0\uFE0F Mejorable'}</td></tr>`;
     });
-    document.getElementById('encTabBody').innerHTML=tb;
+    document.getElementById('encTabBody').innerHTML=tb||`<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Sin datos por profesional</td></tr>`;
 
     // ═══ BAJAS ═══
     set('b-total', C.length);
