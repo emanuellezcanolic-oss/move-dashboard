@@ -185,7 +185,7 @@ tr:hover td{background:#fafbfc;}
 
 /* ── GAUGE CONTAINERS ── */
 #gaugeNPS,#gaugeDeserc,#gaugeServicio{
-    min-height:116px;display:flex;align-items:center;justify-content:center;padding:4px 0;
+    min-height:148px;display:flex;align-items:center;justify-content:center;padding:8px 0;
 }
 
 /* ── SIDEBAR OVERLAY ── */
@@ -547,24 +547,22 @@ tr:hover td{background:#fafbfc;}
             <!-- 3 Gauges with interpretation -->
             <div class="row c3">
                 <div class="card">
-                    <div class="card-hd" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                    <div class="card-hd">
                         <div class="card-title"><i class="fas fa-star"></i> NPS Ex-Socios</div>
-                        <div class="bench-pill">🌍 Benchmark fitness: 30&ndash;45</div>
                     </div>
                     <div id="gaugeNPS"></div>
                     <div id="interpNPS"></div>
                 </div>
                 <div class="card">
-                    <div class="card-hd" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                    <div class="card-hd">
                         <div class="card-title"><i class="fas fa-crosshairs"></i> &Iacute;ndice Deserci&oacute;n Controlable</div>
                     </div>
                     <div id="gaugeDeserc"></div>
                     <div id="interpDeserc"></div>
                 </div>
                 <div class="card">
-                    <div class="card-hd" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                    <div class="card-hd">
                         <div class="card-title"><i class="fas fa-trophy"></i> &Iacute;ndice Servicio MOVE</div>
-                        <div class="bench-pill">🌍 Benchmark fitness: 70&ndash;80%</div>
                     </div>
                     <div id="gaugeServicio"></div>
                     <div id="interpServicio"></div>
@@ -858,30 +856,66 @@ function getCol(row, keyword) {
     return k ? (row[k] || '') : '';
 }
 
-// SVG Gauge
+// SVG Gauge — velocímetro limpio
 function svgGauge(containerId, value, min, max, color, badge, unit) {
-    if(unit===undefined)unit='';
-    const pct=Math.max(0,Math.min(1,(value-min)/(max-min)));
-    const angle=Math.PI*pct;
-    const r=72,cx=100,cy=90;
-    const endX=cx+r*Math.cos(Math.PI-angle);
-    const endY=cy-r*Math.sin(angle);
-    const largeArc=pct>0.5?1:0;
-    const arc=pct>0.01?`<path d="M ${cx-r} ${cy} A ${r} ${r} 0 ${largeArc} 1 ${endX.toFixed(1)} ${endY.toFixed(1)}" fill="none" stroke="${color}" stroke-width="13" stroke-linecap="round"/>`:'';
-    const ticks=[0,0.25,0.5,0.75,1].map(t=>{
-        const a=Math.PI*t;
-        const x1=cx+r*Math.cos(Math.PI-a), y1=cy-r*Math.sin(a);
-        const x2=cx+(r+8)*Math.cos(Math.PI-a), y2=cy-(r+8)*Math.sin(a);
-        return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#e2e8f0" stroke-width="1.5"/>`;
-    }).join('');
-    document.getElementById(containerId).innerHTML=`
-        <svg viewBox="0 0 200 105" style="width:100%;max-width:280px;display:block;margin:0 auto">
-            <path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="#e2e8f0" stroke-width="13" stroke-linecap="round"/>
-            ${arc}
-            ${ticks}
-            <text x="${cx}" y="${cy+2}" text-anchor="middle" font-size="26" font-weight="800" fill="#0f172a">${value}${unit}</text>
-            <text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="9" fill="#94a3b8" font-weight="600" letter-spacing="0.5">${badge.toUpperCase()}</text>
-        </svg>`;
+    if(unit===undefined) unit='';
+    const W=220, H=130, cx=110, cy=108, R=82, SW=16;
+    const pct = Math.max(0, Math.min(1, (value - min) / (max - min)));
+
+    // Arco de fondo completo (semicírculo)
+    const bgPath = `M ${cx-R} ${cy} A ${R} ${R} 0 0 1 ${cx+R} ${cy}`;
+
+    // Arco de valor — de izquierda hasta pct
+    let fgPath = '';
+    if(pct > 0.001) {
+        const a = Math.PI * pct;                           // 0 → π
+        const ex = +(cx - R * Math.cos(a)).toFixed(3);
+        const ey = +(cy - R * Math.sin(a)).toFixed(3);
+        const lg = pct > 0.5 ? 1 : 0;
+        fgPath = `<path d="M ${cx-R} ${cy} A ${R} ${R} 0 ${lg} 1 ${ex} ${ey}"
+                    fill="none" stroke="${color}" stroke-width="${SW}"
+                    stroke-linecap="round"/>`;
+    }
+
+    // Aguja — pequeño triángulo desde centro
+    const needleA = Math.PI - Math.PI * pct;              // 0° izq → 180° der
+    const nLen = R - 8;
+    const nx = +(cx + nLen * Math.cos(needleA)).toFixed(2);
+    const ny = +(cy - nLen * Math.sin(needleA)).toFixed(2);
+
+    // Etiquetas de escala (min, mid, max)
+    const midVal = min + (max - min) / 2;
+    const fmtLbl = v => Number.isInteger(v) ? v : v.toFixed(0);
+
+    document.getElementById(containerId).innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:260px;display:block;margin:0 auto;overflow:visible">
+      <!-- Track -->
+      <path d="${bgPath}" fill="none" stroke="#e8edf3" stroke-width="${SW}" stroke-linecap="round"/>
+      <!-- Value arc -->
+      ${fgPath}
+      <!-- Glow ring en el centro del track -->
+      <circle cx="${cx}" cy="${cy}" r="5" fill="${color}" opacity="0.15"/>
+      <!-- Aguja -->
+      <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}"
+            stroke="${color}" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="${cx}" cy="${cy}" r="6" fill="${color}"/>
+      <circle cx="${cx}" cy="${cy}" r="3" fill="#fff"/>
+      <!-- Valor -->
+      <text x="${cx}" y="${cy-14}" text-anchor="middle"
+            font-size="30" font-weight="800" fill="#0f172a"
+            font-family="Inter,system-ui,sans-serif">${value}${unit}</text>
+      <!-- Badge -->
+      <text x="${cx}" y="${cy+18}" text-anchor="middle"
+            font-size="9.5" font-weight="700" fill="${color}" letter-spacing="1"
+            font-family="Inter,system-ui,sans-serif">${badge.toUpperCase()}</text>
+      <!-- Scale labels -->
+      <text x="${cx-R-4}" y="${cy+14}" text-anchor="end"
+            font-size="9" fill="#b0bec5" font-family="Inter,system-ui,sans-serif">${fmtLbl(min)}</text>
+      <text x="${cx+R+4}" y="${cy+14}" text-anchor="start"
+            font-size="9" fill="#b0bec5" font-family="Inter,system-ui,sans-serif">${fmtLbl(max)}</text>
+      <text x="${cx}" y="${H-2}" text-anchor="middle"
+            font-size="9" fill="#b0bec5" font-family="Inter,system-ui,sans-serif">${fmtLbl(midVal)}</text>
+    </svg>`;
 }
 
 // Interpretation helpers
