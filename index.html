@@ -462,7 +462,13 @@ tr:hover td{background:#fafbfc;}
                 </div>
                 <canvas id="chBariTotal"></canvas>
             </div>
-            <div id="bariTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;"></div>
+            <div id="bariTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
+            <!-- Selector de mes por profesor -->
+            <div style="background:#f8fafc;border-radius:12px;padding:14px 16px;margin-bottom:18px;border:1px solid var(--border);">
+                <div style="font-size:.62rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Seleccionar mes</div>
+                <div id="bariMesesTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
+                <div class="kpi-grid" id="bariMesKpis"></div>
+            </div>
             <div class="row c2">
                 <div class="card">
                     <div class="card-hd">
@@ -806,19 +812,38 @@ function loadBariProfe(profe) {
 function parseBariData(json, nombre) {
     if(!json || !json.table || !json.table.rows) return null;
     const rows = json.table.rows;
+    // cell con manejo seguro de null/error (gviz devuelve % como decimal, #DIV/0! como null)
     const cell = (ri, ci) => {
-        try { return parseFloat(rows[ri].c[ci] && rows[ri].c[ci].v) || 0; }
-        catch(e) { return 0; }
+        try {
+            const v = rows[ri] && rows[ri].c && rows[ri].c[ci] && rows[ri].c[ci].v;
+            const n = parseFloat(v);
+            return isNaN(n) ? 0 : n;
+        } catch(e) { return 0; }
     };
-    // Activos = S12 → row idx 0, col idx 17 (S desde B=0)
-    const activos = Math.round(cell(0, 17));
-    // NUEVO=fila14(idx2), RENUEVA=fila15(idx3), RENX2=fila16(idx4)
-    const histAltas  = BARI_MONTH_COLS.map(c => cell(2,c) + cell(3,c) + cell(4,c));
-    // BAJA=fila17(idx5)
-    const histBajas  = BARI_MONTH_COLS.map(c => cell(5,c));
-    // %DESERCIÓN=fila26(idx14)
-    const histDeserc = BARI_MONTH_COLS.map(c => cell(14,c));
-    return { nombre, activos, histAltas, histBajas, histDeserc };
+    // Estructura de filas (índice 0 = fila 12 del rango B12:S35):
+    //  idx 0 → NUEVO       idx 1 → RENUEVA     idx 2 → RENX2
+    //  idx 4 → BAJA        idx 12 → %DESERCIÓN  idx 13 → ACTIVOS
+    const months = BARI_MONTH_COLS.map((c, i) => {
+        const nuevo   = cell(0, c);
+        const renueva = cell(1, c);
+        const renx2   = cell(2, c);
+        const baja    = cell(4, c);
+        const deseRc  = cell(12, c);   // decimal: 0.05 = 5%
+        const activos = Math.round(cell(13, c));
+        return { mes: MESES[i], nuevo, renueva, renx2, baja, deseRc, activos,
+                 altas: nuevo + renueva + renx2 };
+    });
+    // Activos actuales = último mes con activos > 0
+    let activos = 0;
+    for(let i = months.length - 1; i >= 0; i--) {
+        if(months[i].activos > 0) { activos = months[i].activos; break; }
+    }
+    return {
+        nombre, activos, months,
+        histAltas:  months.map(m => m.altas),
+        histBajas:  months.map(m => m.baja),
+        histDeserc: months.map(m => m.deseRc),
+    };
 }
 
 function demoData() {
@@ -1065,6 +1090,54 @@ function renderBariProfe(p) {
         kpiCard('Bajas 2026',totBajas,'Total a\u00f1o','#ef4444')+
         kpiCard('Crecimiento neto',netoCrecimiento>=0?'+'+netoCrecimiento:netoCrecimiento,'Altas - Bajas',netoCrecimiento>=0?'#10b981':'#ef4444')+
         kpiCard('Deserci\u00f3n prom.',avgD+'%','Mensual','#f59e0b');
+    if(p.months) renderBariMesesTabs(p);
+}
+
+function renderBariMesesTabs(p) {
+    const tabs = document.getElementById('bariMesesTabs');
+    if(!tabs) return;
+    tabs.innerHTML = '';
+    // Último mes con datos reales como default
+    let defaultIdx = 0;
+    for(let i = p.months.length - 1; i >= 0; i--) {
+        if(p.months[i].activos > 0 || p.months[i].altas > 0 || p.months[i].baja > 0) {
+            defaultIdx = i; break;
+        }
+    }
+    p.months.forEach((m, i) => {
+        const hasData = m.activos > 0 || m.altas > 0 || m.baja > 0;
+        const t = document.createElement('div');
+        t.className = 'tab' + (i === defaultIdx ? ' active' : '');
+        if(!hasData) t.style.opacity = '0.35';
+        t.textContent = m.mes;
+        t.onclick = () => {
+            tabs.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+            t.classList.add('active');
+            renderBariMesKpis(m);
+        };
+        tabs.appendChild(t);
+    });
+    renderBariMesKpis(p.months[defaultIdx]);
+}
+
+function renderBariMesKpis(m) {
+    // %Deserción: usar valor de planilla; calcular como fallback
+    let desPct = '\u2014';
+    if(m.deseRc > 0) {
+        desPct = (m.deseRc * 100).toFixed(1) + '%';
+    } else if(m.baja > 0 && m.activos > 0) {
+        desPct = (m.baja / m.activos * 100).toFixed(1) + '%';
+    } else if(m.activos > 0 || m.altas > 0) {
+        desPct = '0,0%';
+    }
+    const netMes = m.altas - m.baja;
+    document.getElementById('bariMesKpis').innerHTML =
+        kpiCard('Activos', m.activos || '\u2014', m.mes + ' \u00b7 Total activos') +
+        kpiCard('Nuevos',  m.nuevo,  'Ingresos nuevos \u00b7 ' + m.mes, '#3b82f6') +
+        kpiCard('Renovaciones', m.renueva + (m.renx2 > 0 ? ' (+' + m.renx2 + ')' : ''), 'Renov. + ReX2 \u00b7 ' + m.mes, '#10b981') +
+        kpiCard('Bajas',   m.baja,   'Bajas del mes \u00b7 ' + m.mes, '#ef4444') +
+        kpiCard('Neto mes', netMes >= 0 ? '+' + netMes : netMes, 'Altas \u2212 Bajas', netMes >= 0 ? '#10b981' : '#ef4444') +
+        kpiCard('Deserci\u00f3n', desPct, 'Tasa mensual', '#f59e0b');
 }
 
 // ══════════════════════════════════════════════════
