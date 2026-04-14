@@ -243,6 +243,17 @@ tr:hover td{background:#fafbfc;}
 /* ── BENCH PILL ── */
 .bench-pill{display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:2px 9px;font-size:.66rem;font-weight:700;color:#166534;margin-top:4px;}
 
+/* ── COMMENT CARDS ── */
+.quotes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:4px;}
+.quote-card{background:#f8fafc;border-radius:10px;padding:14px 16px;border-left:3px solid var(--accent);}
+.quote-card.neg{border-left-color:#f59e0b;background:#fffbeb;}
+.quote-card.pos{border-left-color:#10b981;background:#f0fdf4;}
+.quote-text{font-size:.83rem;color:#334155;line-height:1.7;font-style:italic;}
+.quote-prof{display:flex;align-items:center;gap:6px;margin-top:9px;}
+.quote-avatar{width:22px;height:22px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff;flex-shrink:0;}
+.quote-name{font-size:.72rem;font-weight:700;color:var(--muted);}
+.quote-empty{color:#94a3b8;font-size:.82rem;padding:12px 0;text-align:center;}
+
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
     #sidebar{transform:translateX(-100%);}
@@ -515,6 +526,17 @@ tr:hover td{background:#fafbfc;}
                     </table>
                 </div>
             </div>
+
+            <!-- Sugerencias de nuevos socios -->
+            <div class="card">
+                <div class="card-hd">
+                    <div class="card-title"><i class="fas fa-comment-dots"></i> Sugerencias de los Nuevos Socios</div>
+                    <span class="card-badge">Si pudieras mejorar una sola cosa...</span>
+                </div>
+                <div class="quotes-grid" id="encSugerencias">
+                    <div class="quote-empty">Sin datos</div>
+                </div>
+            </div>
         </div>
 
         <!-- ═══ SECTION: BAJAS ═══ -->
@@ -639,6 +661,26 @@ tr:hover td{background:#fafbfc;}
                 </div>
             </div>
 
+            <!-- Voz del Ex-Socio -->
+            <div class="row c2">
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-exclamation-circle" style="color:#f59e0b"></i> &iquest;Qu&eacute; deber&iacute;a mejorar MOVE?</div>
+                    </div>
+                    <div class="quotes-grid" id="bajaMejorar">
+                        <div class="quote-empty">Sin datos</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-heart" style="color:#10b981"></i> &iquest;Qu&eacute; hace muy bien MOVE?</div>
+                    </div>
+                    <div class="quotes-grid" id="bajaBien">
+                        <div class="quote-empty">Sin datos</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Expert Strategic Analysis -->
             <div class="expert-card">
                 <div class="expert-title"><i class="fas fa-brain"></i> Diagn&oacute;stico Estrat&eacute;gico &middot; Fitness Expert</div>
@@ -660,7 +702,7 @@ const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV'
 const SEDE_MAP = {
     'Enzo':'El Bols\u00f3n','Belen':'El Bols\u00f3n','Fernando':'El Bols\u00f3n','Francisco':'El Bols\u00f3n',
     'Javier':'Lago Puelo','Valeria':'Lago Puelo','Facundo':'Lago Puelo',
-    'Luz':'Lago Puelo','Agustina':'Lago Puelo','Emanuel':'Ambas'
+    'Luz':'Lago Puelo','Agustina':'Lago Puelo','Leonardo':'Lago Puelo','Emanuel':'Ambas'
 };
 
 // Intercept Google gviz format
@@ -856,6 +898,20 @@ function getCol(row, keyword) {
     return k ? (row[k] || '') : '';
 }
 
+// Renderiza una tarjeta de comentario
+function renderQuoteCard(text, prof, type) {
+    if(!text||text.trim()==='') return '';
+    const initial = prof ? prof.trim()[0].toUpperCase() : '?';
+    const shortProf = prof ? prof.split(' ').slice(0,2).join(' ') : 'An\u00f3nimo';
+    return `<div class="quote-card ${type||''}">
+        <div class="quote-text">"${text}"</div>
+        <div class="quote-prof">
+            <div class="quote-avatar">${initial}</div>
+            <span class="quote-name">${shortProf}</span>
+        </div>
+    </div>`;
+}
+
 // Anillo circular — número en el centro, sin superposiciones
 function svgGauge(containerId, value, min, max, color, badge, unit) {
     if(unit===undefined) unit='';
@@ -962,16 +1018,18 @@ function renderEnc(){
     const npsV=profs.map(p=>calcNPS(byProf[p]));
     barSimple('chNpsProf',profs.map(p=>p.split(' ')[0]),npsV,npsV.map(v=>v>=50?'#10b981cc':v>=30?'#3b82f6cc':'#ef4444cc'));
 
-    // Experiencia por horario
-    const slotKeys=['Ma\u00f1ana','Mediod\u00eda','Tarde','Noche','Horarios variables'];
-    const slotData={'Ma\u00f1ana':[],'Mediod\u00eda':[],'Tarde':[],'Noche':[],'Horarios variables':[]};
+    // Experiencia por horario — descubrimiento dinámico de valores reales
+    const horarioMap={};
     W.forEach(r=>{
-        const h=getCol(r,'horario');
+        const h=(getCol(r,'horario')||'').trim();
         const e=parseFloat(getCol(r,'experiencia'));
-        const key=slotKeys.find(k=>h.toLowerCase().includes(k.toLowerCase().split(' ')[0]));
-        if(key&&!isNaN(e))slotData[key].push(e);
+        if(h&&!isNaN(e)){if(!horarioMap[h])horarioMap[h]=[];horarioMap[h].push(e);}
     });
-    radar('chHorario',slotKeys,slotKeys.map(k=>slotData[k].length?+(slotData[k].reduce((x,y)=>x+y)/slotData[k].length).toFixed(2):0));
+    const horLabels=Object.keys(horarioMap);
+    const horVals=horLabels.map(k=>+(horarioMap[k].reduce((a,b)=>a+b)/horarioMap[k].length).toFixed(2));
+    if(horLabels.length>=3){radar('chHorario',horLabels,horVals);}
+    else if(horLabels.length>0){bar('chHorario',horLabels,[{l:'Exp. promedio',d:horVals,c:'#6366f1'}]);}
+    else{document.getElementById('chHorario').style.display='none';}
 
     // Tabla detalle por profesional
     let tb='';
@@ -983,6 +1041,14 @@ function renderEnc(){
         tb+=`<tr><td><b>${p}</b></td><td>${sede}</td><td><span class="badge ${cls}">${nv}</span></td><td>${ep}/10</td><td>${nv>=50?'\uD83C\uDFC6 Excelente':nv>=30?'\uD83D\uDC4D Bueno':'\u26A0\uFE0F Mejorable'}</td></tr>`;
     });
     document.getElementById('encTabBody').innerHTML=tb||`<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Sin datos por profesional</td></tr>`;
+
+    // Sugerencias de bienvenida — "Si pudieras mejorar una sola cosa..."
+    const sugCards=W.map(r=>{
+        const txt=(getCol(r,'mejorar una')||getCol(r,'mejorar')||'').trim();
+        const prof=(getCol(r,'profesor')||getCol(r,'profesional')||'').trim();
+        return txt?renderQuoteCard(txt,prof,'neg'):'';
+    }).filter(Boolean).join('');
+    document.getElementById('encSugerencias').innerHTML=sugCards||'<div class="quote-empty">Sin sugerencias registradas</div>';
 
     // ═══ BAJAS ═══
     set('b-total', C.length);
@@ -1099,6 +1165,23 @@ function renderEnc(){
         rankRows+=`<tr><td><span class="rank-num">${i+1}</span> <b>${p.nombre}</b></td><td>${p.avgExpF}/10</td><td><span class="badge ${npsCls}">${p.nps}</span></td><td><span class="badge ${siCls}">${p.si}%</span></td><td style="color:#94a3b8;font-size:.8rem">${p.n} resp.</td></tr>`;
     });
     document.getElementById('bajaProfTab').innerHTML=rankRows||'<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">Sin datos suficientes por profesional</td></tr>';
+
+    // Voz del Ex-Socio — textos libres de la encuesta de baja
+    const mejCards=C.map(r=>{
+        const txt=(getCol(r,'mejorar para')||getCol(r,'deber\u00eda mejorar')||getCol(r,'mejorar')||'').trim();
+        const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();
+        const p=esProfeReal(prof)?prof:'';
+        return txt?renderQuoteCard(txt,p,'neg'):'';
+    }).filter(Boolean).join('');
+    document.getElementById('bajaMejorar').innerHTML=mejCards||'<div class="quote-empty">Sin respuestas registradas</div>';
+
+    const bienCards=C.map(r=>{
+        const txt=(getCol(r,'hace muy bien')||getCol(r,'hace bien')||getCol(r,'muy bien')||'').trim();
+        const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();
+        const p=esProfeReal(prof)?prof:'';
+        return txt?renderQuoteCard(txt,p,'pos'):'';
+    }).filter(Boolean).join('');
+    document.getElementById('bajaBien').innerHTML=bienCards||'<div class="quote-empty">Sin respuestas registradas</div>';
 
     // Gráfico Experiencia vs NPS por Profe (escala 0-10)
     if(profRanking.length){
