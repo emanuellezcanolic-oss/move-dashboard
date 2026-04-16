@@ -117,30 +117,41 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 .row{display:grid;gap:18px;margin-bottom:18px;}
 .c2{grid-template-columns:repeat(2,1fr);}
 .c3{grid-template-columns:repeat(3,1fr);}
+canvas{max-height:260px !important;}
 
-/* TABLES */
+/* TABLE */
 .tw{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:.82rem;}
 thead tr{background:#f8fafc;}
-th{padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap;}
+th{
+    padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);
+    font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;
+    border-bottom:1px solid var(--border);white-space:nowrap;
+}
 td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#fafbfc;}
 
 /* BADGES */
-.badge{display:inline-flex;align-items:center;justify-content:center;padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:700;}
+.badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:3px 9px;border-radius:20px;font-size:.72rem;font-weight:700;
+}
 .bg{background:#d1fae5;color:#065f46;}
 .bb{background:#dbeafe;color:#1e40af;}
 .by{background:#fef3c7;color:#92400e;}
 .br{background:#fee2e2;color:#991b1b;}
 
 /* TABS */
-.tabs-container{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
-.tab{padding:7px 16px;border-radius:8px;background:var(--bg);border:1px solid var(--border);font-size:.8rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .16s;}
+#profesTabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
+.tab{
+    padding:7px 16px;border-radius:8px;background:var(--bg);border:1px solid var(--border);
+    font-size:.8rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .16s;
+}
 .tab:hover{background:var(--border);color:var(--text);}
 .tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 
-/* RESUME SECTION */
+/* RESUMEN STYLES */
 .resume-sede-card{
     background:var(--card);border:1px solid var(--border);border-radius:20px;
     padding:24px;margin-bottom:24px;box-shadow:var(--shadow);
@@ -181,8 +192,42 @@ tr:hover td{background:#fafbfc;}
 .deserc-mid{background:#fef3c7;color:#92400e;}
 .deserc-high{background:#fee2e2;color:#991b1b;}
 
+/* GAUGE */
+.nps-dial-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;}
+#gaugeNPS,#gaugeDeserc,#gaugeServicio{min-height:190px;display:flex;align-items:center;justify-content:center;padding:4px 0;}
+
+/* QUOTES */
+.quotes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:4px;}
+.quote-card{background:#f8fafc;border-radius:10px;padding:14px 16px;border-left:3px solid var(--accent);}
+.quote-card.neg{border-left-color:#f59e0b;background:#fffbeb;}
+.quote-card.pos{border-left-color:#10b981;background:#f0fdf4;}
+.quote-text{font-size:.83rem;color:#334155;line-height:1.7;font-style:italic;}
+.quote-prof{display:flex;align-items:center;gap:6px;margin-top:9px;}
+.quote-avatar{width:22px;height:22px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff;flex-shrink:0;}
+.quote-name{font-size:.72rem;font-weight:700;color:var(--muted);}
+.quote-empty{color:#94a3b8;font-size:.82rem;padding:12px 0;text-align:center;}
+
+/* NPS SEGMENTS */
+.nps-seg{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
+.nps-seg:last-child{border:none;}
+.nps-seg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.nps-seg-label{font-size:.79rem;color:var(--muted);flex:1;}
+.nps-seg-pct{font-size:.95rem;font-weight:800;color:var(--text);}
+.nps-seg-n{font-size:.72rem;color:#b0bec5;margin-left:2px;}
+
+/* ALERT */
+.alert{
+    background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;
+    padding:12px 16px;font-size:.79rem;color:#1e40af;margin-bottom:18px;
+    display:flex;align-items:flex-start;gap:10px;line-height:1.5;
+}
+.alert i{margin-top:2px;flex-shrink:0;}
+
 /* SIDEBAR OVERLAY */
 #sbOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:190;}
+
+/* BARILOCHE MES TABS */
+#bariMesesTabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
 
 /* RESPONSIVE */
 @media(max-width:900px){
@@ -273,9 +318,8 @@ tr:hover td{background:#fafbfc;}
 
     <div id="content">
 
-        <!-- ═══ SECCIÓN: RESUMEN GENERAL ═══ -->
+        <!-- ═══ SECCIÓN: RESUMEN GENERAL (NUEVO FORMATO) ═══ -->
         <div class="section active" id="section-resumen">
-            <div class="kpi-grid" id="resumenGlobalKpis"></div>
             <div id="resumenSedesContainer"></div>
             <div class="card">
                 <div class="card-hd">
@@ -285,7 +329,7 @@ tr:hover td{background:#fafbfc;}
             </div>
         </div>
 
-        <!-- ═══ SECCIÓN: EL BOLSÓN ═══ -->
+        <!-- ═══ SECCIÓN: EL BOLSÓN (RESTAURADA) ═══ -->
         <div class="section" id="section-bolson">
             <div class="kpi-grid" id="bolsonKpis"></div>
             <div class="card">
@@ -294,7 +338,7 @@ tr:hover td{background:#fafbfc;}
                 </div>
                 <canvas id="chBolsonTotal"></canvas>
             </div>
-            <div id="bolsonTabs" class="tabs-container"></div>
+            <div id="bolsonTabs" class="tabs-container" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;"></div>
             <div class="row c2">
                 <div class="card">
                     <div class="card-hd">
@@ -312,7 +356,7 @@ tr:hover td{background:#fafbfc;}
             <div class="kpi-grid" id="bolsonProfKpis"></div>
         </div>
 
-        <!-- ═══ SECCIÓN: LAGO PUELO ═══ -->
+        <!-- ═══ SECCIÓN: LAGO PUELO (RESTAURADA) ═══ -->
         <div class="section" id="section-puelo">
             <div class="kpi-grid" id="pueloKpis"></div>
             <div class="card">
@@ -321,7 +365,7 @@ tr:hover td{background:#fafbfc;}
                 </div>
                 <canvas id="chPueloTotal"></canvas>
             </div>
-            <div id="pueloTabs" class="tabs-container"></div>
+            <div id="pueloTabs" class="tabs-container" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;"></div>
             <div class="row c2">
                 <div class="card">
                     <div class="card-hd">
@@ -339,7 +383,7 @@ tr:hover td{background:#fafbfc;}
             <div class="kpi-grid" id="pueloProfKpis"></div>
         </div>
 
-        <!-- ═══ SECCIÓN: BARILOCHE ═══ -->
+        <!-- ═══ SECCIÓN: BARILOCHE (NUEVA SEDE) ═══ -->
         <div class="section" id="section-bariloche">
             <div class="kpi-grid" id="barilocheKpis"></div>
             <div class="card">
@@ -348,7 +392,7 @@ tr:hover td{background:#fafbfc;}
                 </div>
                 <canvas id="chBarilocheTotal"></canvas>
             </div>
-            <div id="barilocheTabs" class="tabs-container"></div>
+            <div id="barilocheTabs" class="tabs-container" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;"></div>
             <div class="row c2">
                 <div class="card">
                     <div class="card-hd">
@@ -368,44 +412,63 @@ tr:hover td{background:#fafbfc;}
                 <div class="card-hd">
                     <div class="card-title"><i class="fas fa-calendar-alt"></i> Desglose Mensual</div>
                 </div>
-                <div id="barilocheMesesTabs" class="tabs-container"></div>
+                <div id="barilocheMesesTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
                 <div class="kpi-grid" id="barilocheMesKpis"></div>
             </div>
         </div>
 
-        <!-- ═══ SECCIÓN: ENCUESTAS ═══ -->
+        <!-- ═══ SECCIÓN: ENCUESTAS DE BIENVENIDA (COMPLETAMENTE RESTAURADA) ═══ -->
         <div class="section" id="section-encuestas">
-            <div class="alert" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:flex-start;gap:10px;">
+            <div class="alert">
                 <i class="fas fa-info-circle"></i>
                 <span>Datos de encuestas de bienvenida. El NPS mide la probabilidad de recomendación (0–10). Promotores: 9–10. Detractores: 0–6.</span>
             </div>
+            <div id="encWarn" style="display:none" class="alert"></div>
             <div class="kpi-grid">
-                <div class="kpi-card"><div class="kpi-label">Respuestas</div><div class="kpi-value" id="e-total">--</div><div class="kpi-sub">Total encuestas</div></div>
-                <div class="kpi-card"><div class="kpi-label">NPS</div><div class="kpi-value" id="e-nps">--</div><div class="kpi-sub" id="e-nps-lbl"></div></div>
-                <div class="kpi-card"><div class="kpi-label">Índice Servicio</div><div class="kpi-value" id="e-serv">--</div><div class="kpi-sub">Acompañamiento + Plan</div></div>
-                <div class="kpi-card"><div class="kpi-label">Experiencia</div><div class="kpi-value" id="e-exp">--</div><div class="kpi-sub">Promedio /10</div></div>
+                <div class="kpi-card"><div class="kpi-label">Respuestas</div><div class="kpi-value" id="e-total">--</div><div class="kpi-sub">Total encuestas recibidas</div></div>
+                <div class="kpi-card"><div class="kpi-label">NPS</div><div class="kpi-value" id="e-nps">--</div><div class="kpi-sub" id="e-nps-lbl">Net Promoter Score</div></div>
+                <div class="kpi-card"><div class="kpi-label">Índice Servicio</div><div class="kpi-value" id="e-serv">--</div><div class="kpi-sub">Acompañamiento + Plan + Entrevista</div></div>
+                <div class="kpi-card"><div class="kpi-label">Experiencia</div><div class="kpi-value" id="e-exp">--</div><div class="kpi-sub">Promedio (0–10)</div></div>
             </div>
             <div class="row c2">
-                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-tachometer-alt"></i> NPS General</div></div><canvas id="chNpsDial" style="max-width:180px;max-height:180px;margin:0 auto;"></canvas><div style="text-align:center;margin-top:-50px;"><div style="font-size:2rem;font-weight:800;" id="npsDialVal">--</div><div style="font-size:.7rem;color:#94a3b8;">NPS</div></div></div>
+                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-tachometer-alt"></i> NPS General</div></div><div class="nps-dial-wrap"><canvas id="chNpsDial" style="max-width:180px;max-height:180px !important;"></canvas><div style="margin-top:-58px;text-align:center;pointer-events:none;"><div style="font-size:2rem;font-weight:800;color:#0f172a;" id="npsDialVal">--</div><div style="font-size:.7rem;color:#94a3b8;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;">NPS</div></div></div></div>
                 <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-user-tie"></i> NPS por Profesional</div></div><canvas id="chNpsProf"></canvas></div>
             </div>
+            <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-clock"></i> Experiencia por Horario</div></div><canvas id="chHorario"></canvas></div>
             <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-list"></i> Detalle por Profesional</div></div><div class="tw"><table><thead><tr><th>Profesional</th><th>Sede</th><th>NPS</th><th>Exp. Gral</th><th>Estado</th></tr></thead><tbody id="encTabBody"></tbody></table></div></div>
-            <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-comment-dots"></i> Sugerencias de Nuevos Socios</div></div><div id="encSugerencias" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div></div>
+            <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-comment-dots"></i> Sugerencias de los Nuevos Socios</div><span class="card-badge">Si pudieras mejorar una sola cosa...</span></div><div class="quotes-grid" id="encSugerencias"><div class="quote-empty">Sin datos</div></div></div>
         </div>
 
-        <!-- ═══ SECCIÓN: BAJAS ═══ -->
+        <!-- ═══ SECCIÓN: ANÁLISIS DE BAJAS (COMPLETAMENTE RESTAURADA) ═══ -->
         <div class="section" id="section-bajas">
             <div class="kpi-grid">
-                <div class="kpi-card"><div class="kpi-label">Respuestas Baja</div><div class="kpi-value" id="b-total">--</div><div class="kpi-sub">Ex-socios</div></div>
-                <div class="kpi-card"><div class="kpi-label">NPS Ex-Socios</div><div class="kpi-value" id="b-nps">--</div><div class="kpi-sub" id="b-nps-lbl"></div></div>
-                <div class="kpi-card"><div class="kpi-label">% Promotores</div><div class="kpi-value" id="b-prom">--</div><div class="kpi-sub">Recomendarían</div></div>
-                <div class="kpi-card"><div class="kpi-label">Experiencia Prom.</div><div class="kpi-value" id="b-exp">--</div><div class="kpi-sub">/10</div></div>
+                <div class="kpi-card"><div class="kpi-label">Respuestas Baja</div><div class="kpi-value" id="b-total">--</div><div class="kpi-sub">Ex-socios encuestados</div></div>
+                <div class="kpi-card"><div class="kpi-label">NPS Ex-Socios</div><div class="kpi-value" id="b-nps">--</div><div class="kpi-sub" id="b-nps-lbl">Net Promoter Score</div></div>
+                <div class="kpi-card"><div class="kpi-label">% Promotores</div><div class="kpi-value" style="color:#10b981" id="b-prom">--</div><div class="kpi-sub">Ex-socios que recomendarían</div></div>
+                <div class="kpi-card"><div class="kpi-label">Experiencia Prom.</div><div class="kpi-value" id="b-exp">--</div><div class="kpi-sub">Calificación / 10</div></div>
             </div>
-            <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-chart-bar"></i> Distribución NPS Ex-Socios</div></div><canvas id="chNpsDist" style="height:110px;"></canvas><div id="npsDistDetail"></div></div>
-            <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-list-ul"></i> Motivos de Baja — Ranking</div></div><canvas id="chMotivos" style="max-height:320px;"></canvas></div>
+            <div class="row c3">
+                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-star"></i> NPS Ex-Socios</div></div><div id="gaugeNPS"></div><div id="interpNPS"></div></div>
+                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-crosshairs"></i> Índice Deserción Controlable</div></div><div id="gaugeDeserc"></div><div id="interpDeserc"></div></div>
+                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-trophy"></i> Índice Servicio MOVE</div></div><div id="gaugeServicio"></div><div id="interpServicio"></div></div>
+            </div>
             <div class="row c2">
-                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-exclamation-circle"></i> ¿Qué debería mejorar MOVE?</div></div><div id="bajaMejorar" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div></div>
-                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-heart"></i> ¿Qué hace muy bien MOVE?</div></div><div id="bajaBien" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div></div>
+                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-chart-bar"></i> Distribución NPS Ex-Socios</div><span class="card-badge">Promotores · Pasivos · Detractores</span></div><canvas id="chNpsDist" style="height:110px !important;max-height:110px !important;margin-bottom:16px;"></canvas><div id="npsDistDetail"></div></div>
+                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-balance-scale"></i> Causas: Internas vs Externas</div></div><div style="display:grid;grid-template-columns:150px 1fr;align-items:center;gap:20px;padding:6px 0;"><canvas id="chIntExt" style="width:150px !important;height:150px !important;max-height:150px !important;"></canvas><div id="intExtLegend"></div></div></div>
+            </div>
+            <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-list-ul"></i> Motivos de Baja — Ranking</div><span class="card-badge" id="motivosBadge"></span></div><canvas id="chMotivos" style="max-height:320px !important;"></canvas></div>
+            <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-medal"></i> Ranking por Profesional</div><span style="font-size:.74rem;color:#94a3b8">Desde encuestas de baja</span></div><div class="tw"><table><thead><tr><th>Profesional</th><th>Exp. Gral</th><th>NPS</th><th>Índ. Servicio</th><th>Muestra</th></tr></thead><tbody id="bajaProfTab"></tbody></table></div></div>
+            <div class="row c2">
+                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-chart-bar"></i> Experiencia vs NPS por Profesor</div><span class="card-badge">Escala 0–10</span></div><canvas id="chExpNpsProf"></canvas></div>
+                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-layer-group"></i> Antigüedad vs Motivo de Baja</div><span class="card-badge">Cantidad de respuestas</span></div><canvas id="chAntMotivo"></canvas></div>
+            </div>
+            <div class="row c2">
+                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-exclamation-circle" style="color:#f59e0b"></i> ¿Qué debería mejorar MOVE?</div></div><div class="quotes-grid" id="bajaMejorar"><div class="quote-empty">Sin datos</div></div></div>
+                <div class="card"><div class="card-hd"><div class="card-title"><i class="fas fa-heart" style="color:#10b981"></i> ¿Qué hace muy bien MOVE?</div></div><div class="quotes-grid" id="bajaBien"><div class="quote-empty">Sin datos</div></div></div>
+            </div>
+            <div class="expert-card">
+                <div class="expert-title"><i class="fas fa-brain"></i> Diagnóstico Estratégico · Fitness Expert</div>
+                <div class="expert-cols" id="expertAnalysis"></div>
             </div>
         </div>
 
@@ -414,7 +477,7 @@ tr:hover td{background:#fafbfc;}
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// CONFIGURACIÓN DE URLs
+// CONFIGURACIÓN GLOBAL
 // ═══════════════════════════════════════════════════════════════════
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyQQ8v-cxcbncGh4E9iJGr5_9FwfQ03FJ_GdjbTpq-YVhk_FkzRNTcxwbJbzZiGKWBX/exec';
 const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
@@ -426,7 +489,7 @@ const BARILOCHE_PROFES = [
     { nombre: 'Giuliano Palomeque', id: '1bOyKt3MJ180nv6pPxCJOutBDlSAP22nt', gid: '328722414' }
 ];
 
-// Mapeo de profesores a sede
+// Mapeo de profesores a sede (para encuestas)
 const SEDE_MAP = {
     'Belu':'El Bolsón', 'Belén':'El Bolsón', 'Belen':'El Bolsón',
     'Fer':'El Bolsón', 'Fernando':'El Bolsón',
@@ -438,8 +501,19 @@ const SEDE_MAP = {
     'Camila':'Bariloche', 'Carla':'Bariloche', 'Giuliano':'Bariloche'
 };
 
-// Columnas de meses en planilla Bariloche
-const BARI_MONTH_COLS = [2,3,4,5,7,8,9,10,12,13,14,15]; // 0-indexed: C=2, D=3, etc.
+const PROFE_CONTEXT = {
+    'Belu': { reemplazaA:'Francisco', turno:'Mañana' },
+    'Fer': { reemplazaA:'Belu', turno:'Tarde' },
+    'Enzo': { reemplazaA:null, turno:'Noche' },
+    'Francisco': { reemplazadoPor:'Belu', turno:'Mañana' },
+    'Javi': { reemplazaA:'Luz', turno:'Mañana' },
+    'Agus': { reemplazaA:'Facundo', turno:null },
+    'Luz': { reemplazadoPor:'Javi', turno:'Mañana' },
+    'Facundo': { reemplazadoPor:'Agus', turno:null },
+};
+
+// Columnas de meses en planilla Bariloche (0-indexed)
+const BARI_MONTH_COLS = [2,3,4,5,7,8,9,10,12,13,14,15];
 
 let CH = {};
 let planData = null;
@@ -448,7 +522,7 @@ let cData = [];
 let barilocheData = [];
 
 // ═══════════════════════════════════════════════════════════════════
-// CARGA PRINCIPAL
+// CARGA PRINCIPAL DE DATOS
 // ═══════════════════════════════════════════════════════════════════
 async function cargarTodo() {
     document.getElementById('refreshIco').className = 'fas fa-spinner fa-spin';
@@ -495,6 +569,7 @@ function loadBariloche() {
         .then(results => {
             barilocheData = results.filter(Boolean);
             if (barilocheData.length) renderBariloche();
+            renderResumenGeneral(); // Actualizar resumen después de cargar Bariloche
         });
 }
 
@@ -532,16 +607,15 @@ function parseBarilocheData(json, nombre) {
         const col = BARI_MONTH_COLS[m];
         months.push({
             mes: MESES[m],
-            nuevo: getVal(13, col),      // fila 14 (index 13) = NUEVO
-            renueva: getVal(14, col),    // fila 15 = RENUEVA
-            renx2: getVal(15, col),      // fila 16 = RENUEVA X2
-            baja: getVal(16, col),       // fila 17 = BAJA
-            deserc: getVal(25, col),     // fila 26 = % DESERCIÓN
-            activos: getVal(28, col)     // fila 29 = Activos al cierre
+            nuevo: getVal(13, col),
+            renueva: getVal(14, col),
+            renx2: getVal(15, col),
+            baja: getVal(16, col),
+            deserc: getVal(25, col),
+            activos: getVal(28, col)
         });
     }
     
-    // Activos actuales de S13 (columna 18 = S, fila 12 = índice 11)
     const activosActuales = getVal(11, 18);
     
     return {
@@ -563,6 +637,7 @@ function loadEncuestas() {
         wData = w || [];
         cData = c || [];
         renderEncuestas();
+        renderAnalisisBajas();
     });
 }
 
@@ -594,7 +669,7 @@ function parseSheetData(json) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// RENDERIZADO DE PLANILLAS
+// DATOS DEMO (FALLBACK)
 // ═══════════════════════════════════════════════════════════════════
 function generarDemoData() {
     const r12 = () => Array.from({ length: 12 }, () => Math.floor(Math.random() * 15 + 5));
@@ -614,6 +689,9 @@ function generarDemoData() {
     };
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// RENDERIZADO DE PLANILLAS (EL BOLSÓN Y LAGO PUELO)
+// ═══════════════════════════════════════════════════════════════════
 function renderPlanillas() {
     if (!planData) return;
     
@@ -621,18 +699,12 @@ function renderPlanillas() {
     const profesBolson = d.profes.slice(0, 3);
     const profesPuelo = d.profes.slice(3);
     
-    // Renderizar El Bolsón
     renderSedeBolson(d, profesBolson);
-    
-    // Renderizar Lago Puelo
     renderSedePuelo(d, profesPuelo);
-    
-    // Renderizar Resumen General
-    renderResumenGeneral(d, profesBolson, profesPuelo, barilocheData);
+    renderResumenGeneral();
 }
 
 function renderSedeBolson(d, profes) {
-    const mesActual = new Date().getMonth();
     const a26 = d.histBolson26.reduce((a,b)=>a+b,0);
     const a25 = d.histBolson25.reduce((a,b)=>a+b,0);
     const pct = a25 > 0 ? Math.round(((a26 - a25) / a25) * 100) : 0;
@@ -651,7 +723,6 @@ function renderSedeBolson(d, profes) {
         { l: '2026', d: d.histBolson26, c: '#10b981' }
     ]);
     
-    // Tabs y datos por profesor
     const tabsDiv = document.getElementById('bolsonTabs');
     tabsDiv.innerHTML = '';
     profes.forEach((p, i) => {
@@ -684,10 +755,16 @@ function renderProfeBolson(p) {
     const a26 = p.histAltas26.reduce((a,b)=>a+b,0);
     const a25 = p.histAltas25.reduce((a,b)=>a+b,0);
     const pct = a25 > 0 ? Math.round(((a26 - a25) / a25) * 100) : 0;
+    const ctx = PROFE_CONTEXT[p.nombre];
+    let note = '';
+    if (ctx?.reemplazaA) note = `↩ Reemplazó a ${ctx.reemplazaA}${ctx.turno ? ' · '+ctx.turno : ''}`;
+    else if (ctx?.reemplazadoPor) note = `↪ Reemplazado/a por ${ctx.reemplazadoPor}`;
+    else if (ctx?.turno) note = '🕐 '+ctx.turno;
     
     document.getElementById('bolsonProfKpis').innerHTML = `
         <div class="kpi-card"><div class="kpi-label">Activos</div><div class="kpi-value">${p.activos || '--'}</div><div class="kpi-sub">Alumnos activos</div></div>
         <div class="kpi-card"><div class="kpi-label">Altas 2026</div><div class="kpi-value" style="color:#10b981">${a26}</div><div class="kpi-sub">${pct >= 0 ? '+' : ''}${pct}% vs 2025 (${a25})</div></div>
+        <div class="kpi-card"><div class="kpi-label">Estado</div><div class="kpi-value" style="font-size:1rem">${note || '—'}</div><div class="kpi-sub">Turno / reemplazo</div></div>
     `;
 }
 
@@ -742,17 +819,25 @@ function renderProfePuelo(p) {
     const a26 = p.histAltas26.reduce((a,b)=>a+b,0);
     const a25 = p.histAltas25.reduce((a,b)=>a+b,0);
     const pct = a25 > 0 ? Math.round(((a26 - a25) / a25) * 100) : 0;
+    const ctx = PROFE_CONTEXT[p.nombre];
+    let note = '';
+    if (ctx?.reemplazaA) note = `↩ Reemplazó a ${ctx.reemplazaA}${ctx.turno ? ' · '+ctx.turno : ''}`;
+    else if (ctx?.reemplazadoPor) note = `↪ Reemplazado/a por ${ctx.reemplazadoPor}`;
+    else if (ctx?.turno) note = '🕐 '+ctx.turno;
     
     document.getElementById('pueloProfKpis').innerHTML = `
         <div class="kpi-card"><div class="kpi-label">Activos</div><div class="kpi-value">${p.activos || '--'}</div><div class="kpi-sub">Alumnos activos</div></div>
         <div class="kpi-card"><div class="kpi-label">Altas 2026</div><div class="kpi-value" style="color:#6366f1">${a26}</div><div class="kpi-sub">${pct >= 0 ? '+' : ''}${pct}% vs 2025 (${a25})</div></div>
+        <div class="kpi-card"><div class="kpi-label">Estado</div><div class="kpi-value" style="font-size:1rem">${note || '—'}</div><div class="kpi-sub">Turno / reemplazo</div></div>
     `;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// RENDERIZADO DE BARILOCHE
+// ═══════════════════════════════════════════════════════════════════
 function renderBariloche() {
     if (!barilocheData.length) return;
     
-    const mesActual = new Date().getMonth();
     const totalAltas = barilocheData.reduce((sum, p) => sum + p.histAltas.reduce((a,b)=>a+b,0), 0);
     const totalBajas = barilocheData.reduce((sum, p) => sum + p.histBajas.reduce((a,b)=>a+b,0), 0);
     const totalActivos = barilocheData.reduce((sum, p) => sum + (p.activos || 0), 0);
@@ -766,7 +851,6 @@ function renderBariloche() {
         <div class="kpi-card"><div class="kpi-label">Deserción prom.</div><div class="kpi-value" style="color:#f59e0b">${avgD}%</div><div class="kpi-sub">Mensual</div></div>
     `;
     
-    // Gráfico total de Bariloche (altas vs bajas)
     const altasSum = MESES.map((_, i) => barilocheData.reduce((s, p) => s + (p.histAltas[i] || 0), 0));
     const bajasSum = MESES.map((_, i) => barilocheData.reduce((s, p) => s + (p.histBajas[i] || 0), 0));
     barChart('chBarilocheTotal', MESES, [
@@ -821,10 +905,9 @@ function renderBarilocheMesesTabs(p) {
     if (!tabsDiv) return;
     tabsDiv.innerHTML = '';
     
-    // Encontrar último mes con datos
     let defaultIdx = 0;
     for (let i = p.months.length - 1; i >= 0; i--) {
-        if (p.months[i].activos > 0 || p.months[i].altas > 0) {
+        if (p.months[i].activos > 0 || (p.months[i].nuevo + p.months[i].renueva + p.months[i].renx2) > 0) {
             defaultIdx = i;
             break;
         }
@@ -864,42 +947,33 @@ function renderBarilocheMesKpis(m) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// RESUMEN GENERAL
+// RESUMEN GENERAL (CON EL FORMATO DE LA IMAGEN)
 // ═══════════════════════════════════════════════════════════════════
-function renderResumenGeneral(d, bolsonProfes, pueloProfes, bariData) {
+function renderResumenGeneral() {
+    if (!planData) return;
+    
     const mesActual = new Date().getMonth();
+    const d = planData;
+    const bolsonProfes = d.profes.slice(0, 3);
+    const pueloProfes = d.profes.slice(3);
     
     // Calcular totales del mes actual
     const bolsonAltasMes = d.histBolson26[mesActual] || 0;
     const bolsonAltasMesAnt = d.histBolson25[mesActual] || 0;
     const pueloAltasMes = d.histPuelo26[mesActual] || 0;
     const pueloAltasMesAnt = d.histPuelo25[mesActual] || 0;
-    const bariAltasMes = bariData.length ? bariData.reduce((sum, p) => sum + (p.histAltas[mesActual] || 0), 0) : 0;
+    const bariAltasMes = barilocheData.length ? barilocheData.reduce((sum, p) => sum + (p.histAltas[mesActual] || 0), 0) : 0;
     
-    const totalAltasMes = bolsonAltasMes + pueloAltasMes + bariAltasMes;
-    const totalAltasMesAnt = bolsonAltasMesAnt + pueloAltasMesAnt;
-    const vsAnterior = totalAltasMesAnt > 0 ? Math.round(((totalAltasMes - totalAltasMesAnt) / totalAltasMesAnt) * 100) : 0;
-    
-    // Totales anuales
-    const bolsonAnual = d.histBolson26.reduce((a,b)=>a+b,0);
-    const pueloAnual = d.histPuelo26.reduce((a,b)=>a+b,0);
-    const bariAnual = bariData.length ? bariData.reduce((sum, p) => sum + p.histAltas.reduce((a,b)=>a+b,0), 0) : 0;
-    
-    document.getElementById('resumenGlobalKpis').innerHTML = `
-        <div class="kpi-card"><div class="kpi-label">Altas este mes</div><div class="kpi-value">${totalAltasMes}</div><div class="kpi-sub">${vsAnterior >= 0 ? '↑' : '↓'} ${Math.abs(vsAnterior)}% vs mes anterior</div></div>
-        <div class="kpi-card"><div class="kpi-label">Altas 2026</div><div class="kpi-value">${bolsonAnual + pueloAnual + bariAnual}</div><div class="kpi-sub">Total acumulado</div></div>
-        <div class="kpi-card"><div class="kpi-label">Sedes activas</div><div class="kpi-value">3</div><div class="kpi-sub">El Bolsón · Puelo · Bariloche</div></div>
-    `;
-    
-    // Contenedor de sedes
-    let sedesHtml = '';
-    
-    // El Bolsón
+    // Calcular variación vs año anterior
     const bolsonVs = bolsonAltasMesAnt > 0 ? Math.round(((bolsonAltasMes - bolsonAltasMesAnt) / bolsonAltasMesAnt) * 100) : 0;
+    const pueloVs = pueloAltasMesAnt > 0 ? Math.round(((pueloAltasMes - pueloAltasMesAnt) / pueloAltasMesAnt) * 100) : 0;
+    
     const bolsonVsClass = bolsonVs > 0 ? 'vs-up' : (bolsonVs < 0 ? 'vs-down' : 'vs-neutral');
     const bolsonVsText = bolsonVs > 0 ? `📈 +${bolsonVs}%` : (bolsonVs < 0 ? `📉 ${bolsonVs}%` : '➡️ 0%');
+    const pueloVsClass = pueloVs > 0 ? 'vs-up' : (pueloVs < 0 ? 'vs-down' : 'vs-neutral');
+    const pueloVsText = pueloVs > 0 ? `📈 +${pueloVs}%` : (pueloVs < 0 ? `📉 ${pueloVs}%` : '➡️ 0%');
     
-    sedesHtml += `
+    let sedesHtml = `
         <div class="resume-sede-card">
             <div class="resume-sede-header">
                 <div class="resume-sede-title">
@@ -928,14 +1002,7 @@ function renderResumenGeneral(d, bolsonProfes, pueloProfes, bariData) {
                 }).join('')}
             </div>
         </div>
-    `;
-    
-    // Lago Puelo
-    const pueloVs = pueloAltasMesAnt > 0 ? Math.round(((pueloAltasMes - pueloAltasMesAnt) / pueloAltasMesAnt) * 100) : 0;
-    const pueloVsClass = pueloVs > 0 ? 'vs-up' : (pueloVs < 0 ? 'vs-down' : 'vs-neutral');
-    const pueloVsText = pueloVs > 0 ? `📈 +${pueloVs}%` : (pueloVs < 0 ? `📉 ${pueloVs}%` : '➡️ 0%');
-    
-    sedesHtml += `
+        
         <div class="resume-sede-card">
             <div class="resume-sede-header">
                 <div class="resume-sede-title">
@@ -966,44 +1033,45 @@ function renderResumenGeneral(d, bolsonProfes, pueloProfes, bariData) {
         </div>
     `;
     
-    // Bariloche (sin comparativa vs año anterior)
-    sedesHtml += `
-        <div class="resume-sede-card">
-            <div class="resume-sede-header">
-                <div class="resume-sede-title">
-                    <span class="resume-sede-icon">🏙️</span> Bariloche
+    if (barilocheData.length) {
+        sedesHtml += `
+            <div class="resume-sede-card">
+                <div class="resume-sede-header">
+                    <div class="resume-sede-title">
+                        <span class="resume-sede-icon">🏙️</span> Bariloche
+                    </div>
+                    <div class="resume-sede-stats">
+                        <div class="resume-sede-total">${bariAltasMes}</div>
+                        <div class="vs-neutral resume-sede-vs">📊 Nuevo 2026</div>
+                    </div>
                 </div>
-                <div class="resume-sede-stats">
-                    <div class="resume-sede-total">${bariAltasMes}</div>
-                    <div class="vs-neutral resume-sede-vs">📊 Nuevo 2026</div>
-                </div>
-            </div>
-            <div class="resume-prof-list">
-                ${bariData.map(p => {
-                    const deserc = p.histDeserc[mesActual] || 0;
-                    const desercClass = deserc < 0.1 ? 'deserc-low' : (deserc < 0.2 ? 'deserc-mid' : 'deserc-high');
-                    const desercText = deserc > 0 ? `${Math.round(deserc * 100)}%` : '0%';
-                    const altasMes = p.histAltas[mesActual] || 0;
-                    return `
-                        <div class="resume-prof-item">
-                            <span class="resume-prof-name">${p.nombre}</span>
-                            <div class="resume-prof-stats">
-                                <span class="resume-prof-altas">${altasMes} altas</span>
-                                <span class="deserc-badge ${desercClass}">🟢 ${desercText}</span>
+                <div class="resume-prof-list">
+                    ${barilocheData.map(p => {
+                        const deserc = p.histDeserc[mesActual] || 0;
+                        const desercClass = deserc < 0.1 ? 'deserc-low' : (deserc < 0.2 ? 'deserc-mid' : 'deserc-high');
+                        const desercText = deserc > 0 ? `${Math.round(deserc * 100)}%` : '0%';
+                        const altasMes = p.histAltas[mesActual] || 0;
+                        return `
+                            <div class="resume-prof-item">
+                                <span class="resume-prof-name">${p.nombre.split(' ')[0]}</span>
+                                <div class="resume-prof-stats">
+                                    <span class="resume-prof-altas">${altasMes} altas</span>
+                                    <span class="deserc-badge ${desercClass}">🟢 ${desercText}</span>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                }).join('')}
+                        `;
+                    }).join('')}
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
     
     document.getElementById('resumenSedesContainer').innerHTML = sedesHtml;
     
     // Gráfico de evolución
     const evolucionBolson = d.histBolson26;
     const evolucionPuelo = d.histPuelo26;
-    const evolucionBari = MESES.map((_, i) => bariData.reduce((sum, p) => sum + (p.histAltas[i] || 0), 0));
+    const evolucionBari = MESES.map((_, i) => barilocheData.reduce((sum, p) => sum + (p.histAltas[i] || 0), 0));
     
     lineChart('chResumenEvolucion', MESES, [
         { l: 'El Bolsón', d: evolucionBolson, c: '#10b981' },
@@ -1013,20 +1081,24 @@ function renderResumenGeneral(d, bolsonProfes, pueloProfes, bariData) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ENCUESTAS
+// ENCUESTAS DE BIENVENIDA (COMPLETAMENTE RESTAURADA)
 // ═══════════════════════════════════════════════════════════════════
+function getCol(row, keywords) {
+    const k = Object.keys(row).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
+    return k ? (row[k] || '') : '';
+}
+
+function calcNPS(arr) {
+    if (!arr.length) return 0;
+    return Math.round(((arr.filter(n=>n>=9).length - arr.filter(n=>n<=6).length) / arr.length) * 100);
+}
+
 function renderEncuestas() {
     const W = wData;
-    const C = cData;
-    
-    // Bienvenida
-    const getCol = (row, keywords) => {
-        const k = Object.keys(row).find(k => keywords.some(kw => k.toLowerCase().includes(kw)));
-        return k ? (row[k] || '') : '';
-    };
     
     const recs = W.map(r => parseFloat(getCol(r, ['probable', 'recomiendes', 'recomendar']))).filter(n => !isNaN(n));
-    const nps = recs.length ? Math.round(((recs.filter(n=>n>=9).length - recs.filter(n=>n<=6).length) / recs.length) * 100) : 0;
+    const nps = calcNPS(recs);
+    const lbl = nps >= 50 ? '🔥 Excelente' : (nps >= 30 ? '👍 Bueno' : '⚠️ Regular');
     
     let sumExp = 0, cntExp = 0;
     W.forEach(r => {
@@ -1034,11 +1106,22 @@ function renderEncuestas() {
         if (!isNaN(e)) { sumExp += e; cntExp++; }
     });
     
+    // Índice Servicio
+    let sumServ = 0, cntServ = 0;
+    W.forEach(r => {
+        const a = parseFloat(getCol(r, ['acompa']));
+        const cl = parseFloat(getCol(r, ['plan']));
+        const ev = parseFloat(getCol(r, ['escuchado', 'entrevista']));
+        if (!isNaN(a) && !isNaN(cl) && !isNaN(ev)) { sumServ += ((a+cl+ev)/3)*20; cntServ++; }
+        else if (!isNaN(a) && !isNaN(cl)) { sumServ += ((a+cl)/2)*20; cntServ++; }
+        else if (!isNaN(a)) { sumServ += a*20; cntServ++; }
+    });
+    
     document.getElementById('e-total').textContent = W.length;
     document.getElementById('e-nps').textContent = nps;
-    document.getElementById('e-nps-lbl').textContent = nps >= 50 ? 'Excelente' : (nps >= 30 ? 'Bueno' : 'Regular');
+    document.getElementById('e-nps-lbl').textContent = lbl;
     document.getElementById('e-exp').textContent = cntExp ? (sumExp / cntExp).toFixed(1) : '--';
-    document.getElementById('e-serv').textContent = '--';
+    document.getElementById('e-serv').textContent = cntServ ? Math.round(sumServ / cntServ) : '--';
     document.getElementById('npsDialVal').textContent = nps;
     
     // NPS dial
@@ -1061,7 +1144,7 @@ function renderEncuestas() {
         }
     });
     const profs = Object.keys(byProf);
-    const npsVals = profs.map(p => Math.round(((byProf[p].filter(n=>n>=9).length - byProf[p].filter(n=>n<=6).length) / byProf[p].length) * 100));
+    const npsVals = profs.map(p => calcNPS(byProf[p]));
     
     if (CH['chNpsProf']) CH['chNpsProf'].destroy();
     CH['chNpsProf'] = new Chart(document.getElementById('chNpsProf'), {
@@ -1070,7 +1153,36 @@ function renderEncuestas() {
         options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
     });
     
-    // Tabla de profesionales
+    // Experiencia por horario
+    const horarioMap = {};
+    W.forEach(r => {
+        const h = (getCol(r, ['horario']) || '').trim();
+        const e = parseFloat(getCol(r, ['experiencia']));
+        if (h && !isNaN(e)) {
+            if (!horarioMap[h]) horarioMap[h] = [];
+            horarioMap[h].push(e);
+        }
+    });
+    const horLabels = Object.keys(horarioMap);
+    const horVals = horLabels.map(k => +(horarioMap[k].reduce((a,b)=>a+b) / horarioMap[k].length).toFixed(2));
+    if (CH['chHorario']) CH['chHorario'].destroy();
+    if (horLabels.length >= 3) {
+        CH['chHorario'] = new Chart(document.getElementById('chHorario'), {
+            type: 'radar',
+            data: { labels: horLabels, datasets: [{ label: 'Experiencia (1-10)', data: horVals, backgroundColor: 'rgba(99,102,241,.15)', borderColor: '#6366f1', pointBackgroundColor: '#6366f1' }] },
+            options: { responsive: true, scales: { r: { min: 0, max: 10, ticks: { stepSize: 2 } } } }
+        });
+    } else if (horLabels.length > 0) {
+        CH['chHorario'] = new Chart(document.getElementById('chHorario'), {
+            type: 'bar',
+            data: { labels: horLabels, datasets: [{ label: 'Exp. promedio', data: horVals, backgroundColor: '#6366f1cc', borderRadius: 5 }] },
+            options: { responsive: true }
+        });
+    } else {
+        document.getElementById('chHorario').style.display = 'none';
+    }
+    
+    // Tabla detalle
     let tableHtml = '';
     profs.forEach((p, i) => {
         const sede = Object.entries(SEDE_MAP).find(([key]) => p.includes(key))?.[1] || '—';
@@ -1084,13 +1196,30 @@ function renderEncuestas() {
     const sugerencias = W.map(r => {
         const txt = getCol(r, ['mejorar una', 'mejorar']);
         const prof = getCol(r, ['profesor', 'profesional']);
-        return txt ? `<div style="background:#f8fafc;border-radius:10px;padding:14px;border-left:3px solid #f59e0b;"><div style="font-size:.83rem;font-style:italic;">"${txt}"</div><div style="font-size:.72rem;color:#94a3b8;margin-top:8px;">— ${prof || 'Anónimo'}</div></div>` : '';
+        if (!txt) return '';
+        const initial = prof ? prof.trim()[0].toUpperCase() : '?';
+        const shortProf = prof ? prof.split(' ').slice(0,2).join(' ') : 'Anónimo';
+        return `<div class="quote-card neg"><div class="quote-text">"${txt}"</div><div class="quote-prof"><div class="quote-avatar">${initial}</div><span class="quote-name">${shortProf}</span></div></div>`;
     }).filter(Boolean).join('');
-    document.getElementById('encSugerencias').innerHTML = sugerencias || '<div style="color:#94a3b8;padding:20px;text-align:center">Sin sugerencias registradas</div>';
+    document.getElementById('encSugerencias').innerHTML = sugerencias || '<div class="quote-empty">Sin sugerencias registradas</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ANÁLISIS DE BAJAS (COMPLETAMENTE RESTAURADO)
+// ═══════════════════════════════════════════════════════════════════
+function classifyMotivo(m) {
+    if (!m) return 'external';
+    const l = m.toLowerCase();
+    const internal = ['equipamiento', 'calidad', 'servicio', 'atención', 'atencion', 'profesional', 'no cumplió', 'no cumplio', 'expectativa', 'no me gustó', 'no me gusto', 'mejorar', 'valor', 'precio', 'profe', 'cambio de profe', 'cambio de profesor'];
+    return internal.some(k => l.includes(k)) ? 'internal' : 'external';
+}
+
+function renderAnalisisBajas() {
+    const C = cData;
     
-    // Bajas
+    // KPIs básicos
     const recsBaja = C.map(r => parseFloat(getCol(r, ['recomendarías', 'recomendar']))).filter(n => !isNaN(n));
-    const npsBaja = recsBaja.length ? Math.round(((recsBaja.filter(n=>n>=9).length - recsBaja.filter(n=>n<=6).length) / recsBaja.length) * 100) : 0;
+    const npsBaja = calcNPS(recsBaja);
     const expBaja = C.map(r => parseFloat(getCol(r, ['experiencia']))).filter(n => !isNaN(n));
     const avgExp = expBaja.length ? (expBaja.reduce((a,b)=>a+b) / expBaja.length).toFixed(1) : '--';
     const nProm = recsBaja.filter(n=>n>=9).length;
@@ -1098,11 +1227,11 @@ function renderEncuestas() {
     
     document.getElementById('b-total').textContent = C.length;
     document.getElementById('b-nps').textContent = npsBaja;
-    document.getElementById('b-nps-lbl').textContent = npsBaja >= 50 ? 'Excelente' : (npsBaja >= 30 ? 'Bueno' : 'Regular');
+    document.getElementById('b-nps-lbl').textContent = npsBaja >= 50 ? '🔥 Excelente' : (npsBaja >= 30 ? '👍 Bueno' : '⚠️ Regular');
     document.getElementById('b-prom').textContent = pProm + '%';
     document.getElementById('b-exp').textContent = avgExp + '/10';
     
-    // Distribución NPS
+    // NPS Distribution
     const nDet = recsBaja.filter(n=>n<=6).length;
     const nPas = recsBaja.filter(n=>n>=7 && n<=8).length;
     const pPct = recsBaja.length ? Math.round(nProm / recsBaja.length * 100) : 0;
@@ -1121,24 +1250,42 @@ function renderEncuestas() {
     });
     
     document.getElementById('npsDistDetail').innerHTML = `
-        <div style="display:flex;justify-content:space-between;margin-top:12px;">
-            <div><span style="background:#10b981;display:inline-block;width:12px;height:12px;border-radius:50%;"></span> Promotores: ${pPct}% (${nProm})</div>
-            <div><span style="background:#f59e0b;display:inline-block;width:12px;height:12px;border-radius:50%;"></span> Pasivos: ${paPct}% (${nPas})</div>
-            <div><span style="background:#ef4444;display:inline-block;width:12px;height:12px;border-radius:50%;"></span> Detractores: ${dPct}% (${nDet})</div>
-        </div>
+        <div class="nps-seg"><div class="nps-seg-dot" style="background:#10b981"></div><div class="nps-seg-label">Promotores (9-10)</div><div class="nps-seg-pct">${pPct}%</div><span class="nps-seg-n">${nProm} resp.</span></div>
+        <div class="nps-seg"><div class="nps-seg-dot" style="background:#f59e0b"></div><div class="nps-seg-label">Pasivos (7-8)</div><div class="nps-seg-pct">${paPct}%</div><span class="nps-seg-n">${nPas} resp.</span></div>
+        <div class="nps-seg"><div class="nps-seg-dot" style="background:#ef4444"></div><div class="nps-seg-label">Detractores (0-6)</div><div class="nps-seg-pct">${dPct}%</div><span class="nps-seg-n">${nDet} resp.</span></div>
     `;
     
-    // Motivos de baja
+    // Internal vs External
+    const internals = C.filter(r => classifyMotivo(getCol(r, ['motivo'])) === 'internal').length;
+    const externals = C.length - internals;
+    const desCtrl = C.length > 0 ? Math.round(internals / C.length * 100) : 0;
+    
+    if (CH['chIntExt']) CH['chIntExt'].destroy();
+    CH['chIntExt'] = new Chart(document.getElementById('chIntExt'), {
+        type: 'doughnut',
+        data: { datasets: [{ data: [internals || 1, externals || 1], backgroundColor: ['#ef4444cc', '#10b981cc'], borderWidth: 0 }] },
+        options: { cutout: '60%', responsive: true, plugins: { legend: { display: false } } }
+    });
+    
+    document.getElementById('intExtLegend').innerHTML = `
+        <div class="ie-row"><div class="ie-dot" style="background:#ef4444"></div><div class="ie-label">Causas Internas</div><div style="text-align:right"><div class="ie-pct" style="color:#ef4444">${desCtrl}%</div><div class="ie-n">${internals} socios</div></div></div>
+        <div class="ie-row"><div class="ie-dot" style="background:#10b981"></div><div class="ie-label">Causas Externas</div><div style="text-align:right"><div class="ie-pct" style="color:#10b981">${100 - desCtrl}%</div><div class="ie-n">${externals} socios</div></div></div>
+    `;
+    
+    // Motivos
     const motivos = {};
     C.forEach(r => {
         const m = getCol(r, ['motivo']);
         if (m) motivos[m] = (motivos[m] || 0) + 1;
     });
     const motSorted = Object.entries(motivos).sort((a,b) => b[1] - a[1]);
+    document.getElementById('motivosBadge').textContent = motSorted.length + ' razones · 🔴 internas · 🟢 externas';
+    
     if (CH['chMotivos']) CH['chMotivos'].destroy();
+    const motColors = motSorted.map(([k]) => classifyMotivo(k) === 'internal' ? '#ef4444bb' : '#10b981bb');
     CH['chMotivos'] = new Chart(document.getElementById('chMotivos'), {
         type: 'bar',
-        data: { labels: motSorted.map(([k]) => k.length > 40 ? k.substring(0, 37) + '...' : k), datasets: [{ data: motSorted.map(([,v]) => v), backgroundColor: '#ef4444bb', borderRadius: 5 }] },
+        data: { labels: motSorted.map(([k]) => k.length > 40 ? k.substring(0, 37) + '...' : k), datasets: [{ data: motSorted.map(([,v]) => v), backgroundColor: motColors, borderRadius: 5 }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
     });
     
@@ -1146,16 +1293,111 @@ function renderEncuestas() {
     const mejorar = C.map(r => {
         const txt = getCol(r, ['mejorar para', 'debería mejorar', 'mejorar']);
         const prof = getCol(r, ['profesor', 'profesional']);
-        return txt ? `<div style="background:#fffbeb;border-radius:10px;padding:14px;border-left:3px solid #f59e0b;"><div style="font-size:.83rem;font-style:italic;">"${txt}"</div><div style="font-size:.72rem;color:#94a3b8;margin-top:8px;">— ${prof || 'Anónimo'}</div></div>` : '';
+        if (!txt) return '';
+        const initial = prof ? prof.trim()[0].toUpperCase() : '?';
+        const shortProf = prof ? prof.split(' ').slice(0,2).join(' ') : 'Anónimo';
+        return `<div class="quote-card neg"><div class="quote-text">"${txt}"</div><div class="quote-prof"><div class="quote-avatar">${initial}</div><span class="quote-name">${shortProf}</span></div></div>`;
     }).filter(Boolean).join('');
-    document.getElementById('bajaMejorar').innerHTML = mejorar || '<div style="color:#94a3b8;padding:20px;text-align:center">Sin respuestas</div>';
+    document.getElementById('bajaMejorar').innerHTML = mejorar || '<div class="quote-empty">Sin respuestas registradas</div>';
     
     const bien = C.map(r => {
         const txt = getCol(r, ['hace muy bien', 'hace bien', 'muy bien']);
         const prof = getCol(r, ['profesor', 'profesional']);
-        return txt ? `<div style="background:#f0fdf4;border-radius:10px;padding:14px;border-left:3px solid #10b981;"><div style="font-size:.83rem;font-style:italic;">"${txt}"</div><div style="font-size:.72rem;color:#94a3b8;margin-top:8px;">— ${prof || 'Anónimo'}</div></div>` : '';
+        if (!txt) return '';
+        const initial = prof ? prof.trim()[0].toUpperCase() : '?';
+        const shortProf = prof ? prof.split(' ').slice(0,2).join(' ') : 'Anónimo';
+        return `<div class="quote-card pos"><div class="quote-text">"${txt}"</div><div class="quote-prof"><div class="quote-avatar">${initial}</div><span class="quote-name">${shortProf}</span></div></div>`;
     }).filter(Boolean).join('');
-    document.getElementById('bajaBien').innerHTML = bien || '<div style="color:#94a3b8;padding:20px;text-align:center">Sin respuestas</div>';
+    document.getElementById('bajaBien').innerHTML = bien || '<div class="quote-empty">Sin respuestas registradas</div>';
+    
+    // Ranking por profesional
+    const PROFE_VALIDOS = ['belen','belén','juarez','fernando','enzo','javier','luz','facundo','francisco','leonardo','emanuel','agustina','agus','camila','carla','giuliano'];
+    function esProfeReal(nombre) {
+        if (!nombre || nombre.trim() === '') return false;
+        const n = nombre.toLowerCase().trim();
+        const palabras = n.split(/\s+/);
+        if (palabras.length > 4) return false;
+        return PROFE_VALIDOS.some(v => n.includes(v));
+    }
+    
+    const bajaPorProf = {};
+    C.forEach(r => {
+        const p = getCol(r, ['profesor', 'profesional', 'profe']);
+        const exp = parseFloat(getCol(r, ['experiencia']));
+        const rec = parseFloat(getCol(r, ['recomendarías', 'recomendar']));
+        if (!esProfeReal(p)) return;
+        const nombre = p.trim();
+        if (!bajaPorProf[nombre]) bajaPorProf[nombre] = { exp: [], recom: [] };
+        if (!isNaN(exp)) bajaPorProf[nombre].exp.push(exp);
+        if (!isNaN(rec)) bajaPorProf[nombre].recom.push(rec);
+    });
+    
+    const profRanking = Object.entries(bajaPorProf)
+        .map(([nombre, data]) => {
+            const avgE = data.exp.length ? data.exp.reduce((a,b)=>a+b) / data.exp.length : 0;
+            const npsP = calcNPS(data.recom.length ? data.recom : data.exp);
+            return { nombre, nps: npsP, n: data.exp.length, avgExp: avgE, avgExpF: avgE.toFixed(1) };
+        })
+        .sort((a,b) => b.nps - a.nps);
+    
+    let rankRows = '';
+    profRanking.forEach((p, i) => {
+        const npsCls = p.nps >= 50 ? 'bg' : (p.nps >= 30 ? 'bb' : (p.nps >= 10 ? 'by' : 'br'));
+        rankRows += `<tr><td><span class="rank-num">${i+1}</span> <b>${p.nombre}</b></td><td>${p.avgExpF}/10</td><td><span class="badge ${npsCls}">${p.nps}</span></td><td>--</td><td style="color:#94a3b8">${p.n} resp.</td></tr>`;
+    });
+    document.getElementById('bajaProfTab').innerHTML = rankRows || '<tr><td colspan="5" style="text-align:center">Sin datos</td></tr>';
+    
+    // Experiencia vs NPS por Profesor
+    if (profRanking.length) {
+        const prLabels = profRanking.map(p => p.nombre.split(' ')[0]);
+        const npsNorm = profRanking.map(p => +((p.nps + 100) / 200 * 10).toFixed(2));
+        if (CH['chExpNpsProf']) CH['chExpNpsProf'].destroy();
+        CH['chExpNpsProf'] = new Chart(document.getElementById('chExpNpsProf'), {
+            type: 'bar',
+            data: { labels: prLabels, datasets: [
+                { label: 'Experiencia General (0-10)', data: profRanking.map(p => +p.avgExp.toFixed(2)), backgroundColor: '#6366f1cc', borderRadius: 4 },
+                { label: 'NPS (escalado 0-10)', data: npsNorm, backgroundColor: '#10b981cc', borderRadius: 4 }
+            ] },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { min: 0, max: 10 } } }
+        });
+    }
+    
+    // Gauges y expert analysis (simplificado para mantener funcionalidad)
+    svgGauge('gaugeNPS', npsBaja, -100, 100, npsBaja >= 50 ? '#10b981' : (npsBaja >= 30 ? '#3b82f6' : '#ef4444'), npsBaja >= 50 ? 'Excelente' : (npsBaja >= 30 ? 'Muy bueno' : 'Bajo'));
+    svgGauge('gaugeDeserc', desCtrl, 0, 100, desCtrl < 30 ? '#10b981' : (desCtrl < 50 ? '#f59e0b' : '#ef4444'), desCtrl < 30 ? 'Contexto externo' : (desCtrl < 50 ? 'Mixto' : 'Problema interno'), '%');
+    
+    let servIdx = 0;
+    let cntServB = 0;
+    C.forEach(r => {
+        const exp = parseFloat(getCol(r, ['experiencia']));
+        const aten = parseFloat(getCol(r, ['atención', 'atencion', 'trato']));
+        if (!isNaN(exp) && !isNaN(aten)) { servIdx += (exp + aten) / 2 * 10; cntServB++; }
+        else if (!isNaN(exp)) { servIdx += exp * 10; cntServB++; }
+    });
+    servIdx = cntServB > 0 ? Math.round(servIdx / cntServB) : 0;
+    svgGauge('gaugeServicio', servIdx, 0, 100, servIdx >= 90 ? '#10b981' : (servIdx >= 80 ? '#3b82f6' : (servIdx >= 70 ? '#f59e0b' : '#ef4444')), servIdx >= 90 ? 'Premium' : (servIdx >= 80 ? 'Muy bueno' : (servIdx >= 70 ? 'Aceptable' : 'Problema')), '%');
+    
+    document.getElementById('interpNPS').innerHTML = `<div class="iblock"><div class="ihead">📊 Interpretación</div><div>NPS ${npsBaja}: ${npsBaja >= 50 ? 'Excelente nivel de recomendación' : (npsBaja >= 30 ? 'Buen nivel, hay margen de mejora' : 'Requiere atención inmediata')}</div></div>`;
+    document.getElementById('interpDeserc').innerHTML = `<div class="iblock"><div class="ihead">📊 Interpretación</div><div>${desCtrl}% de causas internas: ${desCtrl < 30 ? 'El problema principal es el contexto externo' : (desCtrl < 50 ? 'Hay factores internos y externos combinados' : 'Problema prioritario interno')}</div></div>`;
+    document.getElementById('interpServicio').innerHTML = `<div class="iblock"><div class="ihead">📊 Interpretación</div><div>Índice de servicio ${servIdx}%: ${servIdx >= 90 ? 'Ejecución de clase mundial' : (servIdx >= 80 ? 'Muy buen servicio' : (servIdx >= 70 ? 'Aceptable, pero mejorable' : 'Problema estructural en la entrega'))}</div></div>`;
+}
+
+function svgGauge(containerId, value, min, max, color, badge, unit = '') {
+    const pct = Math.max(0, Math.min(1, (value - min) / (max - min)));
+    const R = 70, SW = 14, S = 180, cx = 90, cy = 90;
+    const circ = 2 * Math.PI * R;
+    const dash = pct * circ;
+    const gap = circ - dash;
+    const rot = -90;
+    document.getElementById(containerId).innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;">
+      <svg viewBox="0 0 ${S} ${S}" style="width:160px;height:160px;display:block;">
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#edf0f5" stroke-width="${SW}"/>
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${color}" stroke-width="${SW}" stroke-linecap="round" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" transform="rotate(${rot} ${cx} ${cy})"/>
+        <text x="${cx}" y="${cy - 8}" text-anchor="middle" font-size="28" font-weight="800" fill="#0f172a" font-family="Inter,system-ui,sans-serif">${value}${unit}</text>
+        <text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="9" font-weight="700" fill="${color}" letter-spacing="0.8" font-family="Inter,system-ui,sans-serif">${badge.toUpperCase()}</text>
+      </svg>
+    </div>`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
