@@ -273,6 +273,30 @@ tr:hover td{background:#fafbfc;}
 @media(max-width:480px){
     .kpi-grid{grid-template-columns:1fr;}
 }
+
+/* ── ESTADO DEL GYM ── */
+.estado-sede-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 24px;box-shadow:var(--shadow);margin-bottom:20px;}
+.estado-sede-title{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:16px;}
+.estado-list{display:flex;flex-direction:column;gap:10px;}
+.estado-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:12px;background:var(--bg);border:1px solid var(--border);}
+.estado-emoji{font-size:1.5rem;flex-shrink:0;line-height:1;}
+.estado-info{display:flex;flex-direction:column;gap:2px;}
+.estado-nombre{font-size:.95rem;font-weight:700;color:var(--text);}
+.estado-label{font-size:.8rem;font-weight:600;}
+
+/* ── VS 2025 / 2026 ── */
+.versus-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+.vs-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow);}
+.vs-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.vs-nombre{font-size:.95rem;font-weight:700;color:var(--text);}
+.vs-sede{font-size:.65rem;font-weight:600;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:20px;border:1px solid var(--border);}
+.vs-label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;}
+.vs-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.vs-year{flex:1;text-align:center;}
+.vs-yr-lbl{font-size:.65rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+.vs-yr-val{font-size:1.8rem;font-weight:800;color:var(--text);}
+.vs-arrow{color:var(--muted);font-size:1.1rem;}
+.vs-diff{font-size:.82rem;font-weight:700;text-align:center;padding:6px 10px;border-radius:8px;background:var(--bg);}
 </style>
 </head>
 <body>
@@ -314,6 +338,15 @@ tr:hover td{background:#fafbfc;}
             </div>
             <div class="nav-item" onclick="go('bariloche')">
                 <i class="fas fa-city"></i> Bariloche
+            </div>
+        </div>
+        <div class="sb-group">
+            <div class="sb-group-label">An&aacute;lisis</div>
+            <div class="nav-item" onclick="go('estado')">
+                <i class="fas fa-traffic-light"></i> Estado del Gym
+            </div>
+            <div class="nav-item" onclick="go('versus')">
+                <i class="fas fa-exchange-alt"></i> 2025 vs 2026
             </div>
         </div>
         <div class="sb-group">
@@ -478,6 +511,18 @@ tr:hover td{background:#fafbfc;}
                 </div>
             </div>
             <div class="kpi-grid" id="bariProfKpis"></div>
+        </div>
+
+        <!-- ═══ SECTION: ESTADO DEL GYM ═══ -->
+        <div class="section" id="section-estado">
+            <div class="alert"><i class="fas fa-info-circle"></i> <span>Semáforo de deserción promedio mensual por profesional. 🟢 &lt;15% · 🟡 15–25% · 🔴 &gt;25%</span></div>
+            <div id="estadoCards"></div>
+        </div>
+
+        <!-- ═══ SECTION: 2025 VS 2026 ═══ -->
+        <div class="section" id="section-versus">
+            <div class="alert"><i class="fas fa-info-circle"></i> <span>Comparación del mes actual entre 2025 y 2026. Solo Bolsón y Lago Puelo (Bariloche es nueva sede, sin datos 2025).</span></div>
+            <div id="versusCards"></div>
         </div>
 
         <!-- ═══ SECTION: ENCUESTAS ═══ -->
@@ -770,6 +815,8 @@ async function cargarTodo() {
     document.getElementById('refreshIco').className = 'fas fa-spinner fa-spin';
     await Promise.allSettled([loadPlanillas(), loadEncuestas(), loadBariloche()]);
     clearTimeout(hideTimer);
+    renderEstado();
+    renderVersus();
     document.getElementById('refreshIco').className = 'fas fa-sync-alt';
     document.getElementById('lastUpd').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-AR');
     document.getElementById('loadOv').style.display = 'none';
@@ -822,24 +869,20 @@ function parseBariData(json, nombre) {
             return isNaN(n) ? 0 : n;
         } catch(e) { return 0; }
     };
-    // Estructura de filas (índice 0 = fila 12 del rango B12:S35):
+    // Estructura de filas (rango B12:S35):
     //  idx 0 → NUEVO       idx 1 → RENUEVA     idx 2 → RENX2
-    //  idx 4 → BAJA        idx 12 → %DESERCIÓN  idx 13 → ACTIVOS
+    //  idx 4 → BAJA        idx 12 → %DESERCIÓN
+    // Activos VIVOS: celda S13 de la planilla = col S (offset 17 desde B), fila 13 (offset 1 desde fila 12)
+    const activos = Math.round(cell(1, 17));
     const months = BARI_MONTH_COLS.map((c, i) => {
         const nuevo   = cell(0, c);
         const renueva = cell(1, c);
         const renx2   = cell(2, c);
         const baja    = cell(4, c);
         const deseRc  = cell(12, c);   // decimal: 0.05 = 5%
-        const activos = Math.round(cell(13, c));
-        return { mes: MESES[i], nuevo, renueva, renx2, baja, deseRc, activos,
+        return { mes: MESES[i], nuevo, renueva, renx2, baja, deseRc,
                  altas: nuevo + renueva + renx2 };
     });
-    // Activos actuales = último mes con activos > 0
-    let activos = 0;
-    for(let i = months.length - 1; i >= 0; i--) {
-        if(months[i].activos > 0) { activos = months[i].activos; break; }
-    }
     return {
         nombre, activos, months,
         histAltas:  months.map(m => m.altas),
@@ -913,6 +956,8 @@ const META = {
     bolson:    {title:'El Bols\u00f3n',        sub:'Planilla y profesionales'},
     puelo:     {title:'Lago Puelo',            sub:'Planilla y profesionales'},
     bariloche: {title:'Bariloche',             sub:'Planilla y profesionales'},
+    estado:    {title:'Estado del Gym',        sub:'Sem\u00e1foro de deserci\u00f3n por profesional'},
+    versus:    {title:'2025 vs 2026',          sub:'Comparaci\u00f3n de altas \u2014 Bols\u00f3n y Lago Puelo'},
     encuestas: {title:'Encuestas de Bienvenida', sub:'NPS & satisfacci\u00f3n de nuevos socios'},
     bajas:     {title:'An\u00e1lisis de Bajas',  sub:'Encuestas de ex-socios'},
 };
@@ -1134,6 +1179,80 @@ function renderBariMesKpis(m) {
         kpiCard('Bajas',   m.baja,   'Bajas del mes \u00b7 ' + m.mes, '#ef4444') +
         kpiCard('Neto mes', netMes >= 0 ? '+' + netMes : netMes, 'Altas \u2212 Bajas', netMes >= 0 ? '#10b981' : '#ef4444') +
         kpiCard('Deserci\u00f3n', desPct, 'Tasa mensual', '#f59e0b');
+}
+
+// ══ RENDER ESTADO DEL GYM ══
+function renderEstado() {
+    const SEDES_ORDER = ['El Bolsón','Lago Puelo','Bariloche'];
+    const bySedeMap = {};
+    // Bolsón + Puelo desde planData
+    if(planData) {
+        planData.profes.forEach(p => {
+            const sede = getSede(p.nombre);
+            const desArr = p.histDeserc26.filter(v => v > 0);
+            const avgD = desArr.length ? desArr.reduce((a,b)=>a+b,0)/desArr.length*100 : 0;
+            if(!bySedeMap[sede]) bySedeMap[sede] = [];
+            bySedeMap[sede].push({ nombre: p.nombre.split(' ')[0], avgD });
+        });
+    }
+    // Bariloche desde bariData
+    bariData.forEach(p => {
+        const desArr = p.histDeserc.filter(v => v > 0);
+        const avgD = desArr.length ? desArr.reduce((a,b)=>a+b,0)/desArr.length*100 : 0;
+        if(!bySedeMap['Bariloche']) bySedeMap['Bariloche'] = [];
+        bySedeMap['Bariloche'].push({ nombre: p.nombre.split(' ')[0], avgD });
+    });
+    let html = '';
+    SEDES_ORDER.forEach(sede => {
+        const profes = bySedeMap[sede];
+        if(!profes || !profes.length) return;
+        html += `<div class="estado-sede-card"><div class="estado-sede-title"><i class="fas fa-map-marker-alt"></i> ${sede}</div><div class="estado-list">`;
+        profes.forEach(p => {
+            let emoji, label, color;
+            if(p.avgD < 15)       { emoji='🟢'; label='Deserción bajo control'; color='#10b981'; }
+            else if(p.avgD < 25)  { emoji='🟡'; label='Deserción moderada';      color='#f59e0b'; }
+            else                  { emoji='🔴'; label='Deserción crítica';        color='#ef4444'; }
+            html += `<div class="estado-row"><span class="estado-emoji">${emoji}</span><div class="estado-info"><span class="estado-nombre">${p.nombre}</span><span class="estado-label" style="color:${color}">${label}: ${p.avgD.toFixed(0)}%</span></div></div>`;
+        });
+        html += '</div></div>';
+    });
+    document.getElementById('estadoCards').innerHTML = html || '<div class="alert">Sin datos disponibles</div>';
+}
+
+// ══ RENDER VS 2025 vs 2026 ══
+function renderVersus() {
+    if(!planData) return;
+    // Mes actual = último mes con altas26 > 0 en cualquier profe
+    let mesIdx = -1;
+    for(let i = MESES.length - 1; i >= 0; i--) {
+        if(planData.profes.some(p => (p.histAltas26[i]||0) > 0)) { mesIdx = i; break; }
+    }
+    const el = document.getElementById('versusCards');
+    if(mesIdx < 0) { el.innerHTML='<div class="alert">Sin datos 2026 aún</div>'; return; }
+    const mesNombre = MESES[mesIdx];
+    let html = `<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">Mes: ${mesNombre} 2026</div><div class="versus-grid">`;
+    planData.profes.forEach(p => {
+        const a25 = p.histAltas25[mesIdx] || 0;
+        const a26 = p.histAltas26[mesIdx] || 0;
+        const diff = a26 - a25;
+        const pct  = a25 > 0 ? Math.round(diff/a25*100) : 0;
+        const up   = diff >= 0;
+        const arrow = up ? '📈' : '📉';
+        const col  = up ? '#10b981' : '#ef4444';
+        const sede = getSede(p.nombre);
+        html += `<div class="vs-card">
+            <div class="vs-header"><span class="vs-nombre">${p.nombre}</span><span class="vs-sede">${sede}</span></div>
+            <div class="vs-label">Altas ${mesNombre}</div>
+            <div class="vs-row">
+                <div class="vs-year"><div class="vs-yr-lbl">2025</div><div class="vs-yr-val">${a25}</div></div>
+                <div class="vs-arrow">→</div>
+                <div class="vs-year"><div class="vs-yr-lbl">2026</div><div class="vs-yr-val" style="color:${col}">${a26}</div></div>
+            </div>
+            <div class="vs-diff" style="color:${col}">${arrow} ${diff>=0?'+':''}${diff} vs 2025 (${pct>=0?'+':''}${pct}%)</div>
+        </div>`;
+    });
+    html += '</div>';
+    el.innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════
