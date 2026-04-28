@@ -869,19 +869,23 @@ function parseBariData(json, nombre) {
             return isNaN(n) ? 0 : n;
         } catch(e) { return 0; }
     };
-    // Estructura de filas (rango B12:S35):
-    //  idx 0 → NUEVO       idx 1 → RENUEVA     idx 2 → RENX2
-    //  idx 4 → BAJA        idx 12 → %DESERCIÓN
-    // Activos VIVOS: celda S13 de la planilla = col S (offset 17 desde B), fila 13 (offset 1 desde fila 12)
-    const activos = Math.round(cell(1, 17));
+    // Estructura de filas (rango B12:S35, índices 0-based en gviz):
+    //  ri=0  → fila vacía (ci=16 tiene activos VIVOS)
+    //  ri=1  → NUEVO    ri=2 → RENUEVA   ri=3 → RENX2
+    //  ri=4  → BAJA     ri=5 → RUBEN     ri=6 → KEILA
+    //  ri=13 → %DESERCIÓN
+    // Altas totales = NUEVO + RENUEVA + RENX2 + RUBEN + KEILA
+    const activos = Math.round(cell(0, 16));  // celda viva en col 16 (última col del rango)
     const months = BARI_MONTH_COLS.map((c, i) => {
-        const nuevo   = cell(0, c);
-        const renueva = cell(1, c);
-        const renx2   = cell(2, c);
+        const nuevo   = cell(1, c);
+        const renueva = cell(2, c);
+        const renx2   = cell(3, c);
+        const ruben   = cell(5, c);
+        const keila   = cell(6, c);
         const baja    = cell(4, c);
-        const deseRc  = cell(12, c);   // decimal: 0.05 = 5%
-        return { mes: MESES[i], nuevo, renueva, renx2, baja, deseRc,
-                 altas: nuevo + renueva + renx2 };
+        const deseRc  = cell(13, c);   // decimal: 0.05 = 5%
+        return { mes: MESES[i], nuevo, renueva, renx2, ruben, keila, baja, deseRc,
+                 altas: nuevo + renueva + renx2 + ruben + keila };
     });
     return {
         nombre, activos, months,
