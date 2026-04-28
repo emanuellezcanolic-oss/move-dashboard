@@ -861,10 +861,12 @@ function loadBariProfe(profe) {
 function parseBariData(json, nombre) {
     if(!json || !json.table || !json.table.rows) return null;
     const rows = json.table.rows;
-    // cell con manejo seguro de null/error (gviz devuelve % como decimal, #DIV/0! como null)
+    // cell: cuando .v es null (fórmula cross-sheet), gviz devuelve {v:null, f:"63"} → usar .f
     const cell = (ri, ci) => {
         try {
-            const v = rows[ri] && rows[ri].c && rows[ri].c[ci] && rows[ri].c[ci].v;
+            const c = rows[ri] && rows[ri].c && rows[ri].c[ci];
+            if (!c) return 0;
+            const v = (c.v !== null && c.v !== undefined) ? c.v : c.f;
             const n = parseFloat(v);
             return isNaN(n) ? 0 : n;
         } catch(e) { return 0; }
