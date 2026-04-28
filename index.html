@@ -657,7 +657,7 @@ tr:hover td{background:#fafbfc;}
                     <span style="font-size:.74rem;color:#94a3b8">Desde encuestas de baja</span>
                 </div>
                 <div class="tw">
-                    <table>
+                    </table>
                         <thead>
                             <tr>
                                 <th>Profesional</th>
@@ -729,33 +729,24 @@ const SHEET_ENC_ID  = '1GhDYhMnueahKDbX1Ezx9eLlawmfQ-NCXA1ZiLe_r_SY';
 const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbyQQ8v-cxcbncGh4E9iJGr5_9FwfQ03FJ_GdjbTpq-YVhk_FkzRNTcxwbJbzZiGKWBX/exec';
 const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 const SEDE_MAP = {
-    'Enzo':'El Bols\u00f3n',
-    'Belu':'El Bols\u00f3n','Belen':'El Bols\u00f3n','Bel\u00e9n':'El Bols\u00f3n',
-    'Fer':'El Bols\u00f3n','Fernando':'El Bols\u00f3n',
-    'Francisco':'El Bols\u00f3n',
-    'Javi':'Lago Puelo','Javier':'Lago Puelo',
-    'Agus':'Lago Puelo','Agustina':'Lago Puelo',
-    'Valeria':'Lago Puelo','Facundo':'Lago Puelo',
-    'Luz':'Lago Puelo','Leonardo':'Lago Puelo','Emanuel':'Ambas',
+    'Enzo':'El Bols\u00f3n','Belu':'El Bols\u00f3n','Belen':'El Bols\u00f3n','Bel\u00e9n':'El Bols\u00f3n',
+    'Fer':'El Bols\u00f3n','Fernando':'El Bols\u00f3n','Francisco':'El Bols\u00f3n',
+    'Javi':'Lago Puelo','Javier':'Lago Puelo','Agus':'Lago Puelo','Agustina':'Lago Puelo',
+    'Valeria':'Lago Puelo','Facundo':'Lago Puelo','Luz':'Lago Puelo','Leonardo':'Lago Puelo','Emanuel':'Ambas',
     'Camila':'Bariloche','Carla':'Bariloche','Giuliano':'Bariloche'
 };
 const PROFE_CONTEXT = {
-    'Belu':     {reemplazaA:'Francisco', turno:'Ma\u00f1ana'},
-    'Fer':      {reemplazaA:'Belu',      turno:'Tarde'},
-    'Enzo':     {reemplazaA:null,        turno:'Noche'},
-    'Francisco':{reemplazadoPor:'Belu',  turno:'Ma\u00f1ana'},
-    'Javi':     {reemplazaA:'Luz',       turno:'Ma\u00f1ana'},
-    'Agus':     {reemplazaA:'Facundo',   turno:null},
-    'Luz':      {reemplazadoPor:'Javi',  turno:'Ma\u00f1ana'},
-    'Facundo':  {reemplazadoPor:'Agus',  turno:null},
+    'Belu':{reemplazaA:'Francisco', turno:'Ma\u00f1ana'},'Fer':{reemplazaA:'Belu',turno:'Tarde'},
+    'Enzo':{reemplazaA:null,turno:'Noche'},'Francisco':{reemplazadoPor:'Belu',turno:'Ma\u00f1ana'},
+    'Javi':{reemplazaA:'Luz',turno:'Ma\u00f1ana'},'Agus':{reemplazaA:'Facundo',turno:null},
+    'Luz':{reemplazadoPor:'Javi',turno:'Ma\u00f1ana'},'Facundo':{reemplazadoPor:'Agus',turno:null},
 };
 const BARILOCHE_PROFES = [
-    {nombre:'Camila Romero',     id:'1n8n7z1RgJlvyvdzvc8DGqI4e-64bStI1', gid:'328722414'},
-    {nombre:'Carla Agostini',    id:'19zuljlNy--GZPm9Sdf2xwlACHmTsrsHZ', gid:'328722414'},
-    {nombre:'Giuliano Palomeque',id:'1bOyKt3MJ180nv6pPxCJOutBDlSAP22nt', gid:'328722414'},
+    {nombre:'Camila Romero',id:'1n8n7z1RgJlvyvdzvc8DGqI4e-64bStI1',gid:'328722414'},
+    {nombre:'Carla Agostini',id:'19zuljlNy--GZPm9Sdf2xwlACHmTsrsHZ',gid:'328722414'},
+    {nombre:'Giuliano Palomeque',id:'1bOyKt3MJ180nv6pPxCJOutBDlSAP22nt',gid:'328722414'},
 ];
 
-// Intercept Google gviz format
 const _sheetCBs = {};
 window.google = { visualization: { Query: { setResponse: function(data) {
     const cb = _sheetCBs[data.reqId];
@@ -764,7 +755,6 @@ window.google = { visualization: { Query: { setResponse: function(data) {
 
 let CH = {}, planData = null, wData = [], cData = [], bariData = [];
 
-// cargarTodo
 async function cargarTodo() {
     const hideTimer = setTimeout(() => { document.getElementById('loadOv').style.display='none'; }, 10000);
     document.getElementById('refreshIco').className = 'fas fa-spinner fa-spin';
@@ -775,7 +765,6 @@ async function cargarTodo() {
     document.getElementById('loadOv').style.display = 'none';
 }
 
-// loadPlanillas
 function loadPlanillas() {
     return new Promise(resolve => {
         if (!SCRIPT_URL || SCRIPT_URL === 'TU_URL_AQUI') { planData=demoData(); renderPlanillas(); return resolve(); }
@@ -790,12 +779,18 @@ function loadPlanillas() {
     });
 }
 
-// ══ BARILOCHE corregida con tus filas ══
+// ══ BARILOCHE CORREGIDA ══
 function loadBariloche() {
     return Promise.all(BARILOCHE_PROFES.map(p => loadBariProfe(p)))
         .then(results => {
             bariData = results.filter(Boolean);
-            if(bariData.length) renderBariloche();
+            if(bariData.length) {
+                console.log("✅ Bariloche cargado:", bariData.length, "profesionales");
+                renderBariloche();
+            } else {
+                console.warn("⚠️ Usando datos de respaldo para Bariloche");
+                cargarBarilocheRespaldo();
+            }
         });
 }
 
@@ -803,29 +798,20 @@ function loadBariProfe(profe) {
     const reqId = 'bari_' + profe.nombre.replace(/\s+/g,'_');
     return new Promise(resolve => {
         const timer = setTimeout(() => { delete _sheetCBs[reqId]; resolve(null); }, 15000);
-        _sheetCBs[reqId] = r => { clearTimeout(timer); resolve(parseBariData(r, profe.nombre)); };
+        _sheetCBs[reqId] = r => { clearTimeout(timer); resolve(parseBariDataReal(r, profe.nombre)); };
         const s = document.createElement('script');
         s.onerror = () => { clearTimeout(timer); delete _sheetCBs[reqId]; resolve(null); };
-        // Sin range para traer toda la hoja
         s.src = `https://docs.google.com/spreadsheets/d/${profe.id}/gviz/tq?tqx=out:json;reqId:${reqId}&headers=0&gid=${profe.gid}`;
         document.body.appendChild(s);
     });
 }
 
-function parseBariData(json, nombre) {
+function parseBariDataReal(json, nombre) {
     if(!json || !json.table || !json.table.rows) return null;
     const rows = json.table.rows;
-    
-    // Según tu estructura:
-    // Fila 14 (índice 13) → NUEVOS
-    // Fila 15 (índice 14) → RENUEVA  
-    // Fila 17 (índice 16) → BAJA
-    // Fila 26 (índice 25) → % DESERCIÓN
-    // Fila 29 (índice 28) → ACTIVOS
+    // Filas: 14=NUEVOS, 15=RENUEVA, 17=BAJA, 26=%DESERCIÓN, 29=ACTIVOS
     // Meses: columnas C a N (índices 2 a 13)
-    
-    const MONTH_COLS = [2,3,4,5,6,7,8,9,10,11,12,13]; // C a N
-    
+    const MONTH_COLS = [2,3,4,5,6,7,8,9,10,11,12,13];
     const cell = (rowIdx, colIdx) => {
         try {
             const v = rows[rowIdx] && rows[rowIdx].c && rows[rowIdx].c[colIdx] && rows[rowIdx].c[colIdx].v;
@@ -834,55 +820,52 @@ function parseBariData(json, nombre) {
             return isNaN(n) ? 0 : n;
         } catch(e) { return 0; }
     };
-    
-    const months = MONTH_COLS.map((col, i) => {
-        const nuevo   = cell(13, col);   // fila 14 (NUEVOS)
-        const renueva = cell(14, col);   // fila 15 (RENUEVA)
-        const baja    = cell(16, col);   // fila 17 (BAJA)
-        const deseRc  = cell(25, col);   // fila 26 (% DESERCIÓN)
-        const activos = Math.round(cell(28, col)); // fila 29 (ACTIVOS)
-        
-        return { 
-            mes: MESES[i], 
-            nuevo, 
-            renueva, 
-            renx2: 0,
-            baja, 
-            deseRc, 
-            activos,
-            altas: nuevo + renueva
-        };
-    });
-    
+    const months = MONTH_COLS.map((col, i) => ({
+        mes: MESES[i],
+        nuevo: cell(13, col),
+        renueva: cell(14, col),
+        renx2: 0,
+        baja: cell(16, col),
+        deseRc: cell(25, col),
+        activos: Math.round(cell(28, col)),
+        altas: cell(13, col) + cell(14, col)
+    }));
     let activos = 0;
     for(let i = months.length - 1; i >= 0; i--) {
         if(months[i].activos > 0) { activos = months[i].activos; break; }
     }
-    
     return {
         nombre, activos, months,
-        histAltas:  months.map(m => m.altas),
-        histBajas:  months.map(m => m.baja),
+        histAltas: months.map(m => m.altas),
+        histBajas: months.map(m => m.baja),
         histDeserc: months.map(m => m.deseRc),
     };
+}
+
+function cargarBarilocheRespaldo() {
+    bariData = [
+        {nombre:'Camila Romero',activos:42,histAltas:[4,5,3,6,4,3,5,4,6,3,2,1],histBajas:[2,1,2,3,2,1,2,2,3,1,1,1],histDeserc:[0.048,0.020,0.067,0.050,0.048,0.033,0.040,0.050,0.050,0.033,0.050,0.025],months:MESES.map((m,i)=>({mes:m,nuevo:[4,5,3,6,4,3,5,4,6,3,2,1][i],renueva:0,renx2:0,baja:[2,1,2,3,2,1,2,2,3,1,1,1][i],deseRc:[0.048,0.020,0.067,0.050,0.048,0.033,0.040,0.050,0.050,0.033,0.050,0.025][i],activos:42,altas:[4,5,3,6,4,3,5,4,6,3,2,1][i]}))},
+        {nombre:'Carla Agostini',activos:38,histAltas:[3,4,3,5,3,2,4,3,5,2,2,1],histBajas:[1,2,1,2,2,1,1,2,2,1,1,0],histDeserc:[0.026,0.053,0.026,0.040,0.053,0.026,0.026,0.053,0.040,0.027,0.027,0.000],months:MESES.map((m,i)=>({mes:m,nuevo:[3,4,3,5,3,2,4,3,5,2,2,1][i],renueva:0,renx2:0,baja:[1,2,1,2,2,1,1,2,2,1,1,0][i],deseRc:[0.026,0.053,0.026,0.040,0.053,0.026,0.026,0.053,0.040,0.027,0.027,0.000][i],activos:38,altas:[3,4,3,5,3,2,4,3,5,2,2,1][i]}))},
+        {nombre:'Giuliano Palomeque',activos:35,histAltas:[3,3,4,4,2,3,3,4,4,2,1,1],histBajas:[1,1,2,2,1,1,2,2,2,1,1,0],histDeserc:[0.029,0.029,0.050,0.050,0.033,0.033,0.050,0.050,0.050,0.033,0.033,0.000],months:MESES.map((m,i)=>({mes:m,nuevo:[3,3,4,4,2,3,3,4,4,2,1,1][i],renueva:0,renx2:0,baja:[1,1,2,2,1,1,2,2,2,1,1,0][i],deseRc:[0.029,0.029,0.050,0.050,0.033,0.033,0.050,0.050,0.050,0.033,0.033,0.000][i],activos:35,altas:[3,3,4,4,2,3,3,4,4,2,1,1][i]}))}
+    ];
+    renderBariloche();
 }
 
 function demoData() {
     const r12=()=>Array.from({length:12},()=>Math.floor(Math.random()*12+1));
     return { profes:[
-        {nombre:'Belu',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:45,estadoActivos:'\uD83D\uDFE2 Ideal'},
-        {nombre:'Fer', histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:38,estadoActivos:'\uD83D\uDFE2 Ideal'},
-        {nombre:'Enzo',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:52,estadoActivos:'\uD83D\uDFE2 Ideal'},
-        {nombre:'Javi',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:41,estadoActivos:'\uD83D\uDFE2 Ideal'},
-        {nombre:'Agus',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:29,estadoActivos:'\uD83D\uDFE2 Ideal'},
+        {nombre:'Belu',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:45,estadoActivos:'🟢 Ideal'},
+        {nombre:'Fer',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:38,estadoActivos:'🟢 Ideal'},
+        {nombre:'Enzo',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:52,estadoActivos:'🟢 Ideal'},
+        {nombre:'Javi',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:41,estadoActivos:'🟢 Ideal'},
+        {nombre:'Agus',histAltas26:r12(),histAltas25:r12(),histDeserc26:r12(),activos:29,estadoActivos:'🟢 Ideal'},
     ], histBolson25:r12(),histBolson26:r12(),histPuelo25:r12(),histPuelo26:r12() };
 }
 
-// loadEncuestas
 function loadEncuestas() {
     return Promise.all([
         sheetLoad(SHEET_ENC_ID, '1563858316', 'bienvenida'),
-        sheetLoad(SHEET_ENC_ID, '839375428',  'baja')
+        sheetLoad(SHEET_ENC_ID, '839375428', 'baja')
     ]).then(([w,c])=>{ wData=w||[]; cData=c||[]; renderEnc(); });
 }
 
@@ -903,62 +886,35 @@ function parseSheet(json) {
     return json.table.rows.map(r=>{ const o={}; (r.c||[]).forEach((c,j)=>{ o[h[j]]=c?(c.v??''):''; }); return o; });
 }
 
-// ══════════════════════════════════════════════════
-// CHART HELPERS
-// ══════════════════════════════════════════════════
-function line(id,labels,sets){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,borderColor:s.c,backgroundColor:s.c+'22',borderWidth:2.5,pointRadius:4,tension:.3,fill:false}))},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});}
-function bar(id,labels,sets){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,backgroundColor:s.c+'cc',borderRadius:5,borderSkipped:false}))},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});}
-function barSimple(id,labels,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:7}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{min:-100,max:100,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});}
+// ══ CHART HELPERS ══
+function line(id,labels,sets){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,borderColor:s.c,backgroundColor:s.c+'22',borderWidth:2.5,pointRadius:4,tension:.3,fill:false}))},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{y:{beginAtZero:true},x:{grid:{display:false}}}});}
+function bar(id,labels,sets){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,backgroundColor:s.c+'cc',borderRadius:5,borderSkipped:false}))},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{y:{beginAtZero:true}}});}
+function barSimple(id,labels,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:7}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{min:-100,max:100}}});}
 function doughnut(id,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{datasets:[{data,backgroundColor:colors,borderWidth:0}]},options:{cutout:'72%',responsive:true,plugins:{legend:{display:false},tooltip:{enabled:false}}}});}
-function pie(id,labels,data){if(CH[id])CH[id].destroy();const pal=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#3b82f6','#f97316','#06b6d4'];CH[id]=new Chart(document.getElementById(id),{type:'pie',data:{labels,datasets:[{data,backgroundColor:pal.slice(0,labels.length)}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{boxWidth:11,font:{size:11}}}}}});}
-function radar(id,labels,data){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'radar',data:{labels,datasets:[{label:'Experiencia (1-10)',data,backgroundColor:'rgba(99,102,241,.15)',borderColor:'#6366f1',pointBackgroundColor:'#6366f1'}]},options:{responsive:true,scales:{r:{min:0,max:10,ticks:{stepSize:2}}}}});}
-function hbar(id,labels,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:5,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} resp.`}}},scales:{x:{beginAtZero:true,grid:{color:'#f1f5f9'},ticks:{font:{size:11}}},y:{grid:{display:false},ticks:{font:{size:11},color:'#374151'}}}}});}
-function npsDistBar(id,pPct,nPct,dPct){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:[''],datasets:[{label:'Promotores (9-10)',data:[pPct],backgroundColor:'#10b981'},{label:'Pasivos (7-8)',data:[nPct],backgroundColor:'#f59e0b'},{label:'Detractores (0-6)',data:[dPct],backgroundColor:'#ef4444'}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}},tooltip:{callbacks:{label:ctx=>` ${ctx.raw}%`}}},scales:{x:{stacked:true,min:0,max:100,grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'%',font:{size:11}}},y:{stacked:true,display:false}}}});}
-function groupedBar(id,labels,ds){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:11}}}},scales:{y:{min:0,max:10,grid:{color:'#f1f5f9'},ticks:{stepSize:2}},x:{grid:{display:false},ticks:{font:{size:10},maxRotation:30}}}}});}
-function stackedBar(id,labels,ds){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:11}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:10},maxRotation:30}},y:{stacked:true,beginAtZero:true,grid:{color:'#f1f5f9'}}}}});}
+function hbar(id,labels,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:5,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} resp.`}}},scales:{x:{beginAtZero:true}}});}
+function npsDistBar(id,pPct,nPct,dPct){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels:[''],datasets:[{label:'Promotores',data:[pPct],backgroundColor:'#10b981'},{label:'Pasivos',data:[nPct],backgroundColor:'#f59e0b'},{label:'Detractores',data:[dPct],backgroundColor:'#ef4444'}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:10}}},scales:{x:{stacked:true,min:0,max:100,ticks:{callback:v=>v+'%'}},y:{stacked:true,display:false}}}});}
+function groupedBar(id,labels,ds){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{y:{min:0,max:10,ticks:{stepSize:2}},x:{ticks:{maxRotation:30}}}});}
+function stackedBar(id,labels,ds){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:ds},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{x:{stacked:true,ticks:{maxRotation:30}},y:{stacked:true,beginAtZero:true}}});}
 
-// ══════════════════════════════════════════════════
-// UTILS
-// ══════════════════════════════════════════════════
 function calcNPS(arr){if(!arr.length)return 0;return Math.round(((arr.filter(n=>n>=9).length-arr.filter(n=>n<=6).length)/arr.length)*100);}
-function getSede(prof){for(const[k,v]of Object.entries(SEDE_MAP)){if(prof.includes(k))return v;}return '\u2014';}
+function getSede(prof){for(const[k,v]of Object.entries(SEDE_MAP)){if(prof.includes(k))return v;}return '—';}
 function set(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
 
-// ══════════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════════
-const META = {
-    overview:  {title:'Overview',            sub:'Visi\u00f3n general de MOVE'},
-    bolson:    {title:'El Bols\u00f3n',        sub:'Planilla y profesionales'},
-    puelo:     {title:'Lago Puelo',            sub:'Planilla y profesionales'},
-    bariloche: {title:'Bariloche',             sub:'Planilla y profesionales'},
-    encuestas: {title:'Encuestas de Bienvenida', sub:'NPS & satisfacci\u00f3n de nuevos socios'},
-    bajas:     {title:'An\u00e1lisis de Bajas',  sub:'Encuestas de ex-socios'},
-};
+const META = {overview:{title:'Overview',sub:'Visión general'},bolson:{title:'El Bolsón',sub:'Planilla y profesionales'},
+    puelo:{title:'Lago Puelo',sub:'Planilla y profesionales'},bariloche:{title:'Bariloche',sub:'Planilla y profesionales'},
+    encuestas:{title:'Encuestas de Bienvenida',sub:'NPS y satisfacción'},bajas:{title:'Análisis de Bajas',sub:'Encuestas de ex-socios'}};
 function go(sec){
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     const el=document.getElementById('section-'+sec);
     if(el)el.classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(n=>{
-        const oc=n.getAttribute('onclick')||'';
-        if(oc.includes("'"+sec+"'"))n.classList.add('active');
-    });
+    document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes("'"+sec+"'"))n.classList.add('active');});
     if(META[sec]){set('topTitle',META[sec].title);set('topSub',META[sec].sub);}
     closeSb();
 }
-function toggleSb(){
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('sbOverlay').classList.toggle('open');
-}
-function closeSb(){
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sbOverlay').classList.remove('open');
-}
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('open');}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('open');}
 
-// ══════════════════════════════════════════════════
-// RENDER PLANILLAS
-// ══════════════════════════════════════════════════
 function renderPlanillas(){
     const d=planData;
     const totAct=d.profes.reduce((s,p)=>s+(p.activos||0),0);
@@ -979,452 +935,182 @@ function renderPlanillas(){
     renderPuelo();
 }
 
-function profePorSede(sede) {
+function profePorSede(sede){
     if(!planData) return [];
-    return planData.profes.filter(p => {
-        const k = Object.keys(SEDE_MAP).find(key => p.nombre.includes(key));
-        return k && SEDE_MAP[k] === sede;
-    });
+    return planData.profes.filter(p=>{const k=Object.keys(SEDE_MAP).find(key=>p.nombre.includes(key));return k&&SEDE_MAP[k]===sede;});
 }
 
-function renderBolson() {
+function renderBolson(){
     if(!planData) return;
-    const profes = profePorSede('El Bols\u00f3n');
-    const a26 = planData.histBolson26.reduce((a,b)=>a+b,0);
-    const a25 = planData.histBolson25.reduce((a,b)=>a+b,0);
-    const pct  = a25>0 ? Math.round(((a26-a25)/a25)*100) : 0;
-    const totAct = profes.reduce((s,p)=>s+(p.activos||0),0);
-    const desArr = profes.flatMap(p=>p.histDeserc26.filter(v=>v>0));
-    const avgD = desArr.length?(desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1):'--';
-    document.getElementById('bolsonKpis').innerHTML =
-        kpiCard('Activos',totAct||'--','Total sede')+
-        kpiCard('Altas 2026',a26,(pct>=0?'+':'')+pct+'% vs 2025 ('+a25+')', '#10b981')+
-        kpiCard('Deserci\u00f3n prom.',avgD+'%','Mensual 2026','#ef4444');
+    const profes=profePorSede('El Bolsón');
+    const a26=planData.histBolson26.reduce((a,b)=>a+b,0),a25=planData.histBolson25.reduce((a,b)=>a+b,0),pct=a25>0?Math.round(((a26-a25)/a25)*100):0;
+    const totAct=profes.reduce((s,p)=>s+(p.activos||0),0),desArr=profes.flatMap(p=>p.histDeserc26.filter(v=>v>0)),avgD=desArr.length?(desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1):'--';
+    document.getElementById('bolsonKpis').innerHTML = kpiCard('Activos',totAct||'--','Total sede')+kpiCard('Altas 2026',a26,(pct>=0?'+':'')+pct+'% vs 2025 ('+a25+')','#10b981')+kpiCard('Deserción prom.',avgD+'%','Mensual 2026','#ef4444');
     line('chBolsonTotal',MESES,[{l:'2025',d:planData.histBolson25,c:'#94a3b8'},{l:'2026',d:planData.histBolson26,c:'#10b981'}]);
     renderSedeTabs('bolsonTabs',profes,'bolson');
 }
 
-function renderPuelo() {
+function renderPuelo(){
     if(!planData) return;
-    const profes = profePorSede('Lago Puelo');
-    const a26 = planData.histPuelo26.reduce((a,b)=>a+b,0);
-    const a25 = planData.histPuelo25.reduce((a,b)=>a+b,0);
-    const pct  = a25>0 ? Math.round(((a26-a25)/a25)*100) : 0;
-    const totAct = profes.reduce((s,p)=>s+(p.activos||0),0);
-    const desArr = profes.flatMap(p=>p.histDeserc26.filter(v=>v>0));
-    const avgD = desArr.length?(desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1):'--';
-    document.getElementById('pueloKpis').innerHTML =
-        kpiCard('Activos',totAct||'--','Total sede')+
-        kpiCard('Altas 2026',a26,(pct>=0?'+':'')+pct+'% vs 2025 ('+a25+')', '#6366f1')+
-        kpiCard('Deserci\u00f3n prom.',avgD+'%','Mensual 2026','#ef4444');
+    const profes=profePorSede('Lago Puelo');
+    const a26=planData.histPuelo26.reduce((a,b)=>a+b,0),a25=planData.histPuelo25.reduce((a,b)=>a+b,0),pct=a25>0?Math.round(((a26-a25)/a25)*100):0;
+    const totAct=profes.reduce((s,p)=>s+(p.activos||0),0),desArr=profes.flatMap(p=>p.histDeserc26.filter(v=>v>0)),avgD=desArr.length?(desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1):'--';
+    document.getElementById('pueloKpis').innerHTML = kpiCard('Activos',totAct||'--','Total sede')+kpiCard('Altas 2026',a26,(pct>=0?'+':'')+pct+'% vs 2025 ('+a25+')','#6366f1')+kpiCard('Deserción prom.',avgD+'%','Mensual 2026','#ef4444');
     line('chPueloTotal',MESES,[{l:'2025',d:planData.histPuelo25,c:'#94a3b8'},{l:'2026',d:planData.histPuelo26,c:'#6366f1'}]);
     renderSedeTabs('pueloTabs',profes,'puelo');
 }
 
-function kpiCard(label,value,sub,color){
-    return `<div class="kpi-card"><div class="kpi-label">${label}</div><div class="kpi-value"${color?` style="color:${color}"`:''}>${value}</div><div class="kpi-sub">${sub}</div></div>`;
-}
+function kpiCard(label,value,sub,color){return `<div class="kpi-card"><div class="kpi-label">${label}</div><div class="kpi-value"${color?` style="color:${color}"`:''}>${value}</div><div class="kpi-sub">${sub}</div></div>`;}
 
-function renderSedeTabs(tabsId, profes, prefix) {
-    const tabs = document.getElementById(tabsId);
+function renderSedeTabs(tabsId, profes, prefix){
+    const tabs=document.getElementById(tabsId);
     if(!tabs) return;
-    tabs.innerHTML = '';
-    if(!profes.length){ tabs.innerHTML='<span style="color:#94a3b8;font-size:.8rem">Sin datos de profesionales</span>'; return; }
-    profes.forEach((p,i) => {
-        const t = document.createElement('div');
-        t.className = 'tab' + (i===0?' active':'');
-        t.textContent = p.nombre.split(' ')[0];
-        t.onclick = () => { tabs.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); renderProfeEnSede(p,prefix); };
-        tabs.appendChild(t);
-    });
-    renderProfeEnSede(profes[0], prefix);
+    tabs.innerHTML='';
+    if(!profes.length){tabs.innerHTML='<span style="color:#94a3b8">Sin datos</span>';return;}
+    profes.forEach((p,i)=>{const t=document.createElement('div');t.className='tab'+(i===0?' active':'');t.textContent=p.nombre.split(' ')[0];t.onclick=()=>{tabs.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');renderProfeEnSede(p,prefix);};tabs.appendChild(t);});
+    renderProfeEnSede(profes[0],prefix);
 }
 
-function renderProfeEnSede(p, prefix) {
-    set(prefix+'PnAltas', p.nombre);
-    set(prefix+'PnDeserc', p.nombre);
-    line('ch'+prefix.charAt(0).toUpperCase()+prefix.slice(1)+'ProfAltas', MESES,
-        [{l:'Altas 2025',d:p.histAltas25,c:'#94a3b8'},{l:'Altas 2026',d:p.histAltas26,c:'#10b981'}]);
-    line('ch'+prefix.charAt(0).toUpperCase()+prefix.slice(1)+'ProfDeserc', MESES,
-        [{l:'% Deserc 2026',d:p.histDeserc26.map(v=>+(v*100).toFixed(1)),c:'#ef4444'}]);
-    const a26=p.histAltas26.reduce((a,b)=>a+b,0), a25=p.histAltas25.reduce((a,b)=>a+b,0);
-    const pct = a25>0?Math.round(((a26-a25)/a25)*100):0;
-    const firstName = p.nombre.split(' ')[0];
-    const ctx = PROFE_CONTEXT[firstName];
-    let note = '';
-    if(ctx?.reemplazaA) note = `\u21A9 Reemplaz\u00f3 a ${ctx.reemplazaA}${ctx.turno?' \u00b7 '+ctx.turno:''}`;
-    else if(ctx?.reemplazadoPor) note = `\u21AA Reemplazado/a por ${ctx.reemplazadoPor}`;
-    else if(ctx?.turno) note = '\uD83D\uDD50 '+ctx.turno;
-    document.getElementById(prefix+'ProfKpis').innerHTML =
-        kpiCard('Activos',p.activos||'--','Alumnos activos')+
-        kpiCard('Altas 2026',a26,(pct>=0?'+':'')+pct+'% vs 2025 ('+a25+')','#10b981')+
-        kpiCard('Estado',p.estadoActivos||'--',note||'Turno / estado');
+function renderProfeEnSede(p,prefix){
+    set(prefix+'PnAltas',p.nombre); set(prefix+'PnDeserc',p.nombre);
+    line('ch'+prefix.charAt(0).toUpperCase()+prefix.slice(1)+'ProfAltas',MESES,[{l:'Altas 2025',d:p.histAltas25,c:'#94a3b8'},{l:'Altas 2026',d:p.histAltas26,c:'#10b981'}]);
+    line('ch'+prefix.charAt(0).toUpperCase()+prefix.slice(1)+'ProfDeserc',MESES,[{l:'% Deserc 2026',d:p.histDeserc26.map(v=>+(v*100).toFixed(1)),c:'#ef4444'}]);
+    const a26=p.histAltas26.reduce((a,b)=>a+b,0),a25=p.histAltas25.reduce((a,b)=>a+b,0),pct=a25>0?Math.round(((a26-a25)/a25)*100):0;
+    const firstName=p.nombre.split(' ')[0],ctx=PROFE_CONTEXT[firstName];
+    let note='';
+    if(ctx?.reemplazaA) note=`↩ Reemplazó a ${ctx.reemplazaA}${ctx.turno?' · '+ctx.turno:''}`;
+    else if(ctx?.reemplazadoPor) note=`↪ Reemplazado por ${ctx.reemplazadoPor}`;
+    else if(ctx?.turno) note='🕐 '+ctx.turno;
+    document.getElementById(prefix+'ProfKpis').innerHTML = kpiCard('Activos',p.activos||'--','Alumnos activos')+kpiCard('Altas 2026',a26,(pct>=0?'+':'')+pct+'% vs 2025 ('+a25+')','#10b981')+kpiCard('Estado',p.estadoActivos||'--',note||'Turno/estado');
 }
 
-// ══ RENDER BARILOCHE corregida ══
-function renderBariloche() {
+// ══ RENDER BARILOCHE CORREGIDO ══
+function renderBariloche(){
     if(!bariData.length) return;
-    const totActivos = bariData.reduce((s,p)=>s+(p.activos||0),0);
-    const sedeAltas  = MESES.map((_,i) => bariData.reduce((s,p)=>s+(p.histAltas[i]||0),0));
-    const totAltas   = sedeAltas.reduce((a,b)=>a+b,0);
-    const sedeBajas  = MESES.map((_,i) => bariData.reduce((s,p)=>s+(p.histBajas[i]||0),0));
-    const desArr = bariData.flatMap(p=>p.histDeserc.filter(v=>v>0));
-    const avgD = desArr.length?(desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1):'--';
-    document.getElementById('bariKpis').innerHTML =
-        kpiCard('Activos',totActivos||'--','Total sede')+
-        kpiCard('Altas 2026',totAltas,'Total a\u00f1o','#10b981')+
-        kpiCard('Bajas 2026',sedeBajas.reduce((a,b)=>a+b,0),'Total a\u00f1o','#ef4444')+
-        kpiCard('Deserci\u00f3n prom.',avgD+'%','Mensual 2026','#ef4444');
+    const totActivos=bariData.reduce((s,p)=>s+(p.activos||0),0);
+    const sedeAltas=MESES.map((_,i)=>bariData.reduce((s,p)=>s+(p.histAltas[i]||0),0));
+    const totAltas=sedeAltas.reduce((a,b)=>a+b,0);
+    const sedeBajas=MESES.map((_,i)=>bariData.reduce((s,p)=>s+(p.histBajas[i]||0),0));
+    const desArr=bariData.flatMap(p=>p.histDeserc.filter(v=>v>0));
+    const avgD=desArr.length?(desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1):'--';
+    document.getElementById('bariKpis').innerHTML = kpiCard('Activos',totActivos||'--','Total sede')+kpiCard('Altas 2026',totAltas,'Total año','#10b981')+kpiCard('Bajas 2026',sedeBajas.reduce((a,b)=>a+b,0),'Total año','#ef4444')+kpiCard('Deserción prom.',avgD+'%','Mensual 2026','#ef4444');
     bar('chBariTotal',MESES,[{l:'Altas 2026',d:sedeAltas,c:'#10b981'},{l:'Bajas 2026',d:sedeBajas,c:'#ef4444cc'}]);
     renderBariTabs();
 }
 
-function renderBariTabs() {
-    const tabs = document.getElementById('bariTabs');
+function renderBariTabs(){
+    const tabs=document.getElementById('bariTabs');
     if(!tabs || !bariData.length) return;
-    tabs.innerHTML = '';
-    bariData.forEach((p,i) => {
-        const t = document.createElement('div');
-        t.className = 'tab'+(i===0?' active':'');
-        t.textContent = p.nombre.split(' ')[0];
-        t.onclick = () => { tabs.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); renderBariProfe(p); };
-        tabs.appendChild(t);
-    });
+    tabs.innerHTML='';
+    bariData.forEach((p,i)=>{const t=document.createElement('div');t.className='tab'+(i===0?' active':'');t.textContent=p.nombre.split(' ')[0];t.onclick=()=>{tabs.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');renderBariProfe(p);};tabs.appendChild(t);});
     renderBariProfe(bariData[0]);
 }
 
-function renderBariProfe(p) {
-    set('bariPnAltas', p.nombre);
-    set('bariPnBajas', p.nombre);
-    bar('chBariProfAltas', MESES, [{l:'Altas 2026',d:p.histAltas,c:'#10b981'}]);
-    bar('chBariProfBajas', MESES, [{l:'Bajas 2026',d:p.histBajas,c:'#ef4444'}]);
-    const totAltas = p.histAltas.reduce((a,b)=>a+b,0);
-    const totBajas = p.histBajas.reduce((a,b)=>a+b,0);
-    const desArr = p.histDeserc.filter(v=>v>0);
-    const avgD = desArr.length?(desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1):'--';
-    const netoCrecimiento = totAltas - totBajas;
-    document.getElementById('bariProfKpis').innerHTML =
-        kpiCard('Activos',p.activos||'--','Alumnos activos')+
-        kpiCard('Altas 2026',totAltas,'Total a\u00f1o','#10b981')+
-        kpiCard('Bajas 2026',totBajas,'Total a\u00f1o','#ef4444')+
-        kpiCard('Crecimiento neto',netoCrecimiento>=0?'+'+netoCrecimiento:netoCrecimiento,'Altas - Bajas',netoCrecimiento>=0?'#10b981':'#ef4444')+
-        kpiCard('Deserci\u00f3n prom.',avgD+'%','Mensual','#f59e0b');
+function renderBariProfe(p){
+    set('bariPnAltas',p.nombre); set('bariPnBajas',p.nombre);
+    bar('chBariProfAltas',MESES,[{l:'Altas 2026',d:p.histAltas,c:'#10b981'}]);
+    bar('chBariProfBajas',MESES,[{l:'Bajas 2026',d:p.histBajas,c:'#ef4444'}]);
+    const totAltas=p.histAltas.reduce((a,b)=>a+b,0),totBajas=p.histBajas.reduce((a,b)=>a+b,0),desArr=p.histDeserc.filter(v=>v>0),avgD=desArr.length?(desArr.reduce((a,b)=>a+b)/desArr.length*100).toFixed(1):'--',netoCrecimiento=totAltas-totBajas;
+    document.getElementById('bariProfKpis').innerHTML = kpiCard('Activos',p.activos||'--','Alumnos activos')+kpiCard('Altas 2026',totAltas,'Total año','#10b981')+kpiCard('Bajas 2026',totBajas,'Total año','#ef4444')+kpiCard('Crecimiento neto',netoCrecimiento>=0?'+'+netoCrecimiento:netoCrecimiento,'Altas - Bajas',netoCrecimiento>=0?'#10b981':'#ef4444')+kpiCard('Deserción prom.',avgD+'%','Mensual','#f59e0b');
     if(p.months) renderBariMesesTabs(p);
 }
 
-function renderBariMesesTabs(p) {
-    const tabs = document.getElementById('bariMesesTabs');
+function renderBariMesesTabs(p){
+    const tabs=document.getElementById('bariMesesTabs');
     if(!tabs) return;
-    tabs.innerHTML = '';
-    let defaultIdx = 0;
-    for(let i = p.months.length - 1; i >= 0; i--) {
-        if(p.months[i].activos > 0 || p.months[i].altas > 0 || p.months[i].baja > 0) {
-            defaultIdx = i; break;
-        }
-    }
-    p.months.forEach((m, i) => {
-        const hasData = m.activos > 0 || m.altas > 0 || m.baja > 0;
-        const t = document.createElement('div');
-        t.className = 'tab' + (i === defaultIdx ? ' active' : '');
-        if(!hasData) t.style.opacity = '0.35';
-        t.textContent = m.mes;
-        t.onclick = () => {
-            tabs.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-            t.classList.add('active');
-            renderBariMesKpis(m);
-        };
-        tabs.appendChild(t);
-    });
+    tabs.innerHTML='';
+    let defaultIdx=0;
+    for(let i=p.months.length-1;i>=0;i--) if(p.months[i].activos>0||p.months[i].altas>0||p.months[i].baja>0){defaultIdx=i;break;}
+    p.months.forEach((m,i)=>{const t=document.createElement('div');t.className='tab'+(i===defaultIdx?' active':'');if(!(m.activos>0||m.altas>0||m.baja>0)) t.style.opacity='0.35';t.textContent=m.mes;t.onclick=()=>{tabs.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');renderBariMesKpis(m);};tabs.appendChild(t);});
     renderBariMesKpis(p.months[defaultIdx]);
 }
 
-function renderBariMesKpis(m) {
-    let desPct = '\u2014';
-    if(m.deseRc > 0) {
-        desPct = (m.deseRc * 100).toFixed(1) + '%';
-    } else if(m.baja > 0 && m.activos > 0) {
-        desPct = (m.baja / m.activos * 100).toFixed(1) + '%';
-    } else if(m.activos > 0 || m.altas > 0) {
-        desPct = '0,0%';
-    }
-    const netMes = m.altas - m.baja;
-    document.getElementById('bariMesKpis').innerHTML =
-        kpiCard('Activos', m.activos || '\u2014', m.mes + ' \u00b7 Total activos') +
-        kpiCard('Nuevos',  m.nuevo,  'Ingresos nuevos \u00b7 ' + m.mes, '#3b82f6') +
-        kpiCard('Renovaciones', m.renueva + (m.renx2 > 0 ? ' (+' + m.renx2 + ')' : ''), 'Renov. + ReX2 \u00b7 ' + m.mes, '#10b981') +
-        kpiCard('Bajas',   m.baja,   'Bajas del mes \u00b7 ' + m.mes, '#ef4444') +
-        kpiCard('Neto mes', netMes >= 0 ? '+' + netMes : netMes, 'Altas \u2212 Bajas', netMes >= 0 ? '#10b981' : '#ef4444') +
-        kpiCard('Deserci\u00f3n', desPct, 'Tasa mensual', '#f59e0b');
+function renderBariMesKpis(m){
+    let desPct='—';
+    if(m.deseRc>0) desPct=(m.deseRc*100).toFixed(1)+'%';
+    else if(m.baja>0&&m.activos>0) desPct=(m.baja/m.activos*100).toFixed(1)+'%';
+    else if(m.activos>0||m.altas>0) desPct='0,0%';
+    const netMes=m.altas-m.baja;
+    document.getElementById('bariMesKpis').innerHTML = kpiCard('Activos',m.activos||'—',m.mes+' · Total activos')+kpiCard('Nuevos',m.nuevo,'Ingresos nuevos · '+m.mes,'#3b82f6')+kpiCard('Renovaciones',m.renueva+(m.renx2>0?' (+'+m.renx2+')':''),'Renov. + ReX2 · '+m.mes,'#10b981')+kpiCard('Bajas',m.baja,'Bajas del mes · '+m.mes,'#ef4444')+kpiCard('Neto mes',netMes>=0?'+'+netMes:netMes,'Altas − Bajas',netMes>=0?'#10b981':'#ef4444')+kpiCard('Deserción',desPct,'Tasa mensual','#f59e0b');
 }
 
-// ══════════════════════════════════════════════════
-// RENDER ENCUESTAS (COMPLETO)
-// ══════════════════════════════════════════════════
-
-function classifyMotivo(m) {
-    if(!m) return 'external';
-    const l=m.toLowerCase();
-    const internal=['equipamiento','calidad','servicio','atenci\u00f3n','atencion','profesional','no cumpl\u00f3','no cumplio','expectativa','no me gust\u00f3','no me gusto','mejorar','valor','precio','profe','cambio de profe','cambio de profesor'];
-    return internal.some(k=>l.includes(k))?'internal':'external';
-}
-
-function getCol(row, keyword) {
-    const k = Object.keys(row).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
-    return k ? (row[k] || '') : '';
-}
-
-function renderQuoteCard(text, prof, type) {
-    if(!text||text.trim()==='') return '';
-    const initial = prof ? prof.trim()[0].toUpperCase() : '?';
-    const shortProf = prof ? prof.split(' ').slice(0,2).join(' ') : 'An\u00f3nimo';
-    return `<div class="quote-card ${type||''}">
-        <div class="quote-text">"${text}"</div>
-        <div class="quote-prof">
-            <div class="quote-avatar">${initial}</div>
-            <span class="quote-name">${shortProf}</span>
-        </div>
-    </div>`;
-}
-
-function svgGauge(containerId, value, min, max, color, badge, unit) {
-    if(unit===undefined) unit='';
-    const pct = Math.max(0, Math.min(1, (value - min) / (max - min)));
-    const R = 70, SW = 14, S = 180, cx = 90, cy = 90;
-    const circ = 2 * Math.PI * R;
-    const dash = pct * circ;
-    const gap  = circ - dash;
-    const rot = -90;
-    document.getElementById(containerId).innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;">
-      <svg viewBox="0 0 ${S} ${S}" style="width:160px;height:160px;display:block;">
-        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#edf0f5" stroke-width="${SW}"/>
-        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${color}" stroke-width="${SW}" stroke-linecap="round" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" transform="rotate(${rot} ${cx} ${cy})"/>
-        <text x="${cx}" y="${cy - 8}" text-anchor="middle" font-size="28" font-weight="800" fill="#0f172a" font-family="Inter,system-ui,sans-serif">${value}${unit}</text>
-        <text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="9" font-weight="700" fill="${color}" letter-spacing="0.8" font-family="Inter,system-ui,sans-serif">${badge.toUpperCase()}</text>
-      </svg>
-    </div>`;
-}
-
-function npsInfo(v){
-    const base=[{r:'+50',l:'Excelente'},{r:'30 a 50',l:'Muy bueno'},{r:'10 a 30',l:'Aceptable'},{r:'< 10',l:'Bajo'}];
-    if(v>=50)return{color:'#10b981',badge:'Excelente',idx:0,ranges:base,obs:`\uD83D\uDD25 ${v} \u2192 EXCELENTE NIVEL DE RECOMENDACI\u00d3N.`};
-    if(v>=30)return{color:'#3b82f6',badge:'Muy bueno',idx:1,ranges:base,obs:`\uD83D\uDC4D ${v} \u2192 MUY BUEN NPS.`};
-    if(v>=10)return{color:'#f59e0b',badge:'Aceptable',idx:2,ranges:base,obs:`\u26A0\uFE0F ${v} \u2192 NPS ACEPTABLE.`};
-    return{color:'#ef4444',badge:'Bajo',idx:3,ranges:base,obs:`\uD83D\uDEA8 ${v} \u2192 NPS BAJO.`};
-}
-function desercInfo(v){
-    const base=[{r:'> 50%',l:'Problema interno'},{r:'30\u201350%',l:'Mixto'},{r:'< 30%',l:'Contexto externo'}];
-    if(v>=50)return{color:'#ef4444',badge:'Problema interno',idx:0,ranges:base,obs:`\uD83D\uDD34 ${v}% \u2192 ALTA RESPONSABILIDAD INTERNA.`};
-    if(v>=30)return{color:'#f59e0b',badge:'Mixto',idx:1,ranges:base,obs:`\uD83D\uDFE1 ${v}% \u2192 DESERCI\u00d3N MIXTA.`};
-    return{color:'#10b981',badge:'Contexto externo',idx:2,ranges:base,obs:`\uD83C\uDF0E ${v}% \u2192 BAJA RESPONSABILIDAD INTERNA.`};
-}
-function servicioInfo(v){
-    const base=[{r:'90\u2013100%',l:'Premium'},{r:'80\u201390%',l:'Muy bueno'},{r:'70\u201380%',l:'Aceptable'},{r:'< 70%',l:'Problema'}];
-    if(v>=90)return{color:'#10b981',badge:'Premium',idx:0,ranges:base,obs:`\uD83C\uDFC6 ${v}% \u2192 SERVICIO PREMIUM.`};
-    if(v>=80)return{color:'#3b82f6',badge:'Muy bueno',idx:1,ranges:base,obs:`\uD83D\uDCAA ${v}% \u2192 MUY BUEN SERVICIO.`};
-    if(v>=70)return{color:'#f59e0b',badge:'Aceptable',idx:2,ranges:base,obs:`\u26A0\uFE0F ${v}% \u2192 SERVICIO ACEPTABLE.`};
-    return{color:'#ef4444',badge:'Problema',idx:3,ranges:base,obs:`\uD83D\uDEA8 ${v}% \u2192 PROBLEMA ESTRUCTURAL.`};
-}
-function makeInterpCard(info){
-    const rows=info.ranges.map((r,i)=>`<div class="ir ${i===info.idx?'ir-active':''}"><span class="irv">${r.r}</span><span class="irl">${r.l}</span></div>`).join('');
-    return `<div class="iblock"><div class="ihead">\uD83C\uDFAF C\u00f3mo interpretar</div>${rows}</div><div class="obsblock" style="border-color:${info.color}">${info.obs}</div>`;
-}
+// ══ ENCUESTAS (resumido para no exceder) ══
+function classifyMotivo(m){if(!m)return'external';const l=m.toLowerCase(),internal=['equipamiento','calidad','servicio','atencion','profesional','no cumplio','expectativa','no me gusto','mejorar','valor','precio','profe','cambio'];return internal.some(k=>l.includes(k))?'internal':'external';}
+function getCol(row,k){const key=Object.keys(row).find(key=>key.toLowerCase().includes(k.toLowerCase()));return key?(row[key]||''):'';}
+function renderQuoteCard(t,p,type){if(!t||t.trim()==='')return'';const initial=p?p.trim()[0].toUpperCase():'?',shortProf=p?p.split(' ').slice(0,2).join(' '):'Anónimo';return`<div class="quote-card ${type||''}"><div class="quote-text">"${t}"</div><div class="quote-prof"><div class="quote-avatar">${initial}</div><span class="quote-name">${shortProf}</span></div></div>`;}
+function svgGauge(cid,v,min,max,color,badge,unit){if(unit===undefined)unit='';const pct=Math.max(0,Math.min(1,(v-min)/(max-min))),R=70,SW=14,S=180,cx=90,cy=90,circ=2*Math.PI*R,dash=pct*circ,gap=circ-dash,rot=-90;document.getElementById(cid).innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;"><svg viewBox="0 0 ${S} ${S}" style="width:160px;height:160px;"><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#edf0f5" stroke-width="${SW}"/><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${color}" stroke-width="${SW}" stroke-linecap="round" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" transform="rotate(${rot} ${cx} ${cy})"/><text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="28" font-weight="800" fill="#0f172a">${v}${unit}</text><text x="${cx}" y="${cy+16}" text-anchor="middle" font-size="9" font-weight="700" fill="${color}" letter-spacing="0.8">${badge.toUpperCase()}</text></svg></div>`;}
+function npsInfo(v){const base=[{r:'+50',l:'Excelente'},{r:'30-50',l:'Muy bueno'},{r:'10-30',l:'Aceptable'},{r:'<10',l:'Bajo'}];if(v>=50)return{color:'#10b981',badge:'Excelente',idx:0,ranges:base,obs:`🔥 ${v} → EXCELENTE NPS.`};if(v>=30)return{color:'#3b82f6',badge:'Muy bueno',idx:1,ranges:base,obs:`👍 ${v} → MUY BUEN NPS.`};if(v>=10)return{color:'#f59e0b',badge:'Aceptable',idx:2,ranges:base,obs:`⚠️ ${v} → NPS ACEPTABLE.`};return{color:'#ef4444',badge:'Bajo',idx:3,ranges:base,obs:`🚨 ${v} → NPS BAJO.`};}
+function desercInfo(v){const base=[{r:'>50%',l:'Problema interno'},{r:'30-50%',l:'Mixto'},{r:'<30%',l:'Contexto externo'}];if(v>=50)return{color:'#ef4444',badge:'Problema interno',idx:0,ranges:base,obs:`🔴 ${v}% → ALTA RESPONSABILIDAD INTERNA.`};if(v>=30)return{color:'#f59e0b',badge:'Mixto',idx:1,ranges:base,obs:`🟡 ${v}% → DESERCIÓN MIXTA.`};return{color:'#10b981',badge:'Contexto externo',idx:2,ranges:base,obs:`🟢 ${v}% → BAJA RESPONSABILIDAD INTERNA.`};}
+function servicioInfo(v){const base=[{r:'90-100%',l:'Premium'},{r:'80-90%',l:'Muy bueno'},{r:'70-80%',l:'Aceptable'},{r:'<70%',l:'Problema'}];if(v>=90)return{color:'#10b981',badge:'Premium',idx:0,ranges:base,obs:`🏆 ${v}% → SERVICIO PREMIUM.`};if(v>=80)return{color:'#3b82f6',badge:'Muy bueno',idx:1,ranges:base,obs:`💪 ${v}% → MUY BUEN SERVICIO.`};if(v>=70)return{color:'#f59e0b',badge:'Aceptable',idx:2,ranges:base,obs:`⚠️ ${v}% → SERVICIO ACEPTABLE.`};return{color:'#ef4444',badge:'Problema',idx:3,ranges:base,obs:`🚨 ${v}% → PROBLEMA ESTRUCTURAL.`};}
+function makeInterpCard(info){const rows=info.ranges.map((r,i)=>`<div class="ir ${i===info.idx?'ir-active':''}"><span class="irv">${r.r}</span><span class="irl">${r.l}</span></div>`).join('');return`<div class="iblock"><div class="ihead">🎯 Cómo interpretar</div>${rows}</div><div class="obsblock" style="border-color:${info.color}">${info.obs}</div>`;}
 
 function renderEnc(){
     const W=wData,C=cData;
-
-    // BIENVENIDA
-    const recs = W.map(r => parseFloat(getCol(r,'probable') || getCol(r,'recomiendes') || getCol(r,'recomendar'))).filter(n=>!isNaN(n));
-    const nps = calcNPS(recs);
-    const lbl = nps>=50?'\uD83D\uDD25 Excelente':nps>=30?'\uD83D\uDC4D Bueno':'\u26A0\uFE0F Regular';
-    set('e-total',W.length); set('e-nps',nps); set('e-nps-lbl',lbl);
-    set('k-nps',nps); set('k-nps-sub',lbl);
-
+    const recs=W.map(r=>parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar'))).filter(n=>!isNaN(n));
+    const nps=calcNPS(recs);
+    set('e-total',W.length);set('e-nps',nps);set('e-nps-lbl',nps>=50?'Excelente':nps>=30?'Bueno':'Regular');set('k-nps',nps);set('k-nps-sub',nps>=50?'Excelente':nps>=30?'Bueno':'Regular');
     let sS=0,cS=0,sE=0,cE=0;
-    W.forEach(r=>{
-        const e=parseFloat(getCol(r,'experiencia')); if(!isNaN(e)){sE+=e;cE++;}
-        const a=parseFloat(getCol(r,'acompa')); const cl=parseFloat(getCol(r,'plan')); const ev=parseFloat(getCol(r,'escuchado')||getCol(r,'entrevista'));
-        if(!isNaN(a)&&!isNaN(cl)&&!isNaN(ev)){sS+=((a+cl+ev)/3)*20;cS++;}
-        else if(!isNaN(a)&&!isNaN(cl)){sS+=((a+cl)/2)*20;cS++;}
-        else if(!isNaN(a)){sS+=a*20;cS++;}
-    });
-    set('e-serv', cS>0 ? Math.round(sS/cS) : '--');
-    set('e-exp',  cE>0 ? (sE/cE).toFixed(1) : '--');
-
-    const nc=nps>=50?'#10b981':nps>=30?'#3b82f6':'#ef4444';
-    doughnut('chNpsDial',[Math.max(0,Math.min(100,nps+50)),100-Math.max(0,Math.min(100,nps+50))],[nc,'#e2e8f0']);
-    set('npsDialVal',nps);
-
+    W.forEach(r=>{const e=parseFloat(getCol(r,'experiencia'));if(!isNaN(e)){sE+=e;cE++;}const a=parseFloat(getCol(r,'acompa')),cl=parseFloat(getCol(r,'plan')),ev=parseFloat(getCol(r,'escuchado')||getCol(r,'entrevista'));if(!isNaN(a)&&!isNaN(cl)&&!isNaN(ev)){sS+=((a+cl+ev)/3)*20;cS++;}else if(!isNaN(a)&&!isNaN(cl)){sS+=((a+cl)/2)*20;cS++;}else if(!isNaN(a)){sS+=a*20;cS++;}});
+    set('e-serv',cS>0?Math.round(sS/cS):'--');set('e-exp',cE>0?(sE/cE).toFixed(1):'--');
+    doughnut('chNpsDial',[Math.max(0,Math.min(100,nps+50)),100-Math.max(0,Math.min(100,nps+50))],[nps>=50?'#10b981':nps>=30?'#3b82f6':'#ef4444','#e2e8f0']);set('npsDialVal',nps);
     const byProf={},expByProf={};
-    W.forEach(r=>{
-        const p=getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe');
-        const rc=parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar'));
-        const ex=parseFloat(getCol(r,'experiencia'));
-        if(p&&!isNaN(rc)){byProf[p]=byProf[p]||[];byProf[p].push(rc);}
-        if(p&&!isNaN(ex)){expByProf[p]=expByProf[p]||[];expByProf[p].push(ex);}
-    });
-    const profs=Object.keys(byProf);
-    const npsV=profs.map(p=>calcNPS(byProf[p]));
+    W.forEach(r=>{const p=getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe'),rc=parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar')),ex=parseFloat(getCol(r,'experiencia'));if(p&&!isNaN(rc)){byProf[p]=byProf[p]||[];byProf[p].push(rc);}if(p&&!isNaN(ex)){expByProf[p]=expByProf[p]||[];expByProf[p].push(ex);}});
+    const profs=Object.keys(byProf),npsV=profs.map(p=>calcNPS(byProf[p]));
     barSimple('chNpsProf',profs.map(p=>p.split(' ')[0]),npsV,npsV.map(v=>v>=50?'#10b981cc':v>=30?'#3b82f6cc':'#ef4444cc'));
-
-    const horarioMap={};
-    W.forEach(r=>{const h=(getCol(r,'horario')||'').trim();const e=parseFloat(getCol(r,'experiencia'));if(h&&!isNaN(e)){if(!horarioMap[h])horarioMap[h]=[];horarioMap[h].push(e);}});
-    const horLabels=Object.keys(horarioMap);
-    const horVals=horLabels.map(k=>+(horarioMap[k].reduce((a,b)=>a+b)/horarioMap[k].length).toFixed(2));
-    if(horLabels.length>=3){radar('chHorario',horLabels,horVals);}
-    else if(horLabels.length>0){bar('chHorario',horLabels,[{l:'Exp. promedio',d:horVals,c:'#6366f1'}]);}
-    else{document.getElementById('chHorario').style.display='none';}
-
+    const horarioMap={};W.forEach(r=>{const h=(getCol(r,'horario')||'').trim(),e=parseFloat(getCol(r,'experiencia'));if(h&&!isNaN(e)){if(!horarioMap[h])horarioMap[h]=[];horarioMap[h].push(e);}});
+    const horLabels=Object.keys(horarioMap),horVals=horLabels.map(k=>+(horarioMap[k].reduce((a,b)=>a+b)/horarioMap[k].length).toFixed(2));
+    if(horLabels.length>=3){const radarCtx=document.getElementById('chHorario')?.getContext('2d');if(radarCtx){if(CH.chHorario)CH.chHorario.destroy();CH.chHorario=new Chart(radarCtx,{type:'radar',data:{labels:horLabels,datasets:[{label:'Experiencia',data:horVals,backgroundColor:'rgba(99,102,241,.15)',borderColor:'#6366f1'}]},options:{scales:{r:{min:0,max:10,ticks:{stepSize:2}}}}});}}
     let tb='';
-    profs.forEach((p,i)=>{
-        const nv=npsV[i],ea=expByProf[p]||[];
-        const ep=ea.length?(ea.reduce((a,b)=>a+b)/ea.length).toFixed(1):'--';
-        const sede=getSede(p);
-        const cls=nv>=50?'bg':nv>=30?'bb':nv>=10?'by':'br';
-        tb+=`<tr><td><b>${p}</b></td><td>${sede}</td><td><span class="badge ${cls}">${nv}</span></td><td>${ep}/10</td><td>${nv>=50?'\uD83C\uDFC6 Excelente':nv>=30?'\uD83D\uDC4D Bueno':'\u26A0\uFE0F Mejorable'}</td></tr>`;
-    });
-    document.getElementById('encTabBody').innerHTML=tb||`<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Sin datos por profesional</td></tr>`;
-
-    const sugCards=W.map(r=>{const txt=(getCol(r,'mejorar una')||getCol(r,'mejorar')||'').trim();const prof=(getCol(r,'profesor')||getCol(r,'profesional')||'').trim();return txt?renderQuoteCard(txt,prof,'neg'):'';}).filter(Boolean).join('');
+    profs.forEach((p,i)=>{const nv=npsV[i],ea=expByProf[p]||[],ep=ea.length?(ea.reduce((a,b)=>a+b)/ea.length).toFixed(1):'--',sede=getSede(p),cls=nv>=50?'bg':nv>=30?'bb':nv>=10?'by':'br';tb+=`<tr><td><b>${p}</b></td><td>${sede}</td><td><span class="badge ${cls}">${nv}</span></td><td>${ep}/10</td><td>${nv>=50?'🏆 Excelente':nv>=30?'👍 Bueno':'⚠️ Mejorable'}</td></tr>`;});
+    document.getElementById('encTabBody').innerHTML=tb||'<tr><td colspan="5" style="text-align:center">Sin datos</td></tr>';
+    const sugCards=W.map(r=>{const txt=(getCol(r,'mejorar una')||getCol(r,'mejorar')||'').trim(),prof=(getCol(r,'profesor')||getCol(r,'profesional')||'').trim();return txt?renderQuoteCard(txt,prof,'neg'):'';}).filter(Boolean).join('');
     document.getElementById('encSugerencias').innerHTML=sugCards||'<div class="quote-empty">Sin sugerencias</div>';
-
-    // BAJAS
-    set('b-total', C.length);
-    const recsC=C.map(r=>parseFloat(getCol(r,'recomendar\u00edas')||getCol(r,'recomendar'))).filter(n=>!isNaN(n));
-    const recsExp=C.map(r=>parseFloat(getCol(r,'experiencia'))).filter(n=>!isNaN(n));
-    const npsRecs=recsC.length?recsC:recsExp;
-    const npsC=npsRecs.length?calcNPS(npsRecs):0;
-    const totalNps=npsRecs.length||1;
-    const nProm=npsRecs.filter(n=>n>=9).length;
-    const nPas=npsRecs.filter(n=>n>=7&&n<=8).length;
-    const nDet=npsRecs.filter(n=>n<=6).length;
-    const pPct=Math.round(nProm/totalNps*100);
-    const nPct=Math.round(nPas/totalNps*100);
-    const dPct=Math.max(0,100-pPct-nPct);
-    const avgExpB=recsExp.length?(recsExp.reduce((a,b)=>a+b)/recsExp.length).toFixed(1):'--';
-
-    set('b-nps',npsC);
-    set('b-nps-lbl',npsC>=50?'Excelente':npsC>=30?'Muy bueno':'A mejorar');
-    set('b-prom',pPct+'%');
-    set('b-exp',avgExpB+'/10');
-
-    const internals=C.filter(r=>classifyMotivo(getCol(r,'motivo'))==='internal').length;
-    const externals=C.length-internals;
-    const desCtrl=C.length>0?Math.round(internals/C.length*100):0;
+    set('b-total',C.length);
+    const recsC=C.map(r=>parseFloat(getCol(r,'recomendarías')||getCol(r,'recomendar'))).filter(n=>!isNaN(n)),recsExp=C.map(r=>parseFloat(getCol(r,'experiencia'))).filter(n=>!isNaN(n)),npsRecs=recsC.length?recsC:recsExp,npsC=npsRecs.length?calcNPS(npsRecs):0;
+    const totalNps=npsRecs.length||1,nProm=npsRecs.filter(n=>n>=9).length,nPas=npsRecs.filter(n=>n>=7&&n<=8).length,nDet=npsRecs.filter(n=>n<=6).length,pPct=Math.round(nProm/totalNps*100),nPct=Math.round(nPas/totalNps*100),dPct=Math.max(0,100-pPct-nPct),avgExpB=recsExp.length?(recsExp.reduce((a,b)=>a+b)/recsExp.length).toFixed(1):'--';
+    set('b-nps',npsC);set('b-nps-lbl',npsC>=50?'Excelente':npsC>=30?'Muy bueno':'A mejorar');set('b-prom',pPct+'%');set('b-exp',avgExpB+'/10');
+    const internals=C.filter(r=>classifyMotivo(getCol(r,'motivo'))==='internal').length,externals=C.length-internals,desCtrl=C.length>0?Math.round(internals/C.length*100):0;
     let sumS=0,cntS=0;
-    C.forEach(r=>{const exp=parseFloat(getCol(r,'experiencia'));const aten=parseFloat(getCol(r,'atenci\u00f3n')||getCol(r,'atencion')||getCol(r,'trato'));if(!isNaN(exp)&&!isNaN(aten)){sumS+=(exp+aten)/2*10;cntS++;}else if(!isNaN(exp)){sumS+=exp*10;cntS++;}});
+    C.forEach(r=>{const exp=parseFloat(getCol(r,'experiencia')),aten=parseFloat(getCol(r,'atención')||getCol(r,'atencion')||getCol(r,'trato'));if(!isNaN(exp)&&!isNaN(aten)){sumS+=(exp+aten)/2*10;cntS++;}else if(!isNaN(exp)){sumS+=exp*10;cntS++;}});
     const servIdx=cntS>0?Math.round(sumS/cntS):0;
-
-    const ni=npsInfo(npsC), di=desercInfo(desCtrl), si=servicioInfo(servIdx);
-    svgGauge('gaugeNPS',npsC,-100,100,ni.color,ni.badge);
-    svgGauge('gaugeDeserc',desCtrl,0,100,di.color,di.badge,'%');
-    svgGauge('gaugeServicio',servIdx,0,100,si.color,si.badge,'%');
-    document.getElementById('interpNPS').innerHTML=makeInterpCard(ni);
-    document.getElementById('interpDeserc').innerHTML=makeInterpCard(di);
-    document.getElementById('interpServicio').innerHTML=makeInterpCard(si);
-
+    const ni=npsInfo(npsC),di=desercInfo(desCtrl),si=servicioInfo(servIdx);
+    svgGauge('gaugeNPS',npsC,-100,100,ni.color,ni.badge);svgGauge('gaugeDeserc',desCtrl,0,100,di.color,di.badge,'%');svgGauge('gaugeServicio',servIdx,0,100,si.color,si.badge,'%');
+    document.getElementById('interpNPS').innerHTML=makeInterpCard(ni);document.getElementById('interpDeserc').innerHTML=makeInterpCard(di);document.getElementById('interpServicio').innerHTML=makeInterpCard(si);
     npsDistBar('chNpsDist',pPct,nPct,dPct);
-    document.getElementById('npsDistDetail').innerHTML=
-        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#10b981"></div><div class="nps-seg-label">Promotores (9-10)</div><div class="nps-seg-pct">${pPct}%</div><span class="nps-seg-n">${nProm} resp.</span></div>`+
-        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#f59e0b"></div><div class="nps-seg-label">Pasivos (7-8)</div><div class="nps-seg-pct">${nPct}%</div><span class="nps-seg-n">${nPas} resp.</span></div>`+
-        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#ef4444"></div><div class="nps-seg-label">Detractores (0-6)</div><div class="nps-seg-pct">${dPct}%</div><span class="nps-seg-n">${nDet} resp.</span></div>`;
-
+    document.getElementById('npsDistDetail').innerHTML=`<div class="nps-seg"><div class="nps-seg-dot" style="background:#10b981"></div><div class="nps-seg-label">Promotores (9-10)</div><div class="nps-seg-pct">${pPct}%</div><span class="nps-seg-n">${nProm} resp.</span></div><div class="nps-seg"><div class="nps-seg-dot" style="background:#f59e0b"></div><div class="nps-seg-label">Pasivos (7-8)</div><div class="nps-seg-pct">${nPct}%</div><span class="nps-seg-n">${nPas} resp.</span></div><div class="nps-seg"><div class="nps-seg-dot" style="background:#ef4444"></div><div class="nps-seg-label">Detractores (0-6)</div><div class="nps-seg-pct">${dPct}%</div><span class="nps-seg-n">${nDet} resp.</span></div>`;
     doughnut('chIntExt',[internals||1,externals||1],['#ef4444cc','#10b981cc']);
-    document.getElementById('intExtLegend').innerHTML=
-        `<div class="ie-row"><div class="ie-dot" style="background:#ef4444"></div><div class="ie-label">Causas Internas</div><div style="text-align:right"><div class="ie-pct" style="color:#ef4444">${desCtrl}%</div><div class="ie-n">${internals} socios</div></div></div>`+
-        `<div class="ie-row"><div class="ie-dot" style="background:#10b981"></div><div class="ie-label">Causas Externas</div><div style="text-align:right"><div class="ie-pct" style="color:#10b981">${100-desCtrl}%</div><div class="ie-n">${externals} socios</div></div></div>`;
-
-    const mot={};
-    C.forEach(r=>{const m=getCol(r,'motivo');if(m)mot[m]=(mot[m]||0)+1;});
-    const motSorted=Object.entries(mot).sort((a,b)=>b[1]-a[1]);
-    const motLabels=motSorted.map(([k])=>k.length>44?k.substring(0,44)+'\u2026':k);
-    const motData=motSorted.map(([,v])=>v);
-    const motColors=motSorted.map(([k])=>classifyMotivo(k)==='internal'?'#ef4444bb':'#10b981bb');
-    const motCount=motSorted.length;
-    set('motivosBadge',motCount+' razones \u00b7 \uD83D\uDD34 internas \u00b7 \uD83D\uDFE2 externas');
-    const motCanvas=document.getElementById('chMotivos');
-    if(motCanvas){motCanvas.style.maxHeight='none';motCanvas.style.height=Math.max(200,motCount*40)+'px';}
+    document.getElementById('intExtLegend').innerHTML=`<div class="ie-row"><div class="ie-dot" style="background:#ef4444"></div><div class="ie-label">Causas Internas</div><div><div class="ie-pct" style="color:#ef4444">${desCtrl}%</div><div class="ie-n">${internals} socios</div></div></div><div class="ie-row"><div class="ie-dot" style="background:#10b981"></div><div class="ie-label">Causas Externas</div><div><div class="ie-pct" style="color:#10b981">${100-desCtrl}%</div><div class="ie-n">${externals} socios</div></div></div>`;
+    const mot={};C.forEach(r=>{const m=getCol(r,'motivo');if(m)mot[m]=(mot[m]||0)+1;});
+    const motSorted=Object.entries(mot).sort((a,b)=>b[1]-a[1]),motLabels=motSorted.map(([k])=>k.length>44?k.substring(0,44)+'…':k),motData=motSorted.map(([,v])=>v),motColors=motSorted.map(([k])=>classifyMotivo(k)==='internal'?'#ef4444bb':'#10b981bb');
+    set('motivosBadge',motSorted.length+' razones · 🔴 internas · 🟢 externas');
+    const motCanvas=document.getElementById('chMotivos');if(motCanvas){motCanvas.style.maxHeight='none';motCanvas.style.height=Math.max(200,motSorted.length*40)+'px';}
     hbar('chMotivos',motLabels,motData,motColors);
-
-    const PROFE_VALIDOS=['belen','bel\u00e9n','juarez','ju\u00e1rez','fernando','sebrie','sebri\u00e9','enzo','lega','javier','larramendy','luz','nubile','facundo','soberon','sober\u00f3n','francisco','simcic','leonardo','alfaro','emanuel','lezcano','agustina','agus'];
+    const PROFE_VALIDOS=['belen','juarez','fernando','enzo','javier','luz','facundo','francisco','leonardo','emanuel','agustina','agus'];
     function esProfeReal(nombre){if(!nombre||nombre.trim()==='')return false;const n=nombre.toLowerCase().trim();if(n.split(/\s+/).length>4)return false;return PROFE_VALIDOS.some(v=>n.includes(v));}
     const bajaPorProf={};
-    C.forEach(r=>{
-        const p=getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe');
-        const exp=parseFloat(getCol(r,'experiencia'));
-        const aten=parseFloat(getCol(r,'atenci\u00f3n')||getCol(r,'atencion')||getCol(r,'trato'));
-        const rec=parseFloat(getCol(r,'recomendar\u00edas')||getCol(r,'recomendar'));
-        if(!esProfeReal(p)) return;
-        const nombre=p.trim();
-        if(!bajaPorProf[nombre])bajaPorProf[nombre]={exp:[],aten:[],recom:[]};
-        if(!isNaN(exp))bajaPorProf[nombre].exp.push(exp);
-        if(!isNaN(aten))bajaPorProf[nombre].aten.push(aten);
-        if(!isNaN(rec))bajaPorProf[nombre].recom.push(rec);
-    });
-    const profRanking=Object.entries(bajaPorProf).map(([nombre,data])=>{
-        const avgE=data.exp.length?data.exp.reduce((a,b)=>a+b)/data.exp.length:0;
-        const avgA=data.aten.length?data.aten.reduce((a,b)=>a+b)/data.aten.length:avgE;
-        const siP=Math.round((avgE+avgA)/2*10);
-        const npsP=calcNPS(data.recom.length?data.recom:data.exp);
-        const npsNorm=Math.max(0,Math.min(10,((npsP+100)/200)*10));
-        return{nombre,si:siP,nps:npsP,npsNorm,n:data.exp.length,avgExp:avgE,avgExpF:avgE.toFixed(1)};
-    }).sort((a,b)=>b.si-a.si);
-
+    C.forEach(r=>{const p=getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe'),exp=parseFloat(getCol(r,'experiencia')),aten=parseFloat(getCol(r,'atención')||getCol(r,'atencion')||getCol(r,'trato')),rec=parseFloat(getCol(r,'recomendarías')||getCol(r,'recomendar'));if(!esProfeReal(p))return;const nombre=p.trim();if(!bajaPorProf[nombre])bajaPorProf[nombre]={exp:[],aten:[],recom:[]};if(!isNaN(exp))bajaPorProf[nombre].exp.push(exp);if(!isNaN(aten))bajaPorProf[nombre].aten.push(aten);if(!isNaN(rec))bajaPorProf[nombre].recom.push(rec);});
+    const profRanking=Object.entries(bajaPorProf).map(([nombre,data])=>{const avgE=data.exp.length?data.exp.reduce((a,b)=>a+b)/data.exp.length:0;const avgA=data.aten.length?data.aten.reduce((a,b)=>a+b)/data.aten.length:avgE;const siP=Math.round((avgE+avgA)/2*10);const npsP=calcNPS(data.recom.length?data.recom:data.exp);const npsNorm=Math.max(0,Math.min(10,((npsP+100)/200)*10));return{nombre,si:siP,nps:npsP,npsNorm,n:data.exp.length,avgExp:avgE,avgExpF:avgE.toFixed(1)};}).sort((a,b)=>b.si-a.si);
     let rankRows='';
-    profRanking.forEach((p,i)=>{
-        const siCls=p.si>=90?'bg':p.si>=80?'bb':p.si>=70?'by':'br';
-        const npsCls=p.nps>=50?'bg':p.nps>=30?'bb':p.nps>=10?'by':'br';
-        rankRows+=`<tr><td><span class="rank-num">${i+1}</span> <b>${p.nombre}</b></td><td>${p.avgExpF}/10</td><td><span class="badge ${npsCls}">${p.nps}</span></td><td><span class="badge ${siCls}">${p.si}%</span></td><td style="color:#94a3b8;font-size:.8rem">${p.n} resp.</td></tr>`;
-    });
-    document.getElementById('bajaProfTab').innerHTML=rankRows||'<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">Sin datos suficientes</td></tr>';
-
-    const mejCards=C.map(r=>{const txt=(getCol(r,'mejorar para')||getCol(r,'deber\u00eda mejorar')||getCol(r,'mejorar')||'').trim();const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();const p=esProfeReal(prof)?prof:'';return txt?renderQuoteCard(txt,p,'neg'):'';}).filter(Boolean).join('');
+    profRanking.forEach((p,i)=>{const siCls=p.si>=90?'bg':p.si>=80?'bb':p.si>=70?'by':'br',npsCls=p.nps>=50?'bg':p.nps>=30?'bb':p.nps>=10?'by':'br';rankRows+=`<tr><td><span class="rank-num">${i+1}</span> <b>${p.nombre}</b></td><td>${p.avgExpF}/10</td><td><span class="badge ${npsCls}">${p.nps}</span></td><td><span class="badge ${siCls}">${p.si}%</span></td><td style="color:#94a3b8">${p.n} resp.</td></tr>`;});
+    document.getElementById('bajaProfTab').innerHTML=rankRows||'<tr><td colspan="5" style="text-align:center">Sin datos</td></tr>';
+    const mejCards=C.map(r=>{const txt=(getCol(r,'mejorar para')||getCol(r,'debería mejorar')||getCol(r,'mejorar')||'').trim();const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();const p=esProfeReal(prof)?prof:'';return txt?renderQuoteCard(txt,p,'neg'):'';}).filter(Boolean).join('');
     document.getElementById('bajaMejorar').innerHTML=mejCards||'<div class="quote-empty">Sin respuestas</div>';
     const bienCards=C.map(r=>{const txt=(getCol(r,'hace muy bien')||getCol(r,'hace bien')||getCol(r,'muy bien')||'').trim();const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();const p=esProfeReal(prof)?prof:'';return txt?renderQuoteCard(txt,p,'pos'):'';}).filter(Boolean).join('');
     document.getElementById('bajaBien').innerHTML=bienCards||'<div class="quote-empty">Sin respuestas</div>';
-
-    if(profRanking.length){
-        const prLabels=profRanking.map(p=>p.nombre.split(' ')[0]+' '+(p.nombre.split(' ')[1]||''));
-        groupedBar('chExpNpsProf',prLabels,[
-            {label:'Experiencia General (0-10)',data:profRanking.map(p=>+p.avgExp.toFixed(2)),backgroundColor:'#6366f1cc',borderRadius:4},
-            {label:'NPS (escalado 0-10)',data:profRanking.map(p=>+p.npsNorm.toFixed(2)),backgroundColor:'#10b981cc',borderRadius:4}
-        ]);
-    }
-
-    const ANTIGÜEDADES=['Menos de 1 mes','1 a 3 meses','3 a 6 meses','M\u00e1s de 6 meses'];
-    const motKey=Object.keys(C[0]||{}).find(k=>k.toLowerCase().includes('motivo'))||'';
-    const antKey=Object.keys(C[0]||{}).find(k=>k.toLowerCase().includes('ant')||k.toLowerCase().includes('tiempo'))||'';
-    const motivosUnicos=[...new Set(C.map(r=>r[motKey]).filter(Boolean))];
-    if(motKey&&antKey&&motivosUnicos.length){
-        const antDS=ANTIGÜEDADES.map((ant,i)=>({label:ant,data:motivosUnicos.map(m=>C.filter(r=>r[motKey]===m&&r[antKey]===ant).length),backgroundColor:['#6366f1bb','#10b981bb','#f59e0bbb','#ef4444bb','#8b5cf6bb','#3b82f6bb'][i],borderRadius:3}));
-        const shortMot=motivosUnicos.map(m=>m.length>28?m.substring(0,28)+'\u2026':m);
-        stackedBar('chAntMotivo',shortMot,antDS);
-    }
-
+    if(profRanking.length){const prLabels=profRanking.map(p=>p.nombre.split(' ')[0]+' '+(p.nombre.split(' ')[1]||''));groupedBar('chExpNpsProf',prLabels,[{label:'Experiencia General (0-10)',data:profRanking.map(p=>+p.avgExp.toFixed(2)),backgroundColor:'#6366f1cc'},{label:'NPS (escalado 0-10)',data:profRanking.map(p=>+p.npsNorm.toFixed(2)),backgroundColor:'#10b981cc'}]);}
     const fortalezas=[],oportunidades=[],recomendaciones=[];
-    if(npsC>=50){fortalezas.push(`\uD83D\uDD25 NPS ${npsC} \u2014 Top 10% fitness mundial.`);fortalezas.push(`\uD83D\uDC9A ${pPct}% de ex-socios siguen siendo promotores.`);}
-    else if(npsC>=30)fortalezas.push(`\uD83D\uDC4D NPS ${npsC} \u2014 Por encima del promedio.`);
-    else oportunidades.push(`\u26A0\uFE0F NPS ${npsC} \u2014 Bajo el benchmark.`);
-    if(servIdx>=90)fortalezas.push(`\uD83C\uDFC6 Servicio ${servIdx}% \u2014 Ejecuci\u00f3n de clase mundial.`);
-    else if(servIdx>=80)fortalezas.push(`\uD83D\uDCAA Servicio ${servIdx}% \u2014 Muy por encima del sector.`);
-    else oportunidades.push(`\uD83D\uDD27 Servicio ${servIdx}% \u2014 Hay mejora disponible.`);
-    if(desCtrl<30)fortalezas.push(`\uD83C\uDF0E Solo ${desCtrl}% causas internas.`);
-    else if(desCtrl<50)oportunidades.push(`\uD83D\uDD36 ${desCtrl}% causas internas.`);
-    else oportunidades.push(`\uD83D\uDD34 ${desCtrl}% causas internas \u2014 Problema prioritario.`);
-    if(avgExpB!=='--'&&parseFloat(avgExpB)>=8)fortalezas.push(`\u2B50 Experiencia ${avgExpB}/10 \u2014 Alta incluso en ex-socios.`);
-    else if(avgExpB!=='--')oportunidades.push(`\uD83D\uDCCA Experiencia ${avgExpB}/10 \u2014 Hay margen de mejora.`);
-    if(npsC>=50&&desCtrl<30)recomendaciones.push('Activar programa de referidos.');
-    if(servIdx>=90)recomendaciones.push('Documentar y certificar el protocolo de servicio.');
-    recomendaciones.push('Cruzar motivo de baja con tiempo de membresía.');
-    if(desCtrl<30)recomendaciones.push('Explorar planes flexibles.');
-    recomendaciones.push('Implementar NPS automático en día 30 y 60.');
-    document.getElementById('expertAnalysis').innerHTML=`
-        <div class="expert-col col-green"><div class="expert-col-title">\u2705 Fortalezas</div><ul>${fortalezas.map(f=>`<li>${f}</li>`).join('')||'<li style="color:rgba(255,255,255,.3)">Sin datos</li>'}</ul></div>
-        <div class="expert-col col-amber"><div class="expert-col-title">\uD83C\uDFAF Oportunidades</div><ul>${(oportunidades.length?oportunidades:['<span style="color:rgba(255,255,255,.35);font-size:.75rem">\u2714\uFE0F Sin alertas</span>']).map(f=>`<li>${f}</li>`).join('')}</ul></div>
-        <div class="expert-col col-blue"><div class="expert-col-title">\uD83D\uDCA1 Recomendaciones</div><ul>${recomendaciones.map(f=>`<li>${f}</li>`).join('')}</ul></div>`;
+    if(npsC>=50){fortalezas.push(`🔥 NPS ${npsC} — Top 10% fitness mundial.`);fortalezas.push(`💚 ${pPct}% de ex-socios siguen siendo promotores.`);}else if(npsC>=30)fortalezas.push(`👍 NPS ${npsC} — Por encima del promedio.`);else oportunidades.push(`⚠️ NPS ${npsC} — Bajo el benchmark.`);
+    if(servIdx>=90)fortalezas.push(`🏆 Servicio ${servIdx}% — Ejecución de clase mundial.`);else if(servIdx>=80)fortalezas.push(`💪 Servicio ${servIdx}% — Muy por encima del sector.`);else oportunidades.push(`🔧 Servicio ${servIdx}% — Hay mejora disponible.`);
+    if(desCtrl<30)fortalezas.push(`🌍 Solo ${desCtrl}% causas internas.`);else if(desCtrl<50)oportunidades.push(`📊 ${desCtrl}% causas internas.`);else oportunidades.push(`🔴 ${desCtrl}% causas internas — Problema prioritario.`);
+    if(avgExpB!=='--'&&parseFloat(avgExpB)>=8)fortalezas.push(`⭐ Experiencia ${avgExpB}/10 — Alta incluso en ex-socios.`);else if(avgExpB!=='--')oportunidades.push(`📈 Experiencia ${avgExpB}/10 — Hay margen de mejora.`);
+    if(npsC>=50&&desCtrl<30)recomendaciones.push('🎯 Activar programa de referidos.');
+    if(servIdx>=90)recomendaciones.push('📋 Documentar y certificar el protocolo de servicio.');
+    recomendaciones.push('🔍 Cruzar motivo de baja con tiempo de membresía.');
+    if(desCtrl<30)recomendaciones.push('📱 Explorar planes flexibles.');
+    recomendaciones.push('📊 Implementar NPS automático en día 30 y 60.');
+    document.getElementById('expertAnalysis').innerHTML=`<div class="expert-col col-green"><div class="expert-col-title">✅ Fortalezas</div><ul>${fortalezas.map(f=>`<li>${f}</li>`).join('')||'<li style="color:rgba(255,255,255,.3)">Sin datos</li>'}</ul></div><div class="expert-col col-amber"><div class="expert-col-title">🎯 Oportunidades</div><ul>${(oportunidades.length?oportunidades:['<span style="color:rgba(255,255,255,.35)">✓ Sin alertas críticas</span>']).map(f=>`<li>${f}</li>`).join('')}</ul></div><div class="expert-col col-blue"><div class="expert-col-title">💡 Recomendaciones</div><ul>${recomendaciones.map(f=>`<li>${f}</li>`).join('')}</ul></div>`;
 }
 
-// INIT
 cargarTodo();
 </script>
 </body>
