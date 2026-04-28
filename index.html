@@ -283,8 +283,10 @@ tr:hover td{background:#fafbfc;}
 .estado-info{display:flex;flex-direction:column;gap:2px;}
 .estado-nombre{font-size:.95rem;font-weight:700;color:var(--text);}
 .estado-label{font-size:.8rem;font-weight:600;}
+.estado-activos{font-size:.72rem;font-weight:600;color:var(--muted);margin-top:1px;}
 
 /* ── VS 2025 / 2026 ── */
+.vs-sede-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;padding-left:2px;}
 .versus-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
 .vs-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow);}
 .vs-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
@@ -800,6 +802,17 @@ const BARILOCHE_PROFES = [
 // Columnas de meses en planilla Bariloche: C=1,D=2,E=3,F=4,[G skip],H=6,I=7,J=8,K=9,[L skip],M=11,N=12,O=13,P=14 (offset desde col B)
 const BARI_MONTH_COLS = [1,2,3,4,6,7,8,9,11,12,13,14];
 
+const SHEET_METRICS_ID  = '14FQBk6AThswAUZ65mFzyeObepuMhng9K8EqWKpCZZxk';
+const SHEET_METRICS_GID = '1303962381';
+// VS pairs: [nombre26, ri26altas, ri26deseRc, nombre25, ri25altas, sede]
+const VS_PAIRS = [
+    {n26:'Belu',  ri26:2,  riD26:6,  n25:'Fran',  ri25:1,  sede:'El Bolsón'},
+    {n26:'Fer',   ri26:11, riD26:15, n25:'Belu',  ri25:10, sede:'El Bolsón'},
+    {n26:'Enzo',  ri26:20, riD26:24, n25:'Enzo',  ri25:19, sede:'El Bolsón'},
+    {n26:'Javi',  ri26:28, riD26:32, n25:'Luz',   ri25:27, sede:'Lago Puelo'},
+    {n26:'Agus',  ri26:36, riD26:40, n25:'Facu',  ri25:35, sede:'Lago Puelo'},
+];
+
 // Intercept Google gviz format
 const _sheetCBs = {};
 window.google = { visualization: { Query: { setResponse: function(data) {
@@ -807,13 +820,13 @@ window.google = { visualization: { Query: { setResponse: function(data) {
     if (cb) { delete _sheetCBs[data.reqId]; cb(data); }
 }}}};
 
-let CH = {}, planData = null, wData = [], cData = [], bariData = [];
+let CH = {}, planData = null, wData = [], cData = [], bariData = [], metricsData = null;
 
 // cargarTodo with 10s safety timeout
 async function cargarTodo() {
     const hideTimer = setTimeout(() => { document.getElementById('loadOv').style.display='none'; }, 10000);
     document.getElementById('refreshIco').className = 'fas fa-spinner fa-spin';
-    await Promise.allSettled([loadPlanillas(), loadEncuestas(), loadBariloche()]);
+    await Promise.allSettled([loadPlanillas(), loadEncuestas(), loadBariloche(), loadMetrics()]);
     clearTimeout(hideTimer);
     renderEstado();
     renderVersus();
@@ -920,6 +933,69 @@ function parseBariData(json, nombre) {
         histBajas:  months.map(m => m.baja),
         histDeserc: months.map(m => m.deseRc),
     };
+}
+
+// ══ METRICS — Estado del Gym + VS 2025 vs 2026 ══
+function loadMetrics() {
+    const reqId = 'metrics_main';
+    return new Promise(resolve => {
+        const timer = setTimeout(() => { delete _sheetCBs[reqId]; resolve(); }, 15000);
+        _sheetCBs[reqId] = r => {
+            clearTimeout(timer);
+            metricsData = parseMetrics(r);
+            resolve();
+        };
+        const s = document.createElement('script');
+        s.onerror = () => { clearTimeout(timer); delete _sheetCBs[reqId]; resolve(); };
+        s.src = `https://docs.google.com/spreadsheets/d/${SHEET_METRICS_ID}/gviz/tq?tqx=out:json;reqId:${reqId}&headers=0&gid=${SHEET_METRICS_GID}&range=A1:T55`;
+        document.body.appendChild(s);
+    });
+}
+
+function parseMetrics(json) {
+    if (!json || !json.table || !json.table.rows) return null;
+    const rows = json.table.rows;
+    const cell = (ri, ci) => {
+        try {
+            const c = rows[ri] && rows[ri].c && rows[ri].c[ci];
+            if (!c) return 0;
+            const v = (c.v !== null && c.v !== undefined) ? c.v : c.f;
+            const n = parseFloat(v);
+            return isNaN(n) ? 0 : n;
+        } catch(e) { return 0; }
+    };
+    // Detect current month: last ci (1-12) where Belu 2026 altas (ri=2) > 0
+    let currentMesIdx = 0;
+    for (let ci = 1; ci <= 12; ci++) {
+        if (cell(2, ci) > 0) currentMesIdx = ci - 1;
+    }
+    // VS pairs: extract 12 months of altas25, altas26, and current %deseRc
+    const vs = VS_PAIRS.map(p => {
+        const altas25 = Array.from({length:12}, (_, i) => cell(p.ri25, i+1));
+        const altas26 = Array.from({length:12}, (_, i) => cell(p.ri26, i+1));
+        const deseRc26 = Array.from({length:12}, (_, i) => cell(p.riD26, i+1));
+        return { n26: p.n26, n25: p.n25, sede: p.sede, altas25, altas26, deseRc26 };
+    });
+    // Estado: rows 14–18 have pre-computed stats per profe
+    // ci=14=nombre(str), ci=15=avg%Deserc, ci=16=rank, ci=17=activos, ci=18=status(str)
+    const cellStr = (ri, ci) => {
+        try {
+            const c = rows[ri] && rows[ri].c && rows[ri].c[ci];
+            if (!c) return '';
+            return String(c.v !== null && c.v !== undefined ? c.v : (c.f || '')).trim();
+        } catch(e) { return ''; }
+    };
+    const estado = [];
+    for (let ri = 14; ri <= 18; ri++) {
+        const nombre = cellStr(ri, 14);
+        if (!nombre) continue;
+        let avgD = cell(ri, 15);
+        if (avgD <= 1 && avgD > 0) avgD = avgD * 100; // convert decimal → percent
+        const activos = cell(ri, 17);
+        const sede = ['Belu','Fer','Enzo'].includes(nombre) ? 'El Bolsón' : 'Lago Puelo';
+        estado.push({ nombre, avgD, activos, sede });
+    }
+    return { currentMesIdx, vs, estado };
 }
 
 function demoData() {
@@ -1216,35 +1292,54 @@ function renderBariMesKpis(m) {
 function renderEstado() {
     const SEDES_ORDER = ['El Bolsón','Lago Puelo','Bariloche'];
     const bySedeMap = {};
-    // Bolsón + Puelo desde planData
-    if(planData) {
+
+    // Bolsón + Puelo desde metricsData (datos vivos de planilla métricas)
+    if (metricsData && metricsData.estado.length) {
+        metricsData.estado.forEach(p => {
+            if (!bySedeMap[p.sede]) bySedeMap[p.sede] = [];
+            bySedeMap[p.sede].push({ nombre: p.nombre, avgD: p.avgD, activos: p.activos });
+        });
+    } else if (planData) {
+        // fallback a planData si metrics no cargó
         planData.profes.forEach(p => {
             const sede = getSede(p.nombre);
             const desArr = p.histDeserc26.filter(v => v > 0);
             const avgD = desArr.length ? desArr.reduce((a,b)=>a+b,0)/desArr.length*100 : 0;
-            if(!bySedeMap[sede]) bySedeMap[sede] = [];
-            bySedeMap[sede].push({ nombre: p.nombre.split(' ')[0], avgD });
+            if (!bySedeMap[sede]) bySedeMap[sede] = [];
+            bySedeMap[sede].push({ nombre: p.nombre.split(' ')[0], avgD, activos: p.activos });
         });
     }
-    // Bariloche desde bariData
+
+    // Bariloche desde bariData (sus planillas propias)
     bariData.forEach(p => {
         const desArr = p.histDeserc.filter(v => v > 0);
         const avgD = desArr.length ? desArr.reduce((a,b)=>a+b,0)/desArr.length*100 : 0;
-        if(!bySedeMap['Bariloche']) bySedeMap['Bariloche'] = [];
-        bySedeMap['Bariloche'].push({ nombre: p.nombre.split(' ')[0], avgD });
+        if (!bySedeMap['Bariloche']) bySedeMap['Bariloche'] = [];
+        bySedeMap['Bariloche'].push({ nombre: p.nombre.split(' ')[0], avgD, activos: p.activos });
     });
+
+    const estadoRow = (p) => {
+        let emoji, label, color;
+        if (p.avgD < 15)      { emoji='🟢'; label='Deserción bajo control'; color='#10b981'; }
+        else if (p.avgD < 25) { emoji='🟡'; label='Deserción moderada';      color='#f59e0b'; }
+        else                  { emoji='🔴'; label='Deserción crítica';        color='#ef4444'; }
+        const activosStr = p.activos > 0 ? `<span class="estado-activos">${p.activos} activos</span>` : '';
+        return `<div class="estado-row">
+            <span class="estado-emoji">${emoji}</span>
+            <div class="estado-info">
+                <span class="estado-nombre">${p.nombre}</span>
+                <span class="estado-label" style="color:${color}">${label}: ${p.avgD.toFixed(0)}%</span>
+                ${activosStr}
+            </div>
+        </div>`;
+    };
+
     let html = '';
     SEDES_ORDER.forEach(sede => {
         const profes = bySedeMap[sede];
-        if(!profes || !profes.length) return;
+        if (!profes || !profes.length) return;
         html += `<div class="estado-sede-card"><div class="estado-sede-title"><i class="fas fa-map-marker-alt"></i> ${sede}</div><div class="estado-list">`;
-        profes.forEach(p => {
-            let emoji, label, color;
-            if(p.avgD < 15)       { emoji='🟢'; label='Deserción bajo control'; color='#10b981'; }
-            else if(p.avgD < 25)  { emoji='🟡'; label='Deserción moderada';      color='#f59e0b'; }
-            else                  { emoji='🔴'; label='Deserción crítica';        color='#ef4444'; }
-            html += `<div class="estado-row"><span class="estado-emoji">${emoji}</span><div class="estado-info"><span class="estado-nombre">${p.nombre}</span><span class="estado-label" style="color:${color}">${label}: ${p.avgD.toFixed(0)}%</span></div></div>`;
-        });
+        profes.forEach(p => { html += estadoRow(p); });
         html += '</div></div>';
     });
     document.getElementById('estadoCards').innerHTML = html || '<div class="alert">Sin datos disponibles</div>';
@@ -1252,37 +1347,45 @@ function renderEstado() {
 
 // ══ RENDER VS 2025 vs 2026 ══
 function renderVersus() {
-    if(!planData) return;
-    // Mes actual = último mes con altas26 > 0 en cualquier profe
-    let mesIdx = -1;
-    for(let i = MESES.length - 1; i >= 0; i--) {
-        if(planData.profes.some(p => (p.histAltas26[i]||0) > 0)) { mesIdx = i; break; }
-    }
     const el = document.getElementById('versusCards');
-    if(mesIdx < 0) { el.innerHTML='<div class="alert">Sin datos 2026 aún</div>'; return; }
+    if (!metricsData || !metricsData.vs.length) {
+        el.innerHTML = '<div class="alert">Sin datos disponibles</div>';
+        return;
+    }
+    const mesIdx = metricsData.currentMesIdx;
     const mesNombre = MESES[mesIdx];
-    let html = `<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">Mes: ${mesNombre} 2026</div><div class="versus-grid">`;
-    planData.profes.forEach(p => {
-        const a25 = p.histAltas25[mesIdx] || 0;
-        const a26 = p.histAltas26[mesIdx] || 0;
-        const diff = a26 - a25;
-        const pct  = a25 > 0 ? Math.round(diff/a25*100) : 0;
-        const up   = diff >= 0;
-        const arrow = up ? '📈' : '📉';
-        const col  = up ? '#10b981' : '#ef4444';
-        const sede = getSede(p.nombre);
-        html += `<div class="vs-card">
-            <div class="vs-header"><span class="vs-nombre">${p.nombre}</span><span class="vs-sede">${sede}</span></div>
-            <div class="vs-label">Altas ${mesNombre}</div>
-            <div class="vs-row">
-                <div class="vs-year"><div class="vs-yr-lbl">2025</div><div class="vs-yr-val">${a25}</div></div>
-                <div class="vs-arrow">→</div>
-                <div class="vs-year"><div class="vs-yr-lbl">2026</div><div class="vs-yr-val" style="color:${col}">${a26}</div></div>
-            </div>
-            <div class="vs-diff" style="color:${col}">${arrow} ${diff>=0?'+':''}${diff} vs 2025 (${pct>=0?'+':''}${pct}%)</div>
-        </div>`;
+    const SEDES = ['El Bolsón', 'Lago Puelo'];
+    let html = `<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">Mes: ${mesNombre} 2026</div>`;
+
+    SEDES.forEach(sede => {
+        const pares = metricsData.vs.filter(p => p.sede === sede);
+        if (!pares.length) return;
+        html += `<div class="vs-sede-label"><i class="fas fa-map-marker-alt"></i> ${sede}</div><div class="versus-grid">`;
+        pares.forEach(p => {
+            const a25 = p.altas25[mesIdx] || 0;
+            const a26 = p.altas26[mesIdx] || 0;
+            const diff = a26 - a25;
+            const pct  = a25 > 0 ? Math.round(diff / a25 * 100) : (a26 > 0 ? 100 : 0);
+            const up   = diff >= 0;
+            const arrow = up ? '📈' : '📉';
+            const col  = up ? '#10b981' : '#ef4444';
+            const mismoProfe = p.n26 === p.n25;
+            const subLabel = mismoProfe
+                ? `${p.n26} · ${mesNombre}`
+                : `${p.n25} (2025) → ${p.n26} (2026)`;
+            html += `<div class="vs-card">
+                <div class="vs-header"><span class="vs-nombre">${p.n26}</span><span class="vs-sede">${sede}</span></div>
+                <div class="vs-label">${subLabel}</div>
+                <div class="vs-row">
+                    <div class="vs-year"><div class="vs-yr-lbl">2025</div><div class="vs-yr-val">${a25}</div></div>
+                    <div class="vs-arrow">→</div>
+                    <div class="vs-year"><div class="vs-yr-lbl">2026</div><div class="vs-yr-val" style="color:${col}">${a26}</div></div>
+                </div>
+                <div class="vs-diff" style="color:${col}">${arrow} ${diff>=0?'+':''}${diff} vs 2025 (${pct>=0?'+':''}${pct}%)</div>
+            </div>`;
+        });
+        html += '</div>';
     });
-    html += '</div>';
     el.innerHTML = html;
 }
 
