@@ -277,12 +277,23 @@ tr:hover td{background:#fafbfc;}
 /* ── ESTADO DEL GYM ── */
 .estado-sede-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 24px;box-shadow:var(--shadow);margin-bottom:20px;}
 .estado-sede-title{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:16px;}
+.estado-mes-badge{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;}
+.estado-list2{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.estado-card2{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);}
+.estado-card2-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.estado-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;}
+.estado-card2-title{display:flex;flex-direction:column;gap:2px;}
+.estado-nombre2{font-size:1rem;font-weight:800;color:var(--text);}
+.estado-sem-label{font-size:.78rem;font-weight:600;}
+.estado-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.estado-chip{display:flex;flex-direction:column;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:6px 12px;min-width:64px;}
+.estado-chip-val{font-size:1.1rem;font-weight:800;color:var(--text);}
+.estado-chip-lbl{font-size:.62rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:1px;}
+.estado-tend{font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--border);display:inline-flex;align-items:center;gap:4px;}
+.estado-vs2025{font-size:.75rem;font-weight:600;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+/* legacy (keep for safety) */
 .estado-list{display:flex;flex-direction:column;gap:10px;}
 .estado-row{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:12px;background:var(--bg);border:1px solid var(--border);}
-.estado-emoji{font-size:1.5rem;flex-shrink:0;line-height:1;}
-.estado-info{display:flex;flex-direction:column;gap:2px;}
-.estado-nombre{font-size:.95rem;font-weight:700;color:var(--text);}
-.estado-label{font-size:.8rem;font-weight:600;}
 .estado-activos{font-size:.72rem;font-weight:600;color:var(--muted);margin-top:1px;}
 
 /* ── VS 2025 / 2026 ── */
@@ -1276,47 +1287,90 @@ function renderEstado() {
     const SEDES_ORDER = ['El Bolsón','Lago Puelo','Bariloche'];
     const bySedeMap = {};
 
-    // Bolsón + Puelo desde planData (misma fuente que los charts de deserción)
+    // Detect current month: last idx where any profe has altas26 > 5
+    let mesIdx = 0;
     if (planData) {
+        for (let i = MESES.length - 1; i >= 0; i--) {
+            if (planData.profes.some(p => (p.histAltas26[i]||0) > 5)) { mesIdx = i; break; }
+        }
         planData.profes.forEach(p => {
             const sede = getSede(p.nombre);
-            const desArr = p.histDeserc26.filter(v => v > 0);
-            const avgD = desArr.length ? desArr.reduce((a,b)=>a+b,0)/desArr.length*100 : 0;
+            const des  = (p.histDeserc26[mesIdx]  || 0) * 100;
+            const desP = mesIdx > 0 ? (p.histDeserc26[mesIdx-1] || 0) * 100 : null;
+            const alt  = p.histAltas26[mesIdx] || 0;
+            const alt25= p.histAltas25[mesIdx] || 0;
+            const ytdArr = p.histDeserc26.slice(0, mesIdx+1).filter(v=>v>0);
+            const ytd  = ytdArr.length ? ytdArr.reduce((a,b)=>a+b,0)/ytdArr.length*100 : 0;
             if (!bySedeMap[sede]) bySedeMap[sede] = [];
-            bySedeMap[sede].push({ nombre: p.nombre.split(' ')[0], avgD, activos: p.activos });
+            bySedeMap[sede].push({ nombre: p.nombre.split(' ')[0], activos: p.activos,
+                des, desP, alt, alt25, ytd, sede });
         });
     }
 
-    // Bariloche desde bariData (sus planillas propias)
+    // Bariloche: detect mesIdx from its own data
+    let bMesIdx = 0;
+    for (let i = MESES.length - 1; i >= 0; i--) {
+        if (bariData.some(p => (p.histAltas[i]||0) > 0)) { bMesIdx = i; break; }
+    }
     bariData.forEach(p => {
-        const desArr = p.histDeserc.filter(v => v > 0);
-        const avgD = desArr.length ? desArr.reduce((a,b)=>a+b,0)/desArr.length*100 : 0;
+        const des  = (p.histDeserc[bMesIdx]  || 0) * 100;
+        const desP = bMesIdx > 0 ? (p.histDeserc[bMesIdx-1] || 0) * 100 : null;
+        const alt  = p.histAltas[bMesIdx] || 0;
+        const ytdArr = p.histDeserc.slice(0, bMesIdx+1).filter(v=>v>0);
+        const ytd  = ytdArr.length ? ytdArr.reduce((a,b)=>a+b,0)/ytdArr.length*100 : 0;
         if (!bySedeMap['Bariloche']) bySedeMap['Bariloche'] = [];
-        bySedeMap['Bariloche'].push({ nombre: p.nombre.split(' ')[0], avgD, activos: p.activos });
+        bySedeMap['Bariloche'].push({ nombre: p.nombre.split(' ')[0], activos: p.activos,
+            des, desP, alt, alt25: 0, ytd, sede: 'Bariloche' });
     });
 
-    const estadoRow = (p) => {
-        let emoji, label, color;
-        if (p.avgD < 15)      { emoji='🟢'; label='Deserción bajo control'; color='#10b981'; }
-        else if (p.avgD < 25) { emoji='🟡'; label='Deserción moderada';      color='#f59e0b'; }
-        else                  { emoji='🔴'; label='Deserción crítica';        color='#ef4444'; }
-        const activosStr = p.activos > 0 ? `<span class="estado-activos">${p.activos} activos</span>` : '';
-        return `<div class="estado-row">
-            <span class="estado-emoji">${emoji}</span>
-            <div class="estado-info">
-                <span class="estado-nombre">${p.nombre}</span>
-                <span class="estado-label" style="color:${color}">${label}: ${p.avgD.toFixed(0)}%</span>
-                ${activosStr}
+    const sem = d => d < 15 ? {color:'#10b981',label:'Bajo control'} :
+                     d < 25 ? {color:'#f59e0b',label:'Moderada'} :
+                               {color:'#ef4444',label:'Crítica'};
+
+    const card = (p, mi) => {
+        const s = sem(p.des);
+        // Tendencia deserción vs mes anterior
+        let tendHTML = '';
+        if (p.desP !== null) {
+            const diff = p.des - p.desP;
+            if (Math.abs(diff) >= 0.5) {
+                const tc = diff > 0 ? '#ef4444' : '#10b981';
+                tendHTML = `<div class="estado-chip"><div class="estado-chip-val" style="color:${tc};font-size:.88rem">${diff>0?'↑':'↓'} ${Math.abs(diff).toFixed(1)}%</div><div class="estado-chip-lbl">vs ${MESES[mi-1]}</div></div>`;
+            }
+        }
+        // VS 2025 altas mismo mes
+        let vs25 = '';
+        if (p.sede !== 'Bariloche' && p.alt25 > 0) {
+            const diff = p.alt - p.alt25;
+            const pct  = Math.round(diff / p.alt25 * 100);
+            const col  = diff >= 0 ? '#10b981' : '#ef4444';
+            vs25 = `<div class="estado-vs2025"><i class="fas fa-exchange-alt"></i> vs 2025: <strong style="color:${col}">${diff>=0?'+':''}${diff} altas (${pct>=0?'+':''}${pct}%)</strong></div>`;
+        }
+        return `<div class="estado-card2">
+          <div class="estado-card2-header">
+            <div class="estado-dot" style="background:${s.color};box-shadow:0 0 8px ${s.color}88"></div>
+            <div class="estado-card2-title">
+              <span class="estado-nombre2">${p.nombre}</span>
+              <span class="estado-sem-label" style="color:${s.color}">${s.label} &middot; ${p.des.toFixed(1)}% deserción ${MESES[mi]}</span>
             </div>
+          </div>
+          <div class="estado-chips">
+            <div class="estado-chip"><div class="estado-chip-val">${p.activos||'--'}</div><div class="estado-chip-lbl">Activos</div></div>
+            <div class="estado-chip"><div class="estado-chip-val" style="color:#10b981">${p.alt}</div><div class="estado-chip-lbl">Altas ${MESES[mi]}</div></div>
+            <div class="estado-chip"><div class="estado-chip-val" style="color:#f59e0b">${p.ytd.toFixed(0)}%</div><div class="estado-chip-lbl">Prom YTD</div></div>
+            ${tendHTML}
+          </div>
+          ${vs25}
         </div>`;
     };
 
-    let html = '';
+    let html = `<div class="estado-mes-badge"><i class="fas fa-calendar-alt"></i>&nbsp;${MESES[mesIdx]} 2026</div>`;
     SEDES_ORDER.forEach(sede => {
         const profes = bySedeMap[sede];
         if (!profes || !profes.length) return;
-        html += `<div class="estado-sede-card"><div class="estado-sede-title"><i class="fas fa-map-marker-alt"></i> ${sede}</div><div class="estado-list">`;
-        profes.forEach(p => { html += estadoRow(p); });
+        const mi = sede === 'Bariloche' ? bMesIdx : mesIdx;
+        html += `<div class="estado-sede-card"><div class="estado-sede-title"><i class="fas fa-map-marker-alt"></i> ${sede}</div><div class="estado-list2">`;
+        profes.forEach(p => { html += card(p, mi); });
         html += '</div></div>';
     });
     document.getElementById('estadoCards').innerHTML = html || '<div class="alert">Sin datos disponibles</div>';
