@@ -839,11 +839,36 @@ function loadPlanillas() {
 
 // ══ BARILOCHE — carga desde gviz ══
 function loadBariloche() {
-    return Promise.all(BARILOCHE_PROFES.map(p => loadBariProfe(p)))
-        .then(results => {
-            bariData = results.filter(Boolean);
-            if(bariData.length) renderBariloche();
-        });
+    return Promise.all(BARILOCHE_PROFES.map(p =>
+        Promise.all([loadBariProfe(p), loadBariActivos(p)])
+            .then(([data, activos]) => {
+                if(data) data.activos = activos;
+                return data;
+            })
+    )).then(results => {
+        bariData = results.filter(Boolean);
+        if(bariData.length) renderBariloche();
+    });
+}
+
+// Fetch separado solo para S13 (CONTAR.SI cross-sheet — gviz no lo resuelve en rango grande)
+function loadBariActivos(profe) {
+    const reqId = 'bariAct_' + profe.nombre.replace(/\s+/g,'_');
+    return new Promise(resolve => {
+        const timer = setTimeout(() => { delete _sheetCBs[reqId]; resolve(0); }, 10000);
+        _sheetCBs[reqId] = r => {
+            clearTimeout(timer);
+            try {
+                const c = r.table.rows[0].c[0];
+                const v = c ? (c.v != null ? c.v : parseFloat(c.f || '0')) : 0;
+                resolve(Math.round(parseFloat(v) || 0));
+            } catch(e) { resolve(0); }
+        };
+        const s = document.createElement('script');
+        s.onerror = () => { clearTimeout(timer); delete _sheetCBs[reqId]; resolve(0); };
+        s.src = `https://docs.google.com/spreadsheets/d/${profe.id}/gviz/tq?tqx=out:json;reqId:${reqId}&headers=0&gid=${profe.gid}&range=S13`;
+        document.body.appendChild(s);
+    });
 }
 
 function loadBariProfe(profe) {
@@ -853,7 +878,7 @@ function loadBariProfe(profe) {
         _sheetCBs[reqId] = r => { clearTimeout(timer); resolve(parseBariData(r, profe.nombre)); };
         const s = document.createElement('script');
         s.onerror = () => { clearTimeout(timer); delete _sheetCBs[reqId]; resolve(null); };
-        s.src = `https://docs.google.com/spreadsheets/d/${profe.id}/gviz/tq?tqx=out:json;reqId:${reqId}&headers=0&gid=${profe.gid}&range=B12:T35`;
+        s.src = `https://docs.google.com/spreadsheets/d/${profe.id}/gviz/tq?tqx=out:json;reqId:${reqId}&headers=0&gid=${profe.gid}&range=B12:S35`;
         document.body.appendChild(s);
     });
 }
@@ -877,7 +902,7 @@ function parseBariData(json, nombre) {
     //  ri=4  → BAJA     ri=5 → RUBEN     ri=6 → KEILA
     //  ri=13 → %DESERCIÓN
     // Altas totales = NUEVO + RENUEVA + RENX2 + RUBEN + KEILA
-    const activos = Math.round(cell(1, 17));  // S13: col S (ci=17) fila 13 (ri=1 desde B12)
+    const activos = 0; // sobreescrito por loadBariActivos con fetch directo a S13
     const months = BARI_MONTH_COLS.map((c, i) => {
         const nuevo   = cell(1, c);
         const renueva = cell(2, c);
