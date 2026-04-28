@@ -463,7 +463,6 @@ tr:hover td{background:#fafbfc;}
                 <canvas id="chBariTotal"></canvas>
             </div>
             <div id="bariTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
-            <!-- Selector de mes por profesor -->
             <div style="background:#f8fafc;border-radius:12px;padding:14px 16px;margin-bottom:18px;border:1px solid var(--border);">
                 <div style="font-size:.62rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Seleccionar mes</div>
                 <div id="bariMesesTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
@@ -730,17 +729,14 @@ const SHEET_ENC_ID  = '1GhDYhMnueahKDbX1Ezx9eLlawmfQ-NCXA1ZiLe_r_SY';
 const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbyQQ8v-cxcbncGh4E9iJGr5_9FwfQ03FJ_GdjbTpq-YVhk_FkzRNTcxwbJbzZiGKWBX/exec';
 const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 const SEDE_MAP = {
-    // El Bolsón — nombres cortos (Apps Script) y largos (encuestas)
     'Enzo':'El Bols\u00f3n',
     'Belu':'El Bols\u00f3n','Belen':'El Bols\u00f3n','Bel\u00e9n':'El Bols\u00f3n',
     'Fer':'El Bols\u00f3n','Fernando':'El Bols\u00f3n',
     'Francisco':'El Bols\u00f3n',
-    // Lago Puelo
     'Javi':'Lago Puelo','Javier':'Lago Puelo',
     'Agus':'Lago Puelo','Agustina':'Lago Puelo',
     'Valeria':'Lago Puelo','Facundo':'Lago Puelo',
     'Luz':'Lago Puelo','Leonardo':'Lago Puelo','Emanuel':'Ambas',
-    // Bariloche
     'Camila':'Bariloche','Carla':'Bariloche','Giuliano':'Bariloche'
 };
 const PROFE_CONTEXT = {
@@ -758,8 +754,6 @@ const BARILOCHE_PROFES = [
     {nombre:'Carla Agostini',    id:'19zuljlNy--GZPm9Sdf2xwlACHmTsrsHZ', gid:'328722414'},
     {nombre:'Giuliano Palomeque',id:'1bOyKt3MJ180nv6pPxCJOutBDlSAP22nt', gid:'328722414'},
 ];
-// Columnas de meses en planilla Bariloche: C=1,D=2,E=3,F=4,[G skip],H=6,I=7,J=8,K=9,[L skip],M=11,N=12,O=13,P=14 (offset desde col B)
-const BARI_MONTH_COLS = [1,2,3,4,6,7,8,9,11,12,13,14];
 
 // Intercept Google gviz format
 const _sheetCBs = {};
@@ -770,7 +764,7 @@ window.google = { visualization: { Query: { setResponse: function(data) {
 
 let CH = {}, planData = null, wData = [], cData = [], bariData = [];
 
-// cargarTodo with 10s safety timeout
+// cargarTodo
 async function cargarTodo() {
     const hideTimer = setTimeout(() => { document.getElementById('loadOv').style.display='none'; }, 10000);
     document.getElementById('refreshIco').className = 'fas fa-spinner fa-spin';
@@ -781,7 +775,7 @@ async function cargarTodo() {
     document.getElementById('loadOv').style.display = 'none';
 }
 
-// loadPlanillas with 60s timeout, falls back to demoData
+// loadPlanillas
 function loadPlanillas() {
     return new Promise(resolve => {
         if (!SCRIPT_URL || SCRIPT_URL === 'TU_URL_AQUI') { planData=demoData(); renderPlanillas(); return resolve(); }
@@ -796,7 +790,7 @@ function loadPlanillas() {
     });
 }
 
-// ══ BARILOCHE — carga desde gviz ══
+// ══ BARILOCHE corregida con tus filas ══
 function loadBariloche() {
     return Promise.all(BARILOCHE_PROFES.map(p => loadBariProfe(p)))
         .then(results => {
@@ -812,7 +806,8 @@ function loadBariProfe(profe) {
         _sheetCBs[reqId] = r => { clearTimeout(timer); resolve(parseBariData(r, profe.nombre)); };
         const s = document.createElement('script');
         s.onerror = () => { clearTimeout(timer); delete _sheetCBs[reqId]; resolve(null); };
-        s.src = `https://docs.google.com/spreadsheets/d/${profe.id}/gviz/tq?tqx=out:json;reqId:${reqId}&headers=0&gid=${profe.gid}&range=B12:S35`;
+        // Sin range para traer toda la hoja
+        s.src = `https://docs.google.com/spreadsheets/d/${profe.id}/gviz/tq?tqx=out:json;reqId:${reqId}&headers=0&gid=${profe.gid}`;
         document.body.appendChild(s);
     });
 }
@@ -820,32 +815,50 @@ function loadBariProfe(profe) {
 function parseBariData(json, nombre) {
     if(!json || !json.table || !json.table.rows) return null;
     const rows = json.table.rows;
-    // cell con manejo seguro de null/error (gviz devuelve % como decimal, #DIV/0! como null)
-    const cell = (ri, ci) => {
+    
+    // Según tu estructura:
+    // Fila 14 (índice 13) → NUEVOS
+    // Fila 15 (índice 14) → RENUEVA  
+    // Fila 17 (índice 16) → BAJA
+    // Fila 26 (índice 25) → % DESERCIÓN
+    // Fila 29 (índice 28) → ACTIVOS
+    // Meses: columnas C a N (índices 2 a 13)
+    
+    const MONTH_COLS = [2,3,4,5,6,7,8,9,10,11,12,13]; // C a N
+    
+    const cell = (rowIdx, colIdx) => {
         try {
-            const v = rows[ri] && rows[ri].c && rows[ri].c[ci] && rows[ri].c[ci].v;
+            const v = rows[rowIdx] && rows[rowIdx].c && rows[rowIdx].c[colIdx] && rows[rowIdx].c[colIdx].v;
+            if (v === undefined || v === null) return 0;
             const n = parseFloat(v);
             return isNaN(n) ? 0 : n;
         } catch(e) { return 0; }
     };
-    // Estructura de filas (índice 0 = fila 12 del rango B12:S35):
-    //  idx 0 → NUEVO       idx 1 → RENUEVA     idx 2 → RENX2
-    //  idx 4 → BAJA        idx 12 → %DESERCIÓN  idx 13 → ACTIVOS
-    const months = BARI_MONTH_COLS.map((c, i) => {
-        const nuevo   = cell(0, c);
-        const renueva = cell(1, c);
-        const renx2   = cell(2, c);
-        const baja    = cell(4, c);
-        const deseRc  = cell(12, c);   // decimal: 0.05 = 5%
-        const activos = Math.round(cell(13, c));
-        return { mes: MESES[i], nuevo, renueva, renx2, baja, deseRc, activos,
-                 altas: nuevo + renueva + renx2 };
+    
+    const months = MONTH_COLS.map((col, i) => {
+        const nuevo   = cell(13, col);   // fila 14 (NUEVOS)
+        const renueva = cell(14, col);   // fila 15 (RENUEVA)
+        const baja    = cell(16, col);   // fila 17 (BAJA)
+        const deseRc  = cell(25, col);   // fila 26 (% DESERCIÓN)
+        const activos = Math.round(cell(28, col)); // fila 29 (ACTIVOS)
+        
+        return { 
+            mes: MESES[i], 
+            nuevo, 
+            renueva, 
+            renx2: 0,
+            baja, 
+            deseRc, 
+            activos,
+            altas: nuevo + renueva
+        };
     });
-    // Activos actuales = último mes con activos > 0
+    
     let activos = 0;
     for(let i = months.length - 1; i >= 0; i--) {
         if(months[i].activos > 0) { activos = months[i].activos; break; }
     }
+    
     return {
         nombre, activos, months,
         histAltas:  months.map(m => m.altas),
@@ -865,7 +878,7 @@ function demoData() {
     ], histBolson25:r12(),histBolson26:r12(),histPuelo25:r12(),histPuelo26:r12() };
 }
 
-// loadEncuestas using gid and reqId intercept
+// loadEncuestas
 function loadEncuestas() {
     return Promise.all([
         sheetLoad(SHEET_ENC_ID, '1563858316', 'bienvenida'),
@@ -891,9 +904,9 @@ function parseSheet(json) {
 }
 
 // ══════════════════════════════════════════════════
-// CHART HELPERS — keep exactly
+// CHART HELPERS
 // ══════════════════════════════════════════════════
-function line(id,labels,sets){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,borderColor:s.c,backgroundColor:s.c+'22',borderWidth:2.5,pointRadius:4,tension:.3,fill:false}))},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});}
+function line(id,labels,sets){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'line',data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,borderColor:s.c,backgroundColor:s.c+'22',borderWidth:2.5,pointRadius:4,tension:.3,fill:false}))},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});}
 function bar(id,labels,sets){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:sets.map(s=>({label:s.l,data:s.d,backgroundColor:s.c+'cc',borderRadius:5,borderSkipped:false}))},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:11}}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});}
 function barSimple(id,labels,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'bar',data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:7}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{min:-100,max:100,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}});}
 function doughnut(id,data,colors){if(CH[id])CH[id].destroy();CH[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{datasets:[{data,backgroundColor:colors,borderWidth:0}]},options:{cutout:'72%',responsive:true,plugins:{legend:{display:false},tooltip:{enabled:false}}}});}
@@ -966,8 +979,6 @@ function renderPlanillas(){
     renderPuelo();
 }
 
-
-// ══ RENDER SEDES (El Bolsón, Lago Puelo) ══
 function profePorSede(sede) {
     if(!planData) return [];
     return planData.profes.filter(p => {
@@ -1050,7 +1061,7 @@ function renderProfeEnSede(p, prefix) {
         kpiCard('Estado',p.estadoActivos||'--',note||'Turno / estado');
 }
 
-// ══ RENDER BARILOCHE ══
+// ══ RENDER BARILOCHE corregida ══
 function renderBariloche() {
     if(!bariData.length) return;
     const totActivos = bariData.reduce((s,p)=>s+(p.activos||0),0);
@@ -1105,7 +1116,6 @@ function renderBariMesesTabs(p) {
     const tabs = document.getElementById('bariMesesTabs');
     if(!tabs) return;
     tabs.innerHTML = '';
-    // Último mes con datos reales como default
     let defaultIdx = 0;
     for(let i = p.months.length - 1; i >= 0; i--) {
         if(p.months[i].activos > 0 || p.months[i].altas > 0 || p.months[i].baja > 0) {
@@ -1129,7 +1139,6 @@ function renderBariMesesTabs(p) {
 }
 
 function renderBariMesKpis(m) {
-    // %Deserción: usar valor de planilla; calcular como fallback
     let desPct = '\u2014';
     if(m.deseRc > 0) {
         desPct = (m.deseRc * 100).toFixed(1) + '%';
@@ -1149,23 +1158,21 @@ function renderBariMesKpis(m) {
 }
 
 // ══════════════════════════════════════════════════
-// RENDER ENCUESTAS
+// RENDER ENCUESTAS (COMPLETO)
 // ══════════════════════════════════════════════════
 
-// Classification of churn reasons
 function classifyMotivo(m) {
     if(!m) return 'external';
     const l=m.toLowerCase();
     const internal=['equipamiento','calidad','servicio','atenci\u00f3n','atencion','profesional','no cumpl\u00f3','no cumplio','expectativa','no me gust\u00f3','no me gusto','mejorar','valor','precio','profe','cambio de profe','cambio de profesor'];
     return internal.some(k=>l.includes(k))?'internal':'external';
 }
-// Fuzzy-find a column containing keyword (case-insensitive)
+
 function getCol(row, keyword) {
     const k = Object.keys(row).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
     return k ? (row[k] || '') : '';
 }
 
-// Renderiza una tarjeta de comentario
 function renderQuoteCard(text, prof, type) {
     if(!text||text.trim()==='') return '';
     const initial = prof ? prof.trim()[0].toUpperCase() : '?';
@@ -1179,7 +1186,6 @@ function renderQuoteCard(text, prof, type) {
     </div>`;
 }
 
-// Anillo circular — número en el centro, sin superposiciones
 function svgGauge(containerId, value, min, max, color, badge, unit) {
     if(unit===undefined) unit='';
     const pct = Math.max(0, Math.min(1, (value - min) / (max - min)));
@@ -1187,79 +1193,57 @@ function svgGauge(containerId, value, min, max, color, badge, unit) {
     const circ = 2 * Math.PI * R;
     const dash = pct * circ;
     const gap  = circ - dash;
-    // Rotación: empezar desde arriba (−90°)
     const rot = -90;
     document.getElementById(containerId).innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;">
       <svg viewBox="0 0 ${S} ${S}" style="width:160px;height:160px;display:block;">
-        <!-- Track -->
-        <circle cx="${cx}" cy="${cy}" r="${R}"
-          fill="none" stroke="#edf0f5" stroke-width="${SW}"/>
-        <!-- Progreso -->
-        <circle cx="${cx}" cy="${cy}" r="${R}"
-          fill="none" stroke="${color}" stroke-width="${SW}"
-          stroke-linecap="round"
-          stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}"
-          transform="rotate(${rot} ${cx} ${cy})"/>
-        <!-- Valor -->
-        <text x="${cx}" y="${cy - 8}" text-anchor="middle"
-          font-size="28" font-weight="800" fill="#0f172a"
-          font-family="Inter,system-ui,sans-serif">${value}${unit}</text>
-        <!-- Badge -->
-        <text x="${cx}" y="${cy + 16}" text-anchor="middle"
-          font-size="9" font-weight="700" fill="${color}" letter-spacing="0.8"
-          font-family="Inter,system-ui,sans-serif">${badge.toUpperCase()}</text>
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#edf0f5" stroke-width="${SW}"/>
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${color}" stroke-width="${SW}" stroke-linecap="round" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" transform="rotate(${rot} ${cx} ${cy})"/>
+        <text x="${cx}" y="${cy - 8}" text-anchor="middle" font-size="28" font-weight="800" fill="#0f172a" font-family="Inter,system-ui,sans-serif">${value}${unit}</text>
+        <text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="9" font-weight="700" fill="${color}" letter-spacing="0.8" font-family="Inter,system-ui,sans-serif">${badge.toUpperCase()}</text>
       </svg>
     </div>`;
 }
 
-// Interpretation helpers
 function npsInfo(v){
     const base=[{r:'+50',l:'Excelente'},{r:'30 a 50',l:'Muy bueno'},{r:'10 a 30',l:'Aceptable'},{r:'< 10',l:'Bajo'}];
-    if(v>=50)return{color:'#10b981',badge:'Excelente',idx:0,ranges:base,obs:`\uD83D\uDD25 ${v} \u2192 EXCELENTE NIVEL DE RECOMENDACI\u00d3N. MOVE genera v\u00ednculo emocional fuerte y promotores activos. \u26A0\uFE0F No confundas NPS alto con baja deserci\u00f3n: pueden recomendar y aun as\u00ed irse por contexto externo.`};
-    if(v>=30)return{color:'#3b82f6',badge:'Muy bueno',idx:1,ranges:base,obs:`\uD83D\uDC4D ${v} \u2192 MUY BUEN NPS. MOVE supera la media del sector fitness. Continuar construyendo sobre los puntos fuertes actuales.`};
-    if(v>=10)return{color:'#f59e0b',badge:'Aceptable',idx:2,ranges:base,obs:`\u26A0\uFE0F ${v} \u2192 NPS ACEPTABLE. Hay margen de mejora. Identificar los pain points espec\u00edficos de la experiencia.`};
-    return{color:'#ef4444',badge:'Bajo',idx:3,ranges:base,obs:`\uD83D\uDEA8 ${v} \u2192 NPS BAJO. Acci\u00f3n inmediata necesaria en experiencia del cliente.`};
+    if(v>=50)return{color:'#10b981',badge:'Excelente',idx:0,ranges:base,obs:`\uD83D\uDD25 ${v} \u2192 EXCELENTE NIVEL DE RECOMENDACI\u00d3N.`};
+    if(v>=30)return{color:'#3b82f6',badge:'Muy bueno',idx:1,ranges:base,obs:`\uD83D\uDC4D ${v} \u2192 MUY BUEN NPS.`};
+    if(v>=10)return{color:'#f59e0b',badge:'Aceptable',idx:2,ranges:base,obs:`\u26A0\uFE0F ${v} \u2192 NPS ACEPTABLE.`};
+    return{color:'#ef4444',badge:'Bajo',idx:3,ranges:base,obs:`\uD83D\uDEA8 ${v} \u2192 NPS BAJO.`};
 }
 function desercInfo(v){
-    const base=[{r:'> 50%',l:'El problema es interno (mejorable)'},{r:'30\u201350%',l:'Mixto'},{r:'< 30%',l:'Mayor\u00eda contexto externo'}];
-    if(v>=50)return{color:'#ef4444',badge:'Problema interno',idx:0,ranges:base,obs:`\uD83D\uDD34 ${v}% \u2192 ALTA RESPONSABILIDAD INTERNA. El foco debe estar en mejora del servicio y operaciones internas.`};
-    if(v>=30)return{color:'#f59e0b',badge:'Mixto',idx:1,ranges:base,obs:`\uD83D\uDFE1 ${v}% \u2192 DESERCI\u00d3N MIXTA. Hay factores internos que atender junto con el contexto externo.`};
-    return{color:'#10b981',badge:'Contexto externo',idx:2,ranges:base,obs:`\uD83C\uDF0E ${v}% \u2192 BAJA RESPONSABILIDAD INTERNA. La mayor\u00eda responde a contexto externo. El foco debe estar en captaci\u00f3n y adaptaci\u00f3n estrat\u00e9gica.`};
+    const base=[{r:'> 50%',l:'Problema interno'},{r:'30\u201350%',l:'Mixto'},{r:'< 30%',l:'Contexto externo'}];
+    if(v>=50)return{color:'#ef4444',badge:'Problema interno',idx:0,ranges:base,obs:`\uD83D\uDD34 ${v}% \u2192 ALTA RESPONSABILIDAD INTERNA.`};
+    if(v>=30)return{color:'#f59e0b',badge:'Mixto',idx:1,ranges:base,obs:`\uD83D\uDFE1 ${v}% \u2192 DESERCI\u00d3N MIXTA.`};
+    return{color:'#10b981',badge:'Contexto externo',idx:2,ranges:base,obs:`\uD83C\uDF0E ${v}% \u2192 BAJA RESPONSABILIDAD INTERNA.`};
 }
 function servicioInfo(v){
-    const base=[{r:'90\u2013100%',l:'Servicio premium consolidado'},{r:'80\u201390%',l:'Muy buen servicio'},{r:'70\u201380%',l:'Aceptable pero mejorable'},{r:'< 70%',l:'Problema estructural'}];
-    if(v>=90)return{color:'#10b981',badge:'Premium consolidado',idx:0,ranges:base,obs:`\uD83C\uDFC6 ${v}% \u2192 SERVICIO PREMIUM CONSOLIDADO. La ejecuci\u00f3n del modelo MOVE es consistente y alineada con la propuesta de valor. \u26A0\uFE0F No confundir con marketing: esto mide cumplimiento operativo real del sistema.`};
-    if(v>=80)return{color:'#3b82f6',badge:'Muy buen servicio',idx:1,ranges:base,obs:`\uD83D\uDCAA ${v}% \u2192 MUY BUEN SERVICIO. Alto nivel de ejecuci\u00f3n. Identificar el 10-20% de mejora disponible.`};
-    if(v>=70)return{color:'#f59e0b',badge:'Aceptable',idx:2,ranges:base,obs:`\u26A0\uFE0F ${v}% \u2192 SERVICIO ACEPTABLE. Existen oportunidades claras de mejora en la entrega del servicio.`};
-    return{color:'#ef4444',badge:'Problema estructural',idx:3,ranges:base,obs:`\uD83D\uDEA8 ${v}% \u2192 PROBLEMA ESTRUCTURAL. Revisi\u00f3n profunda del modelo de entrega necesaria.`};
+    const base=[{r:'90\u2013100%',l:'Premium'},{r:'80\u201390%',l:'Muy bueno'},{r:'70\u201380%',l:'Aceptable'},{r:'< 70%',l:'Problema'}];
+    if(v>=90)return{color:'#10b981',badge:'Premium',idx:0,ranges:base,obs:`\uD83C\uDFC6 ${v}% \u2192 SERVICIO PREMIUM.`};
+    if(v>=80)return{color:'#3b82f6',badge:'Muy bueno',idx:1,ranges:base,obs:`\uD83D\uDCAA ${v}% \u2192 MUY BUEN SERVICIO.`};
+    if(v>=70)return{color:'#f59e0b',badge:'Aceptable',idx:2,ranges:base,obs:`\u26A0\uFE0F ${v}% \u2192 SERVICIO ACEPTABLE.`};
+    return{color:'#ef4444',badge:'Problema',idx:3,ranges:base,obs:`\uD83D\uDEA8 ${v}% \u2192 PROBLEMA ESTRUCTURAL.`};
 }
 function makeInterpCard(info){
     const rows=info.ranges.map((r,i)=>`<div class="ir ${i===info.idx?'ir-active':''}"><span class="irv">${r.r}</span><span class="irl">${r.l}</span></div>`).join('');
-    return `<div class="iblock"><div class="ihead">\uD83C\uDFAF C\u00f3mo interpretar el resultado</div>${rows}</div><div class="obsblock" style="border-color:${info.color}">${info.obs}</div>`;
+    return `<div class="iblock"><div class="ihead">\uD83C\uDFAF C\u00f3mo interpretar</div>${rows}</div><div class="obsblock" style="border-color:${info.color}">${info.obs}</div>`;
 }
 
 function renderEnc(){
     const W=wData,C=cData;
 
-    // === BIENVENIDA — usa getCol() para tolerar variaciones en nombres de columna ===
-    // NPS: busca columna con "probable" o "recomiendes" o "recomendar"
-    const recs = W.map(r => parseFloat(
-        getCol(r,'probable') || getCol(r,'recomiendes') || getCol(r,'recomendar')
-    )).filter(n=>!isNaN(n));
+    // BIENVENIDA
+    const recs = W.map(r => parseFloat(getCol(r,'probable') || getCol(r,'recomiendes') || getCol(r,'recomendar'))).filter(n=>!isNaN(n));
     const nps = calcNPS(recs);
     const lbl = nps>=50?'\uD83D\uDD25 Excelente':nps>=30?'\uD83D\uDC4D Bueno':'\u26A0\uFE0F Regular';
     set('e-total',W.length); set('e-nps',nps); set('e-nps-lbl',lbl);
     set('k-nps',nps); set('k-nps-sub',lbl);
 
-    // Índice Servicio: acompañamiento + plan + entrevista
     let sS=0,cS=0,sE=0,cE=0;
     W.forEach(r=>{
-        const e  = parseFloat(getCol(r,'experiencia'));
-        if(!isNaN(e)){sE+=e;cE++;}
-        const a  = parseFloat(getCol(r,'acompa'));          // acompañamiento
-        const cl = parseFloat(getCol(r,'plan'));             // claridad del plan
-        const ev = parseFloat(getCol(r,'escuchado') || getCol(r,'entrevista')); // entrevista inicial
+        const e=parseFloat(getCol(r,'experiencia')); if(!isNaN(e)){sE+=e;cE++;}
+        const a=parseFloat(getCol(r,'acompa')); const cl=parseFloat(getCol(r,'plan')); const ev=parseFloat(getCol(r,'escuchado')||getCol(r,'entrevista'));
         if(!isNaN(a)&&!isNaN(cl)&&!isNaN(ev)){sS+=((a+cl+ev)/3)*20;cS++;}
         else if(!isNaN(a)&&!isNaN(cl)){sS+=((a+cl)/2)*20;cS++;}
         else if(!isNaN(a)){sS+=a*20;cS++;}
@@ -1267,17 +1251,15 @@ function renderEnc(){
     set('e-serv', cS>0 ? Math.round(sS/cS) : '--');
     set('e-exp',  cE>0 ? (sE/cE).toFixed(1) : '--');
 
-    // NPS dial
     const nc=nps>=50?'#10b981':nps>=30?'#3b82f6':'#ef4444';
     doughnut('chNpsDial',[Math.max(0,Math.min(100,nps+50)),100-Math.max(0,Math.min(100,nps+50))],[nc,'#e2e8f0']);
     set('npsDialVal',nps);
 
-    // NPS por profesor (bienvenida)
     const byProf={},expByProf={};
     W.forEach(r=>{
-        const p  = getCol(r,'profesor') || getCol(r,'profesional') || getCol(r,'profe');
-        const rc = parseFloat(getCol(r,'probable') || getCol(r,'recomiendes') || getCol(r,'recomendar'));
-        const ex = parseFloat(getCol(r,'experiencia'));
+        const p=getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe');
+        const rc=parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar'));
+        const ex=parseFloat(getCol(r,'experiencia'));
         if(p&&!isNaN(rc)){byProf[p]=byProf[p]||[];byProf[p].push(rc);}
         if(p&&!isNaN(ex)){expByProf[p]=expByProf[p]||[];expByProf[p].push(ex);}
     });
@@ -1285,20 +1267,14 @@ function renderEnc(){
     const npsV=profs.map(p=>calcNPS(byProf[p]));
     barSimple('chNpsProf',profs.map(p=>p.split(' ')[0]),npsV,npsV.map(v=>v>=50?'#10b981cc':v>=30?'#3b82f6cc':'#ef4444cc'));
 
-    // Experiencia por horario — descubrimiento dinámico de valores reales
     const horarioMap={};
-    W.forEach(r=>{
-        const h=(getCol(r,'horario')||'').trim();
-        const e=parseFloat(getCol(r,'experiencia'));
-        if(h&&!isNaN(e)){if(!horarioMap[h])horarioMap[h]=[];horarioMap[h].push(e);}
-    });
+    W.forEach(r=>{const h=(getCol(r,'horario')||'').trim();const e=parseFloat(getCol(r,'experiencia'));if(h&&!isNaN(e)){if(!horarioMap[h])horarioMap[h]=[];horarioMap[h].push(e);}});
     const horLabels=Object.keys(horarioMap);
     const horVals=horLabels.map(k=>+(horarioMap[k].reduce((a,b)=>a+b)/horarioMap[k].length).toFixed(2));
     if(horLabels.length>=3){radar('chHorario',horLabels,horVals);}
     else if(horLabels.length>0){bar('chHorario',horLabels,[{l:'Exp. promedio',d:horVals,c:'#6366f1'}]);}
     else{document.getElementById('chHorario').style.display='none';}
 
-    // Tabla detalle por profesional
     let tb='';
     profs.forEach((p,i)=>{
         const nv=npsV[i],ea=expByProf[p]||[];
@@ -1309,200 +1285,146 @@ function renderEnc(){
     });
     document.getElementById('encTabBody').innerHTML=tb||`<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Sin datos por profesional</td></tr>`;
 
-    // Sugerencias de bienvenida — "Si pudieras mejorar una sola cosa..."
-    const sugCards=W.map(r=>{
-        const txt=(getCol(r,'mejorar una')||getCol(r,'mejorar')||'').trim();
-        const prof=(getCol(r,'profesor')||getCol(r,'profesional')||'').trim();
-        return txt?renderQuoteCard(txt,prof,'neg'):'';
-    }).filter(Boolean).join('');
-    document.getElementById('encSugerencias').innerHTML=sugCards||'<div class="quote-empty">Sin sugerencias registradas</div>';
+    const sugCards=W.map(r=>{const txt=(getCol(r,'mejorar una')||getCol(r,'mejorar')||'').trim();const prof=(getCol(r,'profesor')||getCol(r,'profesional')||'').trim();return txt?renderQuoteCard(txt,prof,'neg'):'';}).filter(Boolean).join('');
+    document.getElementById('encSugerencias').innerHTML=sugCards||'<div class="quote-empty">Sin sugerencias</div>';
 
-    // ═══ BAJAS ═══
+    // BAJAS
     set('b-total', C.length);
+    const recsC=C.map(r=>parseFloat(getCol(r,'recomendar\u00edas')||getCol(r,'recomendar'))).filter(n=>!isNaN(n));
+    const recsExp=C.map(r=>parseFloat(getCol(r,'experiencia'))).filter(n=>!isNaN(n));
+    const npsRecs=recsC.length?recsC:recsExp;
+    const npsC=npsRecs.length?calcNPS(npsRecs):0;
+    const totalNps=npsRecs.length||1;
+    const nProm=npsRecs.filter(n=>n>=9).length;
+    const nPas=npsRecs.filter(n=>n>=7&&n<=8).length;
+    const nDet=npsRecs.filter(n=>n<=6).length;
+    const pPct=Math.round(nProm/totalNps*100);
+    const nPct=Math.round(nPas/totalNps*100);
+    const dPct=Math.max(0,100-pPct-nPct);
+    const avgExpB=recsExp.length?(recsExp.reduce((a,b)=>a+b)/recsExp.length).toFixed(1):'--';
 
-    const recsC   = C.map(r=>parseFloat(getCol(r,'recomendar\u00edas') || getCol(r,'recomendar'))).filter(n=>!isNaN(n));
-    const recsExp  = C.map(r=>parseFloat(getCol(r,'experiencia'))).filter(n=>!isNaN(n));
-    const npsRecs  = recsC.length ? recsC : recsExp;
-    const npsC     = npsRecs.length ? calcNPS(npsRecs) : 0;
+    set('b-nps',npsC);
+    set('b-nps-lbl',npsC>=50?'Excelente':npsC>=30?'Muy bueno':'A mejorar');
+    set('b-prom',pPct+'%');
+    set('b-exp',avgExpB+'/10');
 
-    // NPS breakdown: promotores / pasivos / detractores
-    const totalNps   = npsRecs.length || 1;
-    const nProm      = npsRecs.filter(n=>n>=9).length;
-    const nPas       = npsRecs.filter(n=>n>=7&&n<=8).length;
-    const nDet       = npsRecs.filter(n=>n<=6).length;
-    const pPct       = Math.round(nProm/totalNps*100);
-    const nPct       = Math.round(nPas/totalNps*100);
-    const dPct       = Math.max(0, 100 - pPct - nPct);
-    const avgExpB    = recsExp.length ? (recsExp.reduce((a,b)=>a+b)/recsExp.length).toFixed(1) : '--';
+    const internals=C.filter(r=>classifyMotivo(getCol(r,'motivo'))==='internal').length;
+    const externals=C.length-internals;
+    const desCtrl=C.length>0?Math.round(internals/C.length*100):0;
+    let sumS=0,cntS=0;
+    C.forEach(r=>{const exp=parseFloat(getCol(r,'experiencia'));const aten=parseFloat(getCol(r,'atenci\u00f3n')||getCol(r,'atencion')||getCol(r,'trato'));if(!isNaN(exp)&&!isNaN(aten)){sumS+=(exp+aten)/2*10;cntS++;}else if(!isNaN(exp)){sumS+=exp*10;cntS++;}});
+    const servIdx=cntS>0?Math.round(sumS/cntS):0;
 
-    set('b-nps', npsC);
-    set('b-nps-lbl', npsC>=50?'\uD83D\uDD25 Excelente \u00b7 Top 10% fitness mundial':npsC>=30?'\uD83D\uDC4D Muy bueno \u00b7 Sobre el benchmark':'\u26A0\uFE0F A mejorar \u00b7 Bajo el benchmark');
-    set('b-prom', pPct+'%');
-    set('b-exp', avgExpB+'/10');
-
-    // \u00cdndice Deserci\u00f3n Controlable (usa getCol para encontrar la columna de motivo)
-    const internals = C.filter(r=>classifyMotivo(getCol(r,'motivo'))==='internal').length;
-    const externals = C.length - internals;
-    const desCtrl   = C.length>0 ? Math.round(internals/C.length*100) : 0;
-
-    // \u00cdndice Servicio MOVE
-    let sumS=0, cntS=0;
-    C.forEach(r=>{
-        const exp =parseFloat(getCol(r,'experiencia'));
-        const aten=parseFloat(getCol(r,'atenci\u00f3n') || getCol(r,'atencion') || getCol(r,'trato'));
-        if(!isNaN(exp)&&!isNaN(aten)){sumS+=(exp+aten)/2*10;cntS++;}
-        else if(!isNaN(exp)){sumS+=exp*10;cntS++;}
-    });
-    const servIdx = cntS>0 ? Math.round(sumS/cntS) : 0;
-
-    // 3 gauges + interpretation
     const ni=npsInfo(npsC), di=desercInfo(desCtrl), si=servicioInfo(servIdx);
-    svgGauge('gaugeNPS',     npsC,   -100, 100, ni.color, ni.badge);
-    svgGauge('gaugeDeserc',  desCtrl, 0,   100, di.color, di.badge, '%');
-    svgGauge('gaugeServicio',servIdx, 0,   100, si.color, si.badge, '%');
-    document.getElementById('interpNPS').innerHTML     = makeInterpCard(ni);
-    document.getElementById('interpDeserc').innerHTML  = makeInterpCard(di);
-    document.getElementById('interpServicio').innerHTML= makeInterpCard(si);
+    svgGauge('gaugeNPS',npsC,-100,100,ni.color,ni.badge);
+    svgGauge('gaugeDeserc',desCtrl,0,100,di.color,di.badge,'%');
+    svgGauge('gaugeServicio',servIdx,0,100,si.color,si.badge,'%');
+    document.getElementById('interpNPS').innerHTML=makeInterpCard(ni);
+    document.getElementById('interpDeserc').innerHTML=makeInterpCard(di);
+    document.getElementById('interpServicio').innerHTML=makeInterpCard(si);
 
-    // NPS Distribution stacked bar
-    npsDistBar('chNpsDist', pPct, nPct, dPct);
-    document.getElementById('npsDistDetail').innerHTML =
-        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#10b981"></div><div class="nps-seg-label">Promotores (9\u201310)</div><div class="nps-seg-pct">${pPct}%</div><span class="nps-seg-n">${nProm} resp.</span></div>`+
-        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#f59e0b"></div><div class="nps-seg-label">Pasivos (7\u20138)</div><div class="nps-seg-pct">${nPct}%</div><span class="nps-seg-n">${nPas} resp.</span></div>`+
-        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#ef4444"></div><div class="nps-seg-label">Detractores (0\u20136)</div><div class="nps-seg-pct">${dPct}%</div><span class="nps-seg-n">${nDet} resp.</span></div>`;
+    npsDistBar('chNpsDist',pPct,nPct,dPct);
+    document.getElementById('npsDistDetail').innerHTML=
+        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#10b981"></div><div class="nps-seg-label">Promotores (9-10)</div><div class="nps-seg-pct">${pPct}%</div><span class="nps-seg-n">${nProm} resp.</span></div>`+
+        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#f59e0b"></div><div class="nps-seg-label">Pasivos (7-8)</div><div class="nps-seg-pct">${nPct}%</div><span class="nps-seg-n">${nPas} resp.</span></div>`+
+        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#ef4444"></div><div class="nps-seg-label">Detractores (0-6)</div><div class="nps-seg-pct">${dPct}%</div><span class="nps-seg-n">${nDet} resp.</span></div>`;
 
-    // Internal vs External donut + legend
-    doughnut('chIntExt', [internals||1, externals||1], ['#ef4444cc','#10b981cc']);
-    document.getElementById('intExtLegend').innerHTML =
+    doughnut('chIntExt',[internals||1,externals||1],['#ef4444cc','#10b981cc']);
+    document.getElementById('intExtLegend').innerHTML=
         `<div class="ie-row"><div class="ie-dot" style="background:#ef4444"></div><div class="ie-label">Causas Internas</div><div style="text-align:right"><div class="ie-pct" style="color:#ef4444">${desCtrl}%</div><div class="ie-n">${internals} socios</div></div></div>`+
         `<div class="ie-row"><div class="ie-dot" style="background:#10b981"></div><div class="ie-label">Causas Externas</div><div style="text-align:right"><div class="ie-pct" style="color:#10b981">${100-desCtrl}%</div><div class="ie-n">${externals} socios</div></div></div>`;
 
-    // Motivos horizontal bar — sorted, color-coded (rojo=interno, verde=externo)
     const mot={};
     C.forEach(r=>{const m=getCol(r,'motivo');if(m)mot[m]=(mot[m]||0)+1;});
-    const motSorted = Object.entries(mot).sort((a,b)=>b[1]-a[1]);
-    const motLabels = motSorted.map(([k])=>k.length>44?k.substring(0,44)+'\u2026':k);
-    const motData   = motSorted.map(([,v])=>v);
-    const motColors = motSorted.map(([k])=>classifyMotivo(k)==='internal'?'#ef4444bb':'#10b981bb');
-    const motCount  = motSorted.length;
-    set('motivosBadge', motCount+' razones \u00b7 \uD83D\uDD34 internas \u00b7 \uD83D\uDFE2 externas');
-    const motCanvas = document.getElementById('chMotivos');
-    if(motCanvas){ motCanvas.style.maxHeight='none'; motCanvas.style.height=Math.max(200,motCount*40)+'px'; }
-    hbar('chMotivos', motLabels, motData, motColors);
+    const motSorted=Object.entries(mot).sort((a,b)=>b[1]-a[1]);
+    const motLabels=motSorted.map(([k])=>k.length>44?k.substring(0,44)+'\u2026':k);
+    const motData=motSorted.map(([,v])=>v);
+    const motColors=motSorted.map(([k])=>classifyMotivo(k)==='internal'?'#ef4444bb':'#10b981bb');
+    const motCount=motSorted.length;
+    set('motivosBadge',motCount+' razones \u00b7 \uD83D\uDD34 internas \u00b7 \uD83D\uDFE2 externas');
+    const motCanvas=document.getElementById('chMotivos');
+    if(motCanvas){motCanvas.style.maxHeight='none';motCanvas.style.height=Math.max(200,motCount*40)+'px';}
+    hbar('chMotivos',motLabels,motData,motColors);
 
-    // Per-professor ranking — fuzzy column detection + filter non-real names
-    const PROFE_VALIDOS = ['belen','bel\u00e9n','juarez','ju\u00e1rez','fernando','sebrie','sebri\u00e9','enzo','lega','javier','larramendy','luz','nubile','facundo','soberon','sober\u00f3n','francisco','simcic','leonardo','alfaro','emanuel','lezcano','agustina','agus'];
-    function esProfeReal(nombre){
-        if(!nombre||nombre.trim()==='')return false;
-        const n=nombre.toLowerCase().trim();
-        // Filtra si tiene más de 4 palabras (no es nombre propio) o si no matchea ningún apellido/nombre conocido
-        const palabras=n.split(/\s+/);
-        if(palabras.length>4)return false;
-        return PROFE_VALIDOS.some(v=>n.includes(v));
-    }
+    const PROFE_VALIDOS=['belen','bel\u00e9n','juarez','ju\u00e1rez','fernando','sebrie','sebri\u00e9','enzo','lega','javier','larramendy','luz','nubile','facundo','soberon','sober\u00f3n','francisco','simcic','leonardo','alfaro','emanuel','lezcano','agustina','agus'];
+    function esProfeReal(nombre){if(!nombre||nombre.trim()==='')return false;const n=nombre.toLowerCase().trim();if(n.split(/\s+/).length>4)return false;return PROFE_VALIDOS.some(v=>n.includes(v));}
     const bajaPorProf={};
     C.forEach(r=>{
-        const p   = getCol(r,'profesor') || getCol(r,'profesional') || getCol(r,'profe');
-        const exp = parseFloat(getCol(r,'experiencia'));
-        const aten= parseFloat(getCol(r,'atenci\u00f3n') || getCol(r,'atencion') || getCol(r,'trato'));
-        const rec = parseFloat(getCol(r,'recomendar\u00edas') || getCol(r,'recomendar'));
+        const p=getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe');
+        const exp=parseFloat(getCol(r,'experiencia'));
+        const aten=parseFloat(getCol(r,'atenci\u00f3n')||getCol(r,'atencion')||getCol(r,'trato'));
+        const rec=parseFloat(getCol(r,'recomendar\u00edas')||getCol(r,'recomendar'));
         if(!esProfeReal(p)) return;
-        const nombre = p.trim();
+        const nombre=p.trim();
         if(!bajaPorProf[nombre])bajaPorProf[nombre]={exp:[],aten:[],recom:[]};
-        if(!isNaN(exp)) bajaPorProf[nombre].exp.push(exp);
+        if(!isNaN(exp))bajaPorProf[nombre].exp.push(exp);
         if(!isNaN(aten))bajaPorProf[nombre].aten.push(aten);
-        if(!isNaN(rec)) bajaPorProf[nombre].recom.push(rec);
+        if(!isNaN(rec))bajaPorProf[nombre].recom.push(rec);
     });
-    const profRanking = Object.entries(bajaPorProf)
-        .map(([nombre,data])=>{
-            const avgE=data.exp.length?data.exp.reduce((a,b)=>a+b)/data.exp.length:0;
-            const avgA=data.aten.length?data.aten.reduce((a,b)=>a+b)/data.aten.length:avgE;
-            const siP=Math.round((avgE+avgA)/2*10);
-            const npsP=calcNPS(data.recom.length?data.recom:data.exp);
-            // NPS normalizado a escala 0-10 para gráfico
-            const npsNorm=Math.max(0,Math.min(10,((npsP+100)/200)*10));
-            return{nombre,si:siP,nps:npsP,npsNorm,n:data.exp.length,avgExp:avgE,avgExpF:avgE.toFixed(1)};
-        })
-        .sort((a,b)=>b.si-a.si);
+    const profRanking=Object.entries(bajaPorProf).map(([nombre,data])=>{
+        const avgE=data.exp.length?data.exp.reduce((a,b)=>a+b)/data.exp.length:0;
+        const avgA=data.aten.length?data.aten.reduce((a,b)=>a+b)/data.aten.length:avgE;
+        const siP=Math.round((avgE+avgA)/2*10);
+        const npsP=calcNPS(data.recom.length?data.recom:data.exp);
+        const npsNorm=Math.max(0,Math.min(10,((npsP+100)/200)*10));
+        return{nombre,si:siP,nps:npsP,npsNorm,n:data.exp.length,avgExp:avgE,avgExpF:avgE.toFixed(1)};
+    }).sort((a,b)=>b.si-a.si);
 
     let rankRows='';
     profRanking.forEach((p,i)=>{
-        const siCls =p.si>=90?'bg':p.si>=80?'bb':p.si>=70?'by':'br';
+        const siCls=p.si>=90?'bg':p.si>=80?'bb':p.si>=70?'by':'br';
         const npsCls=p.nps>=50?'bg':p.nps>=30?'bb':p.nps>=10?'by':'br';
         rankRows+=`<tr><td><span class="rank-num">${i+1}</span> <b>${p.nombre}</b></td><td>${p.avgExpF}/10</td><td><span class="badge ${npsCls}">${p.nps}</span></td><td><span class="badge ${siCls}">${p.si}%</span></td><td style="color:#94a3b8;font-size:.8rem">${p.n} resp.</td></tr>`;
     });
-    document.getElementById('bajaProfTab').innerHTML=rankRows||'<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">Sin datos suficientes por profesional</td></tr>';
+    document.getElementById('bajaProfTab').innerHTML=rankRows||'<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">Sin datos suficientes</td></tr>';
 
-    // Voz del Ex-Socio — textos libres de la encuesta de baja
-    const mejCards=C.map(r=>{
-        const txt=(getCol(r,'mejorar para')||getCol(r,'deber\u00eda mejorar')||getCol(r,'mejorar')||'').trim();
-        const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();
-        const p=esProfeReal(prof)?prof:'';
-        return txt?renderQuoteCard(txt,p,'neg'):'';
-    }).filter(Boolean).join('');
-    document.getElementById('bajaMejorar').innerHTML=mejCards||'<div class="quote-empty">Sin respuestas registradas</div>';
+    const mejCards=C.map(r=>{const txt=(getCol(r,'mejorar para')||getCol(r,'deber\u00eda mejorar')||getCol(r,'mejorar')||'').trim();const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();const p=esProfeReal(prof)?prof:'';return txt?renderQuoteCard(txt,p,'neg'):'';}).filter(Boolean).join('');
+    document.getElementById('bajaMejorar').innerHTML=mejCards||'<div class="quote-empty">Sin respuestas</div>';
+    const bienCards=C.map(r=>{const txt=(getCol(r,'hace muy bien')||getCol(r,'hace bien')||getCol(r,'muy bien')||'').trim();const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();const p=esProfeReal(prof)?prof:'';return txt?renderQuoteCard(txt,p,'pos'):'';}).filter(Boolean).join('');
+    document.getElementById('bajaBien').innerHTML=bienCards||'<div class="quote-empty">Sin respuestas</div>';
 
-    const bienCards=C.map(r=>{
-        const txt=(getCol(r,'hace muy bien')||getCol(r,'hace bien')||getCol(r,'muy bien')||'').trim();
-        const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();
-        const p=esProfeReal(prof)?prof:'';
-        return txt?renderQuoteCard(txt,p,'pos'):'';
-    }).filter(Boolean).join('');
-    document.getElementById('bajaBien').innerHTML=bienCards||'<div class="quote-empty">Sin respuestas registradas</div>';
-
-    // Gráfico Experiencia vs NPS por Profe (escala 0-10)
     if(profRanking.length){
-        const prLabels=profRanking.map(p=>p.nombre.split(' ')[0]+' '+( p.nombre.split(' ')[1]||''));
-        groupedBar('chExpNpsProf', prLabels, [
-            {label:'Experiencia General (0\u201310)',data:profRanking.map(p=>+p.avgExp.toFixed(2)),backgroundColor:'#6366f1cc',borderRadius:4},
-            {label:'NPS (escalado 0\u201310)',data:profRanking.map(p=>+p.npsNorm.toFixed(2)),backgroundColor:'#10b981cc',borderRadius:4}
+        const prLabels=profRanking.map(p=>p.nombre.split(' ')[0]+' '+(p.nombre.split(' ')[1]||''));
+        groupedBar('chExpNpsProf',prLabels,[
+            {label:'Experiencia General (0-10)',data:profRanking.map(p=>+p.avgExp.toFixed(2)),backgroundColor:'#6366f1cc',borderRadius:4},
+            {label:'NPS (escalado 0-10)',data:profRanking.map(p=>+p.npsNorm.toFixed(2)),backgroundColor:'#10b981cc',borderRadius:4}
         ]);
     }
 
-    // Gráfico Antigüedad vs Motivo (stacked bar)
-    const ANTIGÜEDADES = ['Menos de 1 mes','1 a 3 meses','3 a 6 meses','M\u00e1s de 6 meses'];
-    const motKey = Object.keys(C[0]||{}).find(k=>k.toLowerCase().includes('motivo'))||'';
-    const antKey = Object.keys(C[0]||{}).find(k=>k.toLowerCase().includes('ant') || k.toLowerCase().includes('tiempo'))||'';
+    const ANTIGÜEDADES=['Menos de 1 mes','1 a 3 meses','3 a 6 meses','M\u00e1s de 6 meses'];
+    const motKey=Object.keys(C[0]||{}).find(k=>k.toLowerCase().includes('motivo'))||'';
+    const antKey=Object.keys(C[0]||{}).find(k=>k.toLowerCase().includes('ant')||k.toLowerCase().includes('tiempo'))||'';
     const motivosUnicos=[...new Set(C.map(r=>r[motKey]).filter(Boolean))];
-    const antColors=['#6366f1bb','#10b981bb','#f59e0bbb','#ef4444bb','#8b5cf6bb','#3b82f6bb'];
-    const antDS = ANTIGÜEDADES.map((ant,i)=>({
-        label:ant,
-        data:motivosUnicos.map(m=>C.filter(r=>r[motKey]===m&&r[antKey]===ant).length),
-        backgroundColor:antColors[i],
-        borderRadius:3
-    }));
     if(motKey&&antKey&&motivosUnicos.length){
+        const antDS=ANTIGÜEDADES.map((ant,i)=>({label:ant,data:motivosUnicos.map(m=>C.filter(r=>r[motKey]===m&&r[antKey]===ant).length),backgroundColor:['#6366f1bb','#10b981bb','#f59e0bbb','#ef4444bb','#8b5cf6bb','#3b82f6bb'][i],borderRadius:3}));
         const shortMot=motivosUnicos.map(m=>m.length>28?m.substring(0,28)+'\u2026':m);
         stackedBar('chAntMotivo',shortMot,antDS);
     }
 
-    // Expert Strategic Analysis
     const fortalezas=[],oportunidades=[],recomendaciones=[];
-    if(npsC>=50){fortalezas.push(`\uD83D\uDD25 NPS ${npsC} \u2014 Top 10% fitness mundial. Benchmark industria: 30\u201345.`);fortalezas.push(`\uD83D\uDC9A ${pPct}% de ex-socios siguen siendo promotores activos.`);}
-    else if(npsC>=30)fortalezas.push(`\uD83D\uDC4D NPS ${npsC} \u2014 Por encima del promedio fitness global (30\u201345).`);
-    else oportunidades.push(`\u26A0\uFE0F NPS ${npsC} \u2014 Bajo el benchmark. Revisar experiencia en primeros 60 d\u00edas.`);
-    if(servIdx>=90)fortalezas.push(`\uD83C\uDFC6 Servicio ${servIdx}% \u2014 Ejecuci\u00f3n de clase mundial seg\u00fan ex-socios.`);
-    else if(servIdx>=80)fortalezas.push(`\uD83D\uDCAA Servicio ${servIdx}% \u2014 Muy por encima del sector (benchmark 70\u201380%).`);
-    else oportunidades.push(`\uD83D\uDD27 Servicio ${servIdx}% \u2014 Hay mejora disponible en la ejecuci\u00f3n operativa.`);
-    if(desCtrl<30)fortalezas.push(`\uD83C\uDF0E Solo ${desCtrl}% causas internas \u2014 MOVE no es el problema; el contexto lo es.`);
-    else if(desCtrl<50)oportunidades.push(`\uD83D\uDD36 ${desCtrl}% causas internas \u2014 Hay factores internos concretos a resolver.`);
-    else oportunidades.push(`\uD83D\uDD34 ${desCtrl}% causas internas \u2014 Problema prioritario: revisar modelo de servicio.`);
-    if(avgExpB!=='--'&&parseFloat(avgExpB)>=8)fortalezas.push(`\u2B50 Experiencia ${avgExpB}/10 \u2014 Alta incluso en ex-socios. Indicador de marca fuerte.`);
-    else if(avgExpB!=='--')oportunidades.push(`\uD83D\uDCCA Experiencia ${avgExpB}/10 \u2014 Hay margen de mejora en la experiencia percibida.`);
-    if(npsC>=50&&desCtrl<30)recomendaciones.push('\uD83C\uDFAF Activar programa de referidos: ex-socios recomiendan MOVE \u2014 monetiz\u00e1 esa energ\u00eda con incentivos concretos.');
-    if(servIdx>=90)recomendaciones.push('\uD83D\uDCCB Documentar y certificar el protocolo de servicio actual como est\u00e1ndar de la marca MOVE.');
-    recomendaciones.push('\uD83D\uDD0D Cruzar motivo de baja con tiempo de membres\u00eda para detectar el "punto de fuga" cr\u00edtico (mes 2\u20133?).');
-    if(desCtrl<30)recomendaciones.push('\uD83D\uDCA1 El problema principal es econom\u00eda/contexto. Explorar planes flexibles, pausas y planes familia.');
-    recomendaciones.push('\uD83D\uDCF1 Implementar NPS autom\u00e1tico en d\u00eda 30 y 60 para detecci\u00f3n temprana de detractores antes de que se den de baja.');
+    if(npsC>=50){fortalezas.push(`\uD83D\uDD25 NPS ${npsC} \u2014 Top 10% fitness mundial.`);fortalezas.push(`\uD83D\uDC9A ${pPct}% de ex-socios siguen siendo promotores.`);}
+    else if(npsC>=30)fortalezas.push(`\uD83D\uDC4D NPS ${npsC} \u2014 Por encima del promedio.`);
+    else oportunidades.push(`\u26A0\uFE0F NPS ${npsC} \u2014 Bajo el benchmark.`);
+    if(servIdx>=90)fortalezas.push(`\uD83C\uDFC6 Servicio ${servIdx}% \u2014 Ejecuci\u00f3n de clase mundial.`);
+    else if(servIdx>=80)fortalezas.push(`\uD83D\uDCAA Servicio ${servIdx}% \u2014 Muy por encima del sector.`);
+    else oportunidades.push(`\uD83D\uDD27 Servicio ${servIdx}% \u2014 Hay mejora disponible.`);
+    if(desCtrl<30)fortalezas.push(`\uD83C\uDF0E Solo ${desCtrl}% causas internas.`);
+    else if(desCtrl<50)oportunidades.push(`\uD83D\uDD36 ${desCtrl}% causas internas.`);
+    else oportunidades.push(`\uD83D\uDD34 ${desCtrl}% causas internas \u2014 Problema prioritario.`);
+    if(avgExpB!=='--'&&parseFloat(avgExpB)>=8)fortalezas.push(`\u2B50 Experiencia ${avgExpB}/10 \u2014 Alta incluso en ex-socios.`);
+    else if(avgExpB!=='--')oportunidades.push(`\uD83D\uDCCA Experiencia ${avgExpB}/10 \u2014 Hay margen de mejora.`);
+    if(npsC>=50&&desCtrl<30)recomendaciones.push('Activar programa de referidos.');
+    if(servIdx>=90)recomendaciones.push('Documentar y certificar el protocolo de servicio.');
+    recomendaciones.push('Cruzar motivo de baja con tiempo de membresía.');
+    if(desCtrl<30)recomendaciones.push('Explorar planes flexibles.');
+    recomendaciones.push('Implementar NPS automático en día 30 y 60.');
     document.getElementById('expertAnalysis').innerHTML=`
-        <div class="expert-col col-green"><div class="expert-col-title">\u2705 Fortalezas</div><ul>${fortalezas.map(f=>`<li>${f}</li>`).join('')||'<li style="color:rgba(255,255,255,.3)">Sin datos suficientes</li>'}</ul></div>
-        <div class="expert-col col-amber"><div class="expert-col-title">\uD83C\uDFAF Oportunidades</div><ul>${(oportunidades.length?oportunidades:['<span style="color:rgba(255,255,255,.35);font-size:.75rem">\u2714\uFE0F Sin alertas cr\u00edticas detectadas</span>']).map(f=>`<li>${f}</li>`).join('')}</ul></div>
+        <div class="expert-col col-green"><div class="expert-col-title">\u2705 Fortalezas</div><ul>${fortalezas.map(f=>`<li>${f}</li>`).join('')||'<li style="color:rgba(255,255,255,.3)">Sin datos</li>'}</ul></div>
+        <div class="expert-col col-amber"><div class="expert-col-title">\uD83C\uDFAF Oportunidades</div><ul>${(oportunidades.length?oportunidades:['<span style="color:rgba(255,255,255,.35);font-size:.75rem">\u2714\uFE0F Sin alertas</span>']).map(f=>`<li>${f}</li>`).join('')}</ul></div>
         <div class="expert-col col-blue"><div class="expert-col-title">\uD83D\uDCA1 Recomendaciones</div><ul>${recomendaciones.map(f=>`<li>${f}</li>`).join('')}</ul></div>`;
 }
 
-// ══════════════════════════════════════════════════
 // INIT
-// ══════════════════════════════════════════════════
 cargarTodo();
 </script>
 </body>
