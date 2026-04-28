@@ -1276,19 +1276,8 @@ function renderEstado() {
     const SEDES_ORDER = ['El Bolsón','Lago Puelo','Bariloche'];
     const bySedeMap = {};
 
-    // Bolsón + Puelo: avgD desde deseRc26 de los pares VS (datos reales del sheet métricas)
-    if (metricsData && metricsData.vs.length) {
-        const activosMap = {};
-        if (planData) planData.profes.forEach(p => { activosMap[p.nombre] = p.activos; });
-        metricsData.vs.forEach(p => {
-            const desArr = p.deseRc26.filter(v => v > 0);
-            let avgD = desArr.length ? desArr.reduce((a,b)=>a+b,0)/desArr.length : 0;
-            if (avgD > 0 && avgD <= 1) avgD *= 100; // decimal → porcentaje
-            const activos = activosMap[p.n26] || 0;
-            if (!bySedeMap[p.sede]) bySedeMap[p.sede] = [];
-            bySedeMap[p.sede].push({ nombre: p.n26, avgD, activos });
-        });
-    } else if (planData) {
+    // Bolsón + Puelo desde planData (misma fuente que los charts de deserción)
+    if (planData) {
         planData.profes.forEach(p => {
             const sede = getSede(p.nombre);
             const desArr = p.histDeserc26.filter(v => v > 0);
