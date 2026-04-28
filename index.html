@@ -804,13 +804,15 @@ const BARI_MONTH_COLS = [1,2,3,4,6,7,8,9,11,12,13,14];
 
 const SHEET_METRICS_ID  = '14FQBk6AThswAUZ65mFzyeObepuMhng9K8EqWKpCZZxk';
 const SHEET_METRICS_GID = '1303962381';
-// VS pairs: [nombre26, ri26altas, ri26deseRc, nombre25, ri25altas, sede]
+// VS pairs — gviz ri = sheet_row - 1 (range A1:T55, 0-based)
+// Sección 1 (sheet 2-9): Altas2025=row4→ri3, Altas2026=row5→ri4, %Deserc2026=row9→ri8
+// Sección +1 cada 10 filas (9 datos + 1 vacía)
 const VS_PAIRS = [
-    {n26:'Belu',  ri26:2,  riD26:6,  n25:'Fran',  ri25:1,  sede:'El Bolsón'},
-    {n26:'Fer',   ri26:11, riD26:15, n25:'Belu',  ri25:10, sede:'El Bolsón'},
-    {n26:'Enzo',  ri26:20, riD26:24, n25:'Enzo',  ri25:19, sede:'El Bolsón'},
-    {n26:'Javi',  ri26:28, riD26:32, n25:'Luz',   ri25:27, sede:'Lago Puelo'},
-    {n26:'Agus',  ri26:36, riD26:40, n25:'Facu',  ri25:35, sede:'Lago Puelo'},
+    {n26:'Belu',  ri26:4,  riD26:8,  n25:'Fran',  ri25:3,  sede:'El Bolsón'},
+    {n26:'Fer',   ri26:13, riD26:17, n25:'Belu',  ri25:12, sede:'El Bolsón'},
+    {n26:'Enzo',  ri26:22, riD26:26, n25:'Enzo',  ri25:21, sede:'El Bolsón'},
+    {n26:'Javi',  ri26:31, riD26:35, n25:'Luz',   ri25:30, sede:'Lago Puelo'},
+    {n26:'Agus',  ri26:40, riD26:44, n25:'Facu',  ri25:39, sede:'Lago Puelo'},
 ];
 
 // Intercept Google gviz format
@@ -964,10 +966,10 @@ function parseMetrics(json) {
             return isNaN(n) ? 0 : n;
         } catch(e) { return 0; }
     };
-    // Detect current month: last ci (1-12) where Belu 2026 altas (ri=2) > 0
+    // Detect current month: last ci (1-12) where Belu 2026 altas (ri=4) > 5
     let currentMesIdx = 0;
     for (let ci = 1; ci <= 12; ci++) {
-        if (cell(2, ci) > 0) currentMesIdx = ci - 1;
+        if (cell(4, ci) > 5) currentMesIdx = ci - 1;
     }
     // VS pairs: extract 12 months of altas25, altas26, and current %deseRc
     const vs = VS_PAIRS.map(p => {
