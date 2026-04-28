@@ -976,26 +976,7 @@ function parseMetrics(json) {
         const deseRc26 = Array.from({length:12}, (_, i) => cell(p.riD26, i+1));
         return { n26: p.n26, n25: p.n25, sede: p.sede, altas25, altas26, deseRc26 };
     });
-    // Estado: rows 14–18 have pre-computed stats per profe
-    // ci=14=nombre(str), ci=15=avg%Deserc, ci=16=rank, ci=17=activos, ci=18=status(str)
-    const cellStr = (ri, ci) => {
-        try {
-            const c = rows[ri] && rows[ri].c && rows[ri].c[ci];
-            if (!c) return '';
-            return String(c.v !== null && c.v !== undefined ? c.v : (c.f || '')).trim();
-        } catch(e) { return ''; }
-    };
-    const estado = [];
-    for (let ri = 14; ri <= 18; ri++) {
-        const nombre = cellStr(ri, 14);
-        if (!nombre) continue;
-        let avgD = cell(ri, 15);
-        if (avgD <= 1 && avgD > 0) avgD = avgD * 100; // convert decimal → percent
-        const activos = cell(ri, 17);
-        const sede = ['Belu','Fer','Enzo'].includes(nombre) ? 'El Bolsón' : 'Lago Puelo';
-        estado.push({ nombre, avgD, activos, sede });
-    }
-    return { currentMesIdx, vs, estado };
+    return { currentMesIdx, vs };
 }
 
 function demoData() {
@@ -1293,14 +1274,19 @@ function renderEstado() {
     const SEDES_ORDER = ['El Bolsón','Lago Puelo','Bariloche'];
     const bySedeMap = {};
 
-    // Bolsón + Puelo desde metricsData (datos vivos de planilla métricas)
-    if (metricsData && metricsData.estado.length) {
-        metricsData.estado.forEach(p => {
+    // Bolsón + Puelo: avgD desde deseRc26 de los pares VS (datos reales del sheet métricas)
+    if (metricsData && metricsData.vs.length) {
+        const activosMap = {};
+        if (planData) planData.profes.forEach(p => { activosMap[p.nombre] = p.activos; });
+        metricsData.vs.forEach(p => {
+            const desArr = p.deseRc26.filter(v => v > 0);
+            let avgD = desArr.length ? desArr.reduce((a,b)=>a+b,0)/desArr.length : 0;
+            if (avgD > 0 && avgD <= 1) avgD *= 100; // decimal → porcentaje
+            const activos = activosMap[p.n26] || 0;
             if (!bySedeMap[p.sede]) bySedeMap[p.sede] = [];
-            bySedeMap[p.sede].push({ nombre: p.nombre, avgD: p.avgD, activos: p.activos });
+            bySedeMap[p.sede].push({ nombre: p.n26, avgD, activos });
         });
     } else if (planData) {
-        // fallback a planData si metrics no cargó
         planData.profes.forEach(p => {
             const sede = getSede(p.nombre);
             const desArr = p.histDeserc26.filter(v => v > 0);
