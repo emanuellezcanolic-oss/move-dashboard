@@ -853,7 +853,7 @@ function loadBariProfe(profe) {
         _sheetCBs[reqId] = r => { clearTimeout(timer); resolve(parseBariData(r, profe.nombre)); };
         const s = document.createElement('script');
         s.onerror = () => { clearTimeout(timer); delete _sheetCBs[reqId]; resolve(null); };
-        s.src = `https://docs.google.com/spreadsheets/d/${profe.id}/gviz/tq?tqx=out:json;reqId:${reqId}&headers=0&gid=${profe.gid}&range=B12:S35`;
+        s.src = `https://docs.google.com/spreadsheets/d/${profe.id}/gviz/tq?tqx=out:json;reqId:${reqId}&headers=0&gid=${profe.gid}&range=B12:T35`;
         document.body.appendChild(s);
     });
 }
@@ -875,7 +875,7 @@ function parseBariData(json, nombre) {
     //  ri=4  → BAJA     ri=5 → RUBEN     ri=6 → KEILA
     //  ri=13 → %DESERCIÓN
     // Altas totales = NUEVO + RENUEVA + RENX2 + RUBEN + KEILA
-    const activos = Math.round(cell(0, 16));  // celda viva en col 16 (última col del rango)
+    const activos = Math.round(cell(1, 17));  // S13: col S (ci=17) fila 13 (ri=1 desde B12)
     const months = BARI_MONTH_COLS.map((c, i) => {
         const nuevo   = cell(1, c);
         const renueva = cell(2, c);
