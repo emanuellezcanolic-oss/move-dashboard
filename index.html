@@ -1307,10 +1307,12 @@ function renderEstado() {
         });
     }
 
-    // Bariloche: detect mesIdx from its own data
-    let bMesIdx = 0;
-    for (let i = MESES.length - 1; i >= 0; i--) {
-        if (bariData.some(p => (p.histAltas[i]||0) > 0)) { bMesIdx = i; break; }
+    // Bariloche: prefer mesIdx from planData; fallback to local detection with threshold >3
+    let bMesIdx = mesIdx;
+    if (!planData) {
+        for (let i = MESES.length - 1; i >= 0; i--) {
+            if (bariData.some(p => (p.histAltas[i]||0) > 3)) { bMesIdx = i; break; }
+        }
     }
     bariData.forEach(p => {
         const des  = (p.histDeserc[bMesIdx]  || 0) * 100;
