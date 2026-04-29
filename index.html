@@ -621,6 +621,28 @@ tr:hover td{background:#fafbfc;}
                 </div>
             </div>
 
+            <!-- NPS Breakdown + 5-Dim Radar -->
+            <div class="row c2">
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-chart-bar"></i> Distribuci&oacute;n NPS &mdash; Nuevos Socios</div>
+                        <span class="card-badge">Promotores &middot; Pasivos &middot; Detractores</span>
+                    </div>
+                    <canvas id="chBienvNpsDist" style="height:100px !important;max-height:100px !important;margin-bottom:16px;"></canvas>
+                    <div id="bienvNpsDistDetail"></div>
+                </div>
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-medal"></i> Dimensiones de Calidad — Onboarding</div>
+                        <span class="card-badge">Escala 0&ndash;10</span>
+                    </div>
+                    <canvas id="chBienvDims" style="max-height:280px;"></canvas>
+                </div>
+            </div>
+
+            <!-- Insight estratégico bienvenida -->
+            <div class="expert-card" id="bienvInsight" style="display:none"></div>
+
             <!-- Sugerencias de nuevos socios -->
             <div class="card">
                 <div class="card-hd">
@@ -713,6 +735,15 @@ tr:hover td{background:#fafbfc;}
                     <span class="card-badge" id="motivosBadge"></span>
                 </div>
                 <canvas id="chMotivos" style="max-height:320px !important;"></canvas>
+            </div>
+
+            <!-- 5 Dimensiones de Servicio -->
+            <div class="card">
+                <div class="card-hd">
+                    <div class="card-title"><i class="fas fa-star-half-alt"></i> Calidad del Servicio &mdash; 5 Dimensiones</div>
+                    <span class="card-badge">Promedio 0&ndash;10 &middot; ex-socios</span>
+                </div>
+                <canvas id="chServDims" style="max-height:240px;"></canvas>
             </div>
 
             <!-- Ranking por profesional -->
@@ -1497,6 +1528,37 @@ function renderVersus() {
 // RENDER ENCUESTAS
 // ══════════════════════════════════════════════════
 
+// Convert categorical text (encuesta) → numeric 0-10
+function textToScore(text) {
+    if (!text) return null;
+    const n = parseFloat(text);
+    if (!isNaN(n)) return Math.min(10, Math.max(0, n));
+    const t = text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    if (/completamente|excelente|totalmente|muy alta|perfect|excellent|very high/.test(t)) return 10;
+    if (/bastante|muy buen|muy bien|alta\b|good|high|bien/.test(t)) return 8;
+    if (/algo|regular|moderada|neutral|media\b|normal|medium|fairly|suficiente/.test(t)) return 6;
+    if (/poco|baja\b|malo|mala|insuficiente|low|poor|little/.test(t)) return 4;
+    if (/nada|muy mal|muy baja|terrible|very low|very bad/.test(t)) return 2;
+    return null;
+}
+
+// Horizontal bar chart for 0-10 scores (tooltip shows value not count)
+function hbarScore(id, labels, data, colors) {
+    if (CH[id]) CH[id].destroy();
+    CH[id] = new Chart(document.getElementById(id), {
+        type: 'bar',
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderRadius: 6, borderSkipped: false }] },
+        options: {
+            indexAxis: 'y', responsive: true,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw.toFixed(1)} / 10` } } },
+            scales: {
+                x: { min: 0, max: 10, grid: { color: '#f1f5f9' }, ticks: { stepSize: 2 } },
+                y: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#374151' } }
+            }
+        }
+    });
+}
+
 // Classification of churn reasons
 function classifyMotivo(m) {
     if(!m) return 'external';
@@ -1654,6 +1716,61 @@ function renderEnc(){
     });
     document.getElementById('encTabBody').innerHTML=tb||`<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Sin datos por profesional</td></tr>`;
 
+    // ── Bienvenida: NPS breakdown ──
+    const wRecs = W.map(r => parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar'))).filter(n=>!isNaN(n));
+    const wProm=wRecs.filter(n=>n>=9).length, wPas=wRecs.filter(n=>n>=7&&n<=8).length, wDet=wRecs.filter(n=>n<=6).length;
+    const wT=wRecs.length||1;
+    const wPP=Math.round(wProm/wT*100), wNP=Math.round(wPas/wT*100), wDP=Math.max(0,100-wPP-wNP);
+    if(document.getElementById('chBienvNpsDist')) {
+        npsDistBar('chBienvNpsDist', wPP, wNP, wDP);
+        document.getElementById('bienvNpsDistDetail').innerHTML=
+            `<div class="nps-seg"><div class="nps-seg-dot" style="background:#10b981"></div><div class="nps-seg-label">Promotores (9–10)</div><div class="nps-seg-pct">${wPP}%</div><span class="nps-seg-n">${wProm} resp.</span></div>`+
+            `<div class="nps-seg"><div class="nps-seg-dot" style="background:#f59e0b"></div><div class="nps-seg-label">Pasivos (7–8)</div><div class="nps-seg-pct">${wNP}%</div><span class="nps-seg-n">${wPas} resp.</span></div>`+
+            `<div class="nps-seg"><div class="nps-seg-dot" style="background:#ef4444"></div><div class="nps-seg-label">Detractores (0–6)</div><div class="nps-seg-pct">${wDP}%</div><span class="nps-seg-n">${wDet} resp.</span></div>`;
+    }
+
+    // ── Bienvenida: 5-Dimensiones calidad onboarding ──
+    const bienvDims = [
+        { label:'Entrevista inicial',   vals: W.map(r=>textToScore(getCol(r,'escuchado')||getCol(r,'entrevista'))).filter(v=>v!==null) },
+        { label:'Claridad del plan',    vals: W.map(r=>textToScore(getCol(r,'plan'))).filter(v=>v!==null) },
+        { label:'Acompañamiento',       vals: W.map(r=>textToScore(getCol(r,'acompa'))).filter(v=>v!==null) },
+        { label:'Experiencia general',  vals: W.map(r=>{ const v=parseFloat(getCol(r,'experiencia')); return isNaN(v)?null:v; }).filter(v=>v!==null) },
+        { label:'Confianza en proceso', vals: W.map(r=>textToScore(getCol(r,'confianza'))).filter(v=>v!==null) },
+    ];
+    const bienvAvgs = bienvDims.map(d => d.vals.length ? +(d.vals.reduce((a,b)=>a+b)/d.vals.length).toFixed(2) : 0);
+    if(document.getElementById('chBienvDims') && bienvAvgs.some(v=>v>0)) {
+        radar('chBienvDims', bienvDims.map(d=>d.label), bienvAvgs);
+    }
+
+    // ── Bienvenida: insight estratégico ──
+    const bienvIns = document.getElementById('bienvInsight');
+    if(bienvIns && W.length >= 5) {
+        const bestDim = bienvDims[bienvAvgs.indexOf(Math.max(...bienvAvgs))];
+        const weakDim = bienvDims[bienvAvgs.indexOf(Math.min(...bienvAvgs.filter(v=>v>0)))];
+        const npsLvl  = nps>=50 ? '🔥 Excelente' : nps>=30 ? '👍 Bueno' : '⚠️ A mejorar';
+        bienvIns.style.display='';
+        bienvIns.innerHTML=`
+        <div class="expert-title"><i class="fas fa-brain"></i> Diagnóstico Onboarding &middot; ${W.length} nuevos socios encuestados</div>
+        <div class="expert-cols">
+          <div class="expert-col">
+            <div class="expert-col-hd" style="color:#10b981">✅ Fortalezas</div>
+            <ul class="expert-list">
+              <li><strong>NPS ${nps} — ${npsLvl}</strong>: ${nps>=50?'Los nuevos socios se convierten en promotores activos desde el día 1.':'Nivel positivo de recomendación inicial.'}</li>
+              <li>Dimensión más valorada: <strong>${bestDim.label}</strong> (${Math.max(...bienvAvgs).toFixed(1)}/10)</li>
+              <li>${wPP}% son Promotores — base sólida para crecimiento orgánico por boca a boca.</li>
+            </ul>
+          </div>
+          <div class="expert-col">
+            <div class="expert-col-hd" style="color:#f59e0b">🎯 Oportunidades</div>
+            <ul class="expert-list">
+              <li>Dimensión con mayor margen de mejora: <strong>${weakDim ? weakDim.label : '—'}</strong>${weakDim ? ' ('+Math.min(...bienvAvgs.filter(v=>v>0)).toFixed(1)+'/10)' : ''}</li>
+              <li>${wDP>0?`${wDP}% de detractores en esta etapa —  riesgo de abandono en primeros 30 días.`:'Sin detractores registrados hasta ahora — excelente señal.'}</li>
+              <li>Capitalizar el alto NPS con un programa formal de referidos.</li>
+            </ul>
+          </div>
+        </div>`;
+    }
+
     // Sugerencias de bienvenida — "Si pudieras mejorar una sola cosa..."
     const sugCards=W.map(r=>{
         const txt=(getCol(r,'mejorar una')||getCol(r,'mejorar')||'').trim();
@@ -1734,6 +1851,23 @@ function renderEnc(){
     const motCanvas = document.getElementById('chMotivos');
     if(motCanvas){ motCanvas.style.maxHeight='none'; motCanvas.style.height=Math.max(200,motCount*40)+'px'; }
     hbar('chMotivos', motLabels, motData, motColors);
+
+    // ── Bajas: 5 Dimensiones de Servicio ──
+    const servDimDef = [
+        { label:'Atención y trato',     key:'atenci' },
+        { label:'Profesionalismo',       key:'profesionalismo' },
+        { label:'Acompañamiento',        key:'acompa' },
+        { label:'Organización',          key:'organiz' },
+        { label:'Ambiente',              key:'ambiente' },
+    ];
+    const servDimVals = servDimDef.map(d => {
+        const vals = C.map(r => parseFloat(getCol(r, d.key))).filter(n=>!isNaN(n));
+        return vals.length ? +(vals.reduce((a,b)=>a+b)/vals.length).toFixed(2) : 0;
+    });
+    if(document.getElementById('chServDims') && servDimVals.some(v=>v>0)) {
+        const sdColors = servDimVals.map(v => v>=8?'#10b981cc':v>=7?'#3b82f6cc':v>=6?'#f59e0bcc':'#ef4444cc');
+        hbarScore('chServDims', servDimDef.map(d=>d.label), servDimVals, sdColors);
+    }
 
     // Per-professor ranking — fuzzy column detection + filter non-real names
     const PROFE_VALIDOS = ['belen','bel\u00e9n','juarez','ju\u00e1rez','fernando','sebrie','sebri\u00e9','enzo','lega','javier','larramendy','luz','nubile','facundo','soberon','sober\u00f3n','francisco','simcic','leonardo','alfaro','emanuel','lezcano','agustina','agus'];
@@ -1820,6 +1954,47 @@ function renderEnc(){
         const shortMot=motivosUnicos.map(m=>m.length>28?m.substring(0,28)+'\u2026':m);
         stackedBar('chAntMotivo',shortMot,antDS);
     }
+
+    // \u2500\u2500 Diagn\u00f3stico Estrat\u00e9gico din\u00e1mico \u2500\u2500
+    const topMot    = motSorted.length ? motSorted[0][0] : '';
+    const topMot2   = motSorted.length>1 ? motSorted[1][0] : '';
+    const topMotInt = topMot && classifyMotivo(topMot)==='internal';
+    const bestServDim = servDimDef[servDimVals.indexOf(Math.max(...servDimVals))];
+    const weakServDim = servDimDef[servDimVals.indexOf(Math.min(...servDimVals.filter(v=>v>0)))];
+    const avgServScore = servDimVals.filter(v=>v>0).length
+        ? (servDimVals.filter(v=>v>0).reduce((a,b)=>a+b)/servDimVals.filter(v=>v>0).length).toFixed(1) : '--';
+    const earlyChurn = C.filter(r=>{ const t=(getCol(r,'tiempo')||getCol(r,'ant')||'').toLowerCase(); return t.includes('1')&&t.includes('3'); }).length;
+    const earlyPct = C.length>0 ? Math.round(earlyChurn/C.length*100) : 0;
+
+    document.getElementById('expertAnalysis').innerHTML=`
+    <div class="expert-col">
+      <div class="expert-col-hd" style="color:#10b981">\u2705 Fortalezas Identificadas</div>
+      <ul class="expert-list">
+        <li><strong>NPS ex-socios: ${npsC}</strong> \u2014 ${npsC>=50?'Extraordinario: incluso quienes se van recomiendan MOVE. Activo de marca invaluable.':npsC>=30?'Nivel positivo entre ex-socios, marca bien valorada.':'Oportunidad de mejora en la experiencia general.'}</li>
+        <li><strong>Servicio MOVE: ${servIdx}%</strong> \u2014 ${servIdx>=90?'Ejecuci\u00f3n premium consolidada. El modelo MOVE funciona.':'Alto nivel de servicio certificado por ex-socios.'}</li>
+        <li>${(100-desCtrl)}% de las bajas son externas \u2014 el problema principal <strong>no es el servicio</strong>, es el contexto del socio.</li>
+        ${bestServDim&&servDimVals.some(v=>v>0)?`<li>Dimensi\u00f3n mejor evaluada: <strong>${bestServDim.label} (${Math.max(...servDimVals).toFixed(1)}/10)</strong></li>`:''}
+      </ul>
+    </div>
+    <div class="expert-col">
+      <div class="expert-col-hd" style="color:#ef4444">\u26a0\ufe0f \u00c1reas Cr\u00edticas</div>
+      <ul class="expert-list">
+        ${topMot?`<li>Motivo #1 de baja: <strong>"${topMot.substring(0,55)}"</strong> \u2014 ${topMotInt?'causa interna, requiere acci\u00f3n inmediata':'causa predominantemente externa'}.</li>`:''}
+        ${topMot2?`<li>Motivo #2: <strong>"${topMot2.substring(0,55)}"</strong> \u2014 ${classifyMotivo(topMot2)==='internal'?'\ud83d\udd34 controlable':'\ud83d\udfe2 externo'}.</li>`:''}
+        <li><strong>${desCtrl}% deserci\u00f3n controlable</strong> \u2014 ${desCtrl>=40?'Porcentaje alto: revisar la entrega del servicio y comunicaci\u00f3n.':desCtrl>=25?'Escenario mixto: hay factores internos identificables y accionables.':'Bajo nivel de responsabilidad interna. Buen indicador.'}</li>
+        ${weakServDim&&servDimVals.some(v=>v>0)?`<li>Dimensi\u00f3n m\u00e1s d\u00e9bil: <strong>${weakServDim.label} (${Math.min(...servDimVals.filter(v=>v>0)).toFixed(1)}/10)</strong> \u2014 foco prioritario de mejora.</li>`:''}
+      </ul>
+    </div>
+    <div class="expert-col">
+      <div class="expert-col-hd" style="color:#6366f1">\ud83c\udfaf Plan de Acci\u00f3n Estrat\u00e9gico</div>
+      <ul class="expert-list">
+        <li><strong>Protocolo 0-90 d\u00edas:</strong> intervenci\u00f3n proactiva en el primer trimestre \u2014 mayor concentraci\u00f3n de abandono identificada.</li>
+        <li><strong>Programa de valor percibido:</strong> comunicar ROI del entrenamiento ante objeciones econ\u00f3micas. Planes flexibles o pausas activas.</li>
+        <li><strong>Gesti\u00f3n de cambio de profe:</strong> onboarding emocional al nuevo profe para mitigar el impacto de la transici\u00f3n.</li>
+        <li><strong>Referidos activos:</strong> capitalizar el NPS ${npsC>=50?'excepcional':''} lanzando un programa formal de referidos con incentivos.</li>
+        ${weakServDim?`<li>Plan de mejora en <strong>${weakServDim.label}</strong>: training espec\u00edfico del equipo en esta dimensi\u00f3n.</li>`:''}
+      </ul>
+    </div>`;
 
     // Expert Strategic Analysis
     const fortalezas=[],oportunidades=[],recomendaciones=[];
