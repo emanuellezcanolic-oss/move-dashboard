@@ -252,6 +252,7 @@ tr:hover td{background:#fafbfc;}
 .quote-prof{display:flex;align-items:center;gap:6px;margin-top:9px;}
 .quote-avatar{width:22px;height:22px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff;flex-shrink:0;}
 .quote-name{font-size:.72rem;font-weight:700;color:var(--muted);}
+.quote-date{font-size:.68rem;color:#b0bec5;margin-left:auto;font-variant-numeric:tabular-nums;}
 .quote-empty{color:#94a3b8;font-size:.82rem;padding:12px 0;text-align:center;}
 
 /* ── PROFE NOTE ── */
@@ -1094,6 +1095,39 @@ function calcNPS(arr){if(!arr.length)return 0;return Math.round(((arr.filter(n=>
 function getSede(prof){for(const[k,v]of Object.entries(SEDE_MAP)){if(prof.includes(k))return v;}return '\u2014';}
 function set(id,val){const el=document.getElementById(id);if(el)el.textContent=val;}
 
+// NPS per-profe bar with always-visible value labels (handles 0 and negatives)
+function barNPSProfe(id,labels,data,colors){
+    if(CH[id])CH[id].destroy();
+    CH[id]=new Chart(document.getElementById(id),{
+        type:'bar',
+        data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:7}]},
+        options:{
+            responsive:true,
+            plugins:{
+                legend:{display:false},
+                tooltip:{callbacks:{label:ctx=>` NPS: ${ctx.raw}`}}
+            },
+            scales:{y:{min:-100,max:100,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}
+        },
+        plugins:[{
+            id:'npsLabels',
+            afterDatasetsDraw(chart){
+                const {ctx,data:d,scales:{y}}=chart;
+                ctx.save();
+                d.datasets[0].data.forEach((val,i)=>{
+                    const bar=chart.getDatasetMeta(0).data[i];
+                    const yPos = val>=0 ? bar.y-6 : bar.y+14;
+                    ctx.fillStyle='#1e293b';
+                    ctx.font='bold 12px system-ui,sans-serif';
+                    ctx.textAlign='center';
+                    ctx.fillText(val,bar.x,yPos);
+                });
+                ctx.restore();
+            }
+        }]
+    });
+}
+
 // ══════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════
@@ -1532,7 +1566,11 @@ function renderVersus() {
 function textToScore(text) {
     if (!text) return null;
     const n = parseFloat(text);
-    if (!isNaN(n)) return Math.min(10, Math.max(0, n));
+    if (!isNaN(n)) {
+        // Emoji-prefixed 1-5 options ("5️⃣ Excelente") → scale to 0-10
+        if (Number.isInteger(n) && n >= 1 && n <= 5) return n * 2;
+        return Math.min(10, Math.max(0, n));
+    }
     const t = text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
     if (/completamente|excelente|totalmente|muy alta|perfect|excellent|very high/.test(t)) return 10;
     if (/bastante|muy buen|muy bien|alta\b|good|high|bien/.test(t)) return 8;
@@ -1572,16 +1610,27 @@ function getCol(row, keyword) {
     return k ? (row[k] || '') : '';
 }
 
+// Parse gviz Date object \u2192 "14 Abr 2026"
+function fmtDate(v) {
+    if (!v) return '';
+    const d = (v instanceof Date) ? v : new Date(v);
+    if (isNaN(d)) return '';
+    const MS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return `${d.getDate()} ${MS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 // Renderiza una tarjeta de comentario
-function renderQuoteCard(text, prof, type) {
+function renderQuoteCard(text, prof, type, date) {
     if(!text||text.trim()==='') return '';
     const initial = prof ? prof.trim()[0].toUpperCase() : '?';
     const shortProf = prof ? prof.split(' ').slice(0,2).join(' ') : 'An\u00f3nimo';
+    const dateLbl = date ? `<span class="quote-date">${date}</span>` : '';
     return `<div class="quote-card ${type||''}">
         <div class="quote-text">"${text}"</div>
         <div class="quote-prof">
             <div class="quote-avatar">${initial}</div>
             <span class="quote-name">${shortProf}</span>
+            ${dateLbl}
         </div>
     </div>`;
 }
@@ -1662,7 +1711,7 @@ function renderEnc(){
     // Índice Servicio: acompañamiento + plan + entrevista
     let sS=0,cS=0,sE=0,cE=0;
     W.forEach(r=>{
-        const e  = parseFloat(getCol(r,'experiencia'));
+        const e  = parseFloat(getCol(r,'calific'));   // col H: "¿Cómo calificarías tu experiencia general?"
         if(!isNaN(e)){sE+=e;cE++;}
         const a  = parseFloat(getCol(r,'acompa'));          // acompañamiento
         const cl = parseFloat(getCol(r,'plan'));             // claridad del plan
@@ -1684,19 +1733,19 @@ function renderEnc(){
     W.forEach(r=>{
         const p  = getCol(r,'profesor') || getCol(r,'profesional') || getCol(r,'profe');
         const rc = parseFloat(getCol(r,'probable') || getCol(r,'recomiendes') || getCol(r,'recomendar'));
-        const ex = parseFloat(getCol(r,'experiencia'));
+        const ex = parseFloat(getCol(r,'calific'));
         if(p&&!isNaN(rc)){byProf[p]=byProf[p]||[];byProf[p].push(rc);}
         if(p&&!isNaN(ex)){expByProf[p]=expByProf[p]||[];expByProf[p].push(ex);}
     });
     const profs=Object.keys(byProf);
     const npsV=profs.map(p=>calcNPS(byProf[p]));
-    barSimple('chNpsProf',profs.map(p=>p.split(' ')[0]),npsV,npsV.map(v=>v>=50?'#10b981cc':v>=30?'#3b82f6cc':'#ef4444cc'));
+    barNPSProfe('chNpsProf',profs.map(p=>p.split(' ')[0]),npsV,npsV.map(v=>v>=50?'#10b981cc':v>=30?'#3b82f6cc':v>=0?'#f59e0bcc':'#ef4444cc'));
 
     // Experiencia por horario — descubrimiento dinámico de valores reales
     const horarioMap={};
     W.forEach(r=>{
         const h=(getCol(r,'horario')||'').trim();
-        const e=parseFloat(getCol(r,'experiencia'));
+        const e=parseFloat(getCol(r,'calific'));
         if(h&&!isNaN(e)){if(!horarioMap[h])horarioMap[h]=[];horarioMap[h].push(e);}
     });
     const horLabels=Object.keys(horarioMap);
@@ -1734,7 +1783,7 @@ function renderEnc(){
         { label:'Entrevista inicial',   vals: W.map(r=>textToScore(getCol(r,'escuchado')||getCol(r,'entrevista'))).filter(v=>v!==null) },
         { label:'Claridad del plan',    vals: W.map(r=>textToScore(getCol(r,'plan'))).filter(v=>v!==null) },
         { label:'Acompañamiento',       vals: W.map(r=>textToScore(getCol(r,'acompa'))).filter(v=>v!==null) },
-        { label:'Experiencia general',  vals: W.map(r=>{ const v=parseFloat(getCol(r,'experiencia')); return isNaN(v)?null:v; }).filter(v=>v!==null) },
+        { label:'Experiencia general',  vals: W.map(r=>{ const v=parseFloat(getCol(r,'calific')); return isNaN(v)?null:v; }).filter(v=>v!==null) },
         { label:'Confianza en proceso', vals: W.map(r=>textToScore(getCol(r,'confianza'))).filter(v=>v!==null) },
     ];
     const bienvAvgs = bienvDims.map(d => d.vals.length ? +(d.vals.reduce((a,b)=>a+b)/d.vals.length).toFixed(2) : 0);
@@ -1775,7 +1824,8 @@ function renderEnc(){
     const sugCards=W.map(r=>{
         const txt=(getCol(r,'mejorar una')||getCol(r,'mejorar')||'').trim();
         const prof=(getCol(r,'profesor')||getCol(r,'profesional')||'').trim();
-        return txt?renderQuoteCard(txt,prof,'neg'):'';
+        const date=fmtDate(getCol(r,'temporal'));
+        return txt?renderQuoteCard(txt,prof,'neg',date):'';
     }).filter(Boolean).join('');
     document.getElementById('encSugerencias').innerHTML=sugCards||'<div class="quote-empty">Sin sugerencias registradas</div>';
 
@@ -1917,7 +1967,8 @@ function renderEnc(){
         const txt=(getCol(r,'mejorar para')||getCol(r,'deber\u00eda mejorar')||getCol(r,'mejorar')||'').trim();
         const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();
         const p=esProfeReal(prof)?prof:'';
-        return txt?renderQuoteCard(txt,p,'neg'):'';
+        const date=fmtDate(getCol(r,'temporal'));
+        return txt?renderQuoteCard(txt,p,'neg',date):'';
     }).filter(Boolean).join('');
     document.getElementById('bajaMejorar').innerHTML=mejCards||'<div class="quote-empty">Sin respuestas registradas</div>';
 
@@ -1925,7 +1976,8 @@ function renderEnc(){
         const txt=(getCol(r,'hace muy bien')||getCol(r,'hace bien')||getCol(r,'muy bien')||'').trim();
         const prof=(getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe')||'').trim();
         const p=esProfeReal(prof)?prof:'';
-        return txt?renderQuoteCard(txt,p,'pos'):'';
+        const date=fmtDate(getCol(r,'temporal'));
+        return txt?renderQuoteCard(txt,p,'pos',date):'';
     }).filter(Boolean).join('');
     document.getElementById('bajaBien').innerHTML=bienCards||'<div class="quote-empty">Sin respuestas registradas</div>';
 
