@@ -297,19 +297,31 @@ tr:hover td{background:#fafbfc;}
 .estado-activos{font-size:.72rem;font-weight:600;color:var(--muted);margin-top:1px;}
 
 /* ── VS 2025 / 2026 ── */
-.vs-sede-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:18px 0 8px;padding-left:2px;}
-.versus-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
-.vs-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow);}
-.vs-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.vs-nombre{font-size:.95rem;font-weight:700;color:var(--text);}
-.vs-sede{font-size:.65rem;font-weight:600;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:20px;border:1px solid var(--border);}
-.vs-label{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;}
-.vs-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
-.vs-year{flex:1;text-align:center;}
-.vs-yr-lbl{font-size:.65rem;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
-.vs-yr-val{font-size:1.8rem;font-weight:800;color:var(--text);}
-.vs-arrow{color:var(--muted);font-size:1.1rem;}
-.vs-diff{font-size:.82rem;font-weight:700;text-align:center;padding:6px 10px;border-radius:8px;background:var(--bg);}
+/* ── VS 2025/2026 ── */
+.vs-month-selector{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
+.vs-mon-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;}
+.vs-mon-btn:hover{border-color:var(--accent);color:var(--accent);}
+.vs-mon-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.vs-mon-dim{opacity:.35;}
+.vs-sede-block{margin-bottom:28px;}
+.vs-sede-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:6px;}
+.vs-sede-title{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.vs-ytd-badge{font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;}
+.versus-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.vs-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow);}
+.vs-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.vs-nombre{font-size:.95rem;font-weight:800;color:var(--text);}
+.vs-sede-tag{font-size:.62rem;font-weight:600;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:20px;border:1px solid var(--border);}
+.vs-mes-label{font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.vs-bars{display:flex;flex-direction:column;gap:7px;margin-bottom:12px;}
+.vs-bar-row{display:flex;align-items:center;gap:8px;}
+.vs-bar-yr{font-size:.65rem;font-weight:700;color:var(--muted);width:28px;flex-shrink:0;}
+.vs-bar-track{flex:1;height:9px;background:var(--bg);border-radius:5px;overflow:hidden;}
+.vs-bar-fill{height:100%;border-radius:5px;transition:width .4s ease;}
+.vs-bar-num{font-size:.85rem;font-weight:800;width:28px;text-align:right;flex-shrink:0;}
+.vs-diff-pill{font-size:.76rem;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid;text-align:center;margin-bottom:8px;}
+.vs-acum{font-size:.67rem;color:var(--muted);font-weight:500;line-height:1.4;}
+.vs-ctx{font-size:.6rem;font-weight:600;color:var(--muted);background:var(--bg);padding:1px 6px;border-radius:8px;border:1px solid var(--border);margin-left:4px;vertical-align:middle;}
 </style>
 </head>
 <body>
@@ -833,7 +845,9 @@ window.google = { visualization: { Query: { setResponse: function(data) {
     if (cb) { delete _sheetCBs[data.reqId]; cb(data); }
 }}}};
 
-let CH = {}, planData = null, wData = [], cData = [], bariData = [], metricsData = null;
+let CH = {}, planData = null, wData = [], cData = [], bariData = [], metricsData = null, vsMonth = -1;
+
+function setVsMonth(idx) { vsMonth = idx; renderVersus(); }
 
 // cargarTodo with 10s safety timeout
 async function cargarTodo() {
@@ -1381,44 +1395,101 @@ function renderEstado() {
 // ══ RENDER VS 2025 vs 2026 ══
 function renderVersus() {
     const el = document.getElementById('versusCards');
-    if (!metricsData || !metricsData.vs.length) {
-        el.innerHTML = '<div class="alert">Sin datos disponibles</div>';
-        return;
+    if (!planData) { el.innerHTML = '<div class="alert">Sin datos disponibles</div>'; return; }
+
+    // Auto-detect current month
+    let curMes = 0;
+    for (let i = MESES.length - 1; i >= 0; i--) {
+        if (planData.profes.some(p => (p.histAltas26[i]||0) > 5)) { curMes = i; break; }
     }
-    const mesIdx = metricsData.currentMesIdx;
-    const mesNombre = MESES[mesIdx];
+    const mi = vsMonth >= 0 ? vsMonth : curMes;
+
+    // Month selector
+    let selHtml = '<div class="vs-month-selector">';
+    MESES.forEach((m, i) => {
+        const active  = i === mi ? ' active' : '';
+        const hasDat  = planData.profes.some(p => (p.histAltas26[i]||0) + (p.histAltas25[i]||0) > 0);
+        selHtml += `<button class="vs-mon-btn${active}${hasDat ? '' : ' vs-mon-dim'}" onclick="setVsMonth(${i})">${m}</button>`;
+    });
+    selHtml += '</div>';
+
+    // Only active 2026 profes (exclude retired ones)
+    const activeProfes = planData.profes.filter(p => {
+        const ctx = PROFE_CONTEXT[p.nombre];
+        return !ctx || !ctx.reemplazadoPor;
+    });
+
     const SEDES = ['El Bolsón', 'Lago Puelo'];
-    let html = `<div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">Mes: ${mesNombre} 2026</div>`;
+    let html = selHtml;
 
     SEDES.forEach(sede => {
-        const pares = metricsData.vs.filter(p => p.sede === sede);
-        if (!pares.length) return;
-        html += `<div class="vs-sede-label"><i class="fas fa-map-marker-alt"></i> ${sede}</div><div class="versus-grid">`;
-        pares.forEach(p => {
-            const a25 = p.altas25[mesIdx] || 0;
-            const a26 = p.altas26[mesIdx] || 0;
+        const profes = activeProfes.filter(p => getSede(p.nombre) === sede);
+        if (!profes.length) return;
+
+        // Sede YTD totals
+        const ytd26 = profes.reduce((s,p) => s + p.histAltas26.slice(0, mi+1).reduce((a,b)=>a+b,0), 0);
+        const ytd25 = profes.reduce((s,p) => s + p.histAltas25.slice(0, mi+1).reduce((a,b)=>a+b,0), 0);
+        const ytdD  = ytd26 - ytd25;
+        const ytdPct = ytd25 > 0 ? Math.round(ytdD/ytd25*100) : 0;
+        const ytdCol = ytdD >= 0 ? '#10b981' : '#ef4444';
+
+        html += `<div class="vs-sede-block">
+            <div class="vs-sede-header">
+                <span class="vs-sede-title"><i class="fas fa-map-marker-alt"></i> ${sede}</span>
+                <span class="vs-ytd-badge" style="color:${ytdCol};background:${ytdCol}14;border:1px solid ${ytdCol}33">
+                    Acum. ENE–${MESES[mi]}: ${ytdD>=0?'+':''}${ytdD} altas (${ytdPct>=0?'+':''}${ytdPct}%)
+                </span>
+            </div>
+            <div class="versus-grid">`;
+
+        profes.forEach(p => {
+            const a26 = p.histAltas26[mi] || 0;
+            const a25 = p.histAltas25[mi] || 0;
             const diff = a26 - a25;
-            const pct  = a25 > 0 ? Math.round(diff / a25 * 100) : (a26 > 0 ? 100 : 0);
-            const up   = diff >= 0;
-            const arrow = up ? '📈' : '📉';
-            const col  = up ? '#10b981' : '#ef4444';
-            const mismoProfe = p.n26 === p.n25;
-            const subLabel = mismoProfe
-                ? `${p.n26} · ${mesNombre}`
-                : `${p.n25} (2025) → ${p.n26} (2026)`;
+            const pct  = a25 > 0 ? Math.round(diff/a25*100) : (a26 > 0 ? 100 : 0);
+            const col  = diff >= 0 ? '#10b981' : '#ef4444';
+            const mx   = Math.max(a25, a26, 1);
+            const w26  = Math.round(a26/mx*100);
+            const w25  = Math.round(a25/mx*100);
+
+            // Profe acumulado YTD
+            const acc26 = p.histAltas26.slice(0, mi+1).reduce((a,b)=>a+b,0);
+            const acc25 = p.histAltas25.slice(0, mi+1).reduce((a,b)=>a+b,0);
+            const accD  = acc26 - acc25;
+            const accPct = acc25 > 0 ? Math.round(accD/acc25*100) : 0;
+            const accCol = accD >= 0 ? '#10b981' : '#ef4444';
+
+            // Context label (replacement info)
+            const ctx = PROFE_CONTEXT[p.nombre];
+            const ctxNote = ctx && ctx.reemplazaA ? `<span class="vs-ctx">reemplaza a ${ctx.reemplazaA}</span>` : '';
+
             html += `<div class="vs-card">
-                <div class="vs-header"><span class="vs-nombre">${p.n26}</span><span class="vs-sede">${sede}</span></div>
-                <div class="vs-label">${subLabel}</div>
-                <div class="vs-row">
-                    <div class="vs-year"><div class="vs-yr-lbl">2025</div><div class="vs-yr-val">${a25}</div></div>
-                    <div class="vs-arrow">→</div>
-                    <div class="vs-year"><div class="vs-yr-lbl">2026</div><div class="vs-yr-val" style="color:${col}">${a26}</div></div>
+                <div class="vs-card-header">
+                    <span class="vs-nombre">${p.nombre} ${ctxNote}</span>
+                    <span class="vs-sede-tag">${sede.replace('El ','').replace('Lago ','L.')}</span>
                 </div>
-                <div class="vs-diff" style="color:${col}">${arrow} ${diff>=0?'+':''}${diff} vs 2025 (${pct>=0?'+':''}${pct}%)</div>
+                <div class="vs-mes-label">${MESES[mi]} — Altas 2025 vs 2026</div>
+                <div class="vs-bars">
+                    <div class="vs-bar-row">
+                        <div class="vs-bar-yr">2026</div>
+                        <div class="vs-bar-track"><div class="vs-bar-fill" style="width:${w26}%;background:#10b981"></div></div>
+                        <div class="vs-bar-num" style="color:#10b981">${a26}</div>
+                    </div>
+                    <div class="vs-bar-row">
+                        <div class="vs-bar-yr">2025</div>
+                        <div class="vs-bar-track"><div class="vs-bar-fill" style="width:${w25}%;background:#94a3b8"></div></div>
+                        <div class="vs-bar-num">${a25}</div>
+                    </div>
+                </div>
+                <div class="vs-diff-pill" style="color:${col};border-color:${col}44;background:${col}12">
+                    ${diff>=0?'↑':'↓'} ${diff>=0?'+':''}${diff} altas (${pct>=0?'+':''}${pct}%) vs 2025
+                </div>
+                <div class="vs-acum">Acum. ENE–${MESES[mi]}: <strong style="color:${accCol}">${accD>=0?'+':''}${accD} (${accPct>=0?'+':''}${accPct}%)</strong> &nbsp;·&nbsp; 2026: <strong>${acc26}</strong> &nbsp;|&nbsp; 2025: ${acc25}</div>
             </div>`;
         });
-        html += '</div>';
+        html += '</div></div>';
     });
+
     el.innerHTML = html;
 }
 
