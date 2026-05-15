@@ -1852,13 +1852,13 @@ function makeInterpCard(info){
 // ── BARILOCHE ENCUESTAS ──────────────────────────────────────
 const SHEET_BARI_ENC_ID = '12lT64vo5ejA5fpLiUUHWsJccQN6fVkQF_lhHfeLuiCc';
 const SHEET_BARI_BIENV_GID = '1297311567';
-const SHEET_BARI_BAJAS_GID = 'sheet:Baja';
+const SHEET_BARI_BAJAS_GID = '712013144';
 let bwData=[], bbData=[];
 
 function setBariTab(tab){
-    ['bienv','bajas'].forEach(t=>{
-        document.getElementById('bariPanelB'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = t===tab?'':'none';
-        document.getElementById('bariTabBtn'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
+    ['Bienv','Bajas'].forEach(t=>{
+        const panel=document.getElementById('bariPanel'+t); if(panel)panel.style.display=t.toLowerCase()===tab?'':'none';
+        const btn=document.getElementById('bariTabBtn'+t); if(btn)btn.classList.toggle('active',t.toLowerCase()===tab);
     });
 }
 
@@ -1881,9 +1881,21 @@ function loadEncuestasBari(){
     });
 }
 
+// Find NPS value in a row — keyword first, then positional fallback (last 4 numeric cols)
+function getNPSVal(r){
+    const byKey=parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar'));
+    if(!isNaN(byKey))return byKey;
+    const vals=Object.values(r);
+    for(let i=vals.length-1;i>=Math.max(0,vals.length-5);i--){
+        const n=parseFloat(vals[i]);
+        if(!isNaN(n)&&n>=0&&n<=10)return n;
+    }
+    return NaN;
+}
+
 // Reusable: render NPS hero for any dataset + prefix
 function renderEncBariHero(W, px){
-    const recs=W.map(r=>parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar'))).filter(n=>!isNaN(n));
+    const recs=W.map(r=>getNPSVal(r)).filter(n=>!isNaN(n));
     const nps=calcNPS(recs);
     const prom=recs.filter(n=>n>=9).length, pas=recs.filter(n=>n>=7&&n<=8).length, det=recs.filter(n=>n<=6).length;
     const T=recs.length||1;
@@ -1906,7 +1918,7 @@ function renderEncBariHero(W, px){
     if(badge){badge.className='enc-hero-badge '+nbCls;badge.textContent=nbLbl;}
     const ids={Promo:pp,Pasi:np,Detr:dp};
     Object.entries(ids).forEach(([k,v])=>{
-        const el=document.getElementById(px[0].toUpperCase()+px.slice(1)+'Brk'+k);
+        const el=document.getElementById(px+'Brk'+k);
         if(el)el.style.width=v+'%';
     });
     set(px+'-promo-pct',pp+'%'); set(px+'-promo-n',prom+' resp.');
@@ -1918,7 +1930,7 @@ function renderEncBariCharts(W, px, chartPfx){
     const byProf={}, expByProf={};
     W.forEach(r=>{
         const p=getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe');
-        const rc=parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar'));
+        const rc=getNPSVal(r);
         const ex=parseFloat(getCol(r,'calific'));
         if(p&&!isNaN(rc)){byProf[p]=byProf[p]||[];byProf[p].push(rc);}
         if(p&&!isNaN(ex)){expByProf[p]=expByProf[p]||[];expByProf[p].push(ex);}
