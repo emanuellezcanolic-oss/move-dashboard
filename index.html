@@ -414,14 +414,11 @@ tr:hover td{background:#fafbfc;}
         </div>
         <div class="sb-group">
             <div class="sb-group-label">Encuestas</div>
-            <div class="nav-item" onclick="go('encuestas')">
-                <i class="fas fa-star"></i> Encuestas de Bienvenida
-            </div>
-            <div class="nav-item" onclick="go('bajas')">
-                <i class="fas fa-door-open"></i> An&aacute;lisis de Bajas
+            <div class="nav-item" onclick="go('bolson-enc')">
+                <i class="fas fa-map-marker-alt"></i> Bols&oacute;n &amp; Lago Puelo
             </div>
             <div class="nav-item" onclick="go('bari-enc')">
-                <i class="fas fa-mountain"></i> Bariloche &mdash; Encuestas
+                <i class="fas fa-mountain"></i> Bariloche
             </div>
         </div>
     </div>
@@ -591,8 +588,23 @@ tr:hover td{background:#fafbfc;}
             <div id="versusCards"></div>
         </div>
 
+        <!-- ═══ SECTION: BOLSÓN & LAGO PUELO ENCUESTAS ═══ -->
+        <div class="section" id="section-bolson-enc">
+            <div class="insight-banner" style="margin-bottom:18px;">
+                <div class="ib-icon">📍</div>
+                <div>
+                    <div class="ib-title">Bolsón &amp; Lago Puelo</div>
+                    <div class="ib-sub">Bienvenida &amp; Análisis de Bajas</div>
+                </div>
+            </div>
+            <div class="enc-tabs">
+                <button class="enc-tab active" id="bolsonTabBtnBienv" onclick="setBolsonTab('Bienv')">⭐ Bienvenida</button>
+                <button class="enc-tab" id="bolsonTabBtnBajas" onclick="setBolsonTab('Bajas')">📉 Análisis de Bajas</button>
+            </div>
+            <div id="bolsonPanelBienv">
+
         <!-- ═══ SECTION: ENCUESTAS ═══ -->
-        <div class="section" id="section-encuestas">
+        <div id="section-encuestas">
             <div class="alert"><i class="fas fa-info-circle"></i> <span>Encuestas de bienvenida — Bolsón &amp; Lago Puelo. NPS: Promotores ≥9 · Detractores ≤6.</span></div>
             <div id="encWarn" style="display:none" class="alert"></div>
 
@@ -685,8 +697,11 @@ tr:hover td{background:#fafbfc;}
             </div>
         </div>
 
+            </div><!-- /bolsonPanelBienv -->
+            <div id="bolsonPanelBajas" style="display:none">
+
         <!-- ═══ SECTION: BAJAS ═══ -->
-        <div class="section" id="section-bajas">
+        <div id="section-bajas">
 
             <!-- KPIs -->
             <div class="kpi-grid">
@@ -843,6 +858,9 @@ tr:hover td{background:#fafbfc;}
             </div>
 
         </div><!-- /section-bajas -->
+
+            </div><!-- /bolsonPanelBajas -->
+        </div><!-- /section-bolson-enc -->
 
         <!-- ═══ SECTION: BARILOCHE ENCUESTAS ═══ -->
         <div class="section" id="section-bari-enc">
@@ -1291,7 +1309,8 @@ const META = {
     versus:    {title:'2025 vs 2026',          sub:'Comparaci\u00f3n de altas \u2014 Bols\u00f3n y Lago Puelo'},
     encuestas: {title:'Encuestas de Bienvenida', sub:'NPS & satisfacci\u00f3n de nuevos socios'},
     bajas:     {title:'An\u00e1lisis de Bajas',  sub:'Encuestas de ex-socios'},
-    'bari-enc':{title:'Bariloche \u2014 Encuestas', sub:'Bienvenida & An\u00e1lisis de Bajas sede Bariloche'},
+    'bari-enc':  {title:'Bariloche \u2014 Encuestas', sub:'Bienvenida & An\u00e1lisis de Bajas sede Bariloche'},
+    'bolson-enc':{title:'Bols\u00f3n & Lago Puelo \u2014 Encuestas', sub:'Bienvenida & An\u00e1lisis de Bajas'},
 };
 function go(sec){
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -1303,7 +1322,7 @@ function go(sec){
         if(oc.includes("'"+sec+"'"))n.classList.add('active');
     });
     if(META[sec]){set('topTitle',META[sec].title);set('topSub',META[sec].sub);}
-    if(sec==='encuestas'||sec==='bajas') loadEncuestas();
+    if(sec==='encuestas'||sec==='bajas'||sec==='bolson-enc') loadEncuestas();
     if(sec==='bari-enc') loadEncuestasBari();
     closeSb();
 }
@@ -1854,6 +1873,13 @@ const SHEET_BARI_ENC_ID = '12lT64vo5ejA5fpLiUUHWsJccQN6fVkQF_lhHfeLuiCc';
 const SHEET_BARI_BIENV_GID = '1297311567';
 const SHEET_BARI_BAJAS_GID = '712013144';
 let bwData=[], bbData=[];
+
+function setBolsonTab(tab){
+    ['Bienv','Bajas'].forEach(t=>{
+        const panel=document.getElementById('bolsonPanel'+t); if(panel)panel.style.display=t===tab?'':'none';
+        const btn=document.getElementById('bolsonTabBtn'+t); if(btn)btn.classList.toggle('active',t===tab);
+    });
+}
 
 function setBariTab(tab){
     ['Bienv','Bajas'].forEach(t=>{
