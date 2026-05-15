@@ -323,6 +323,43 @@ tr:hover td{background:#fafbfc;}
 .vs-diff-pill{font-size:.76rem;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid;text-align:center;margin-bottom:8px;}
 .vs-acum{font-size:.67rem;color:var(--muted);font-weight:500;line-height:1.4;}
 .vs-ctx{font-size:.6rem;font-weight:600;color:var(--muted);background:var(--bg);padding:1px 6px;border-radius:8px;border:1px solid var(--border);margin-left:4px;vertical-align:middle;}
+
+/* ── ENC TABS ── */
+.enc-tabs{display:flex;gap:8px;margin-bottom:20px;}
+.enc-tab{padding:8px 20px;border-radius:20px;border:1.5px solid var(--border);background:transparent;font-size:.79rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .18s;}
+.enc-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.enc-tab:hover:not(.active){background:#f1f5f9;color:var(--text);}
+
+/* ── NPS HERO ── */
+.enc-hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#0f2744 100%);border-radius:16px;padding:28px 32px;margin-bottom:20px;display:grid;grid-template-columns:160px 1fr;gap:36px;align-items:center;border:1px solid rgba(99,102,241,.3);box-shadow:0 8px 32px rgba(0,0,0,.18);}
+@media(max-width:700px){.enc-hero{grid-template-columns:1fr;gap:20px;padding:20px;}}
+.enc-hero-score{font-size:5.2rem;font-weight:900;color:#fff;line-height:1;font-variant-numeric:tabular-nums;}
+.enc-hero-label{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.6px;color:rgba(255,255,255,.35);margin-top:4px;}
+.enc-hero-badge{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:5px 14px;border-radius:20px;font-size:.76rem;font-weight:800;}
+.enc-hero-badge.green{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);}
+.enc-hero-badge.blue{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);}
+.enc-hero-badge.amber{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3);}
+.enc-hero-badge.red{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);}
+.enc-brk-bar{height:10px;border-radius:5px;display:flex;overflow:hidden;margin-bottom:16px;background:#1e293b;}
+.enc-brk-bar div{transition:width .6s cubic-bezier(.4,0,.2,1);}
+.enc-segs{display:flex;gap:0;margin-bottom:18px;}
+.enc-seg{flex:1;}
+.enc-seg-pct{font-size:1.9rem;font-weight:900;line-height:1;}
+.enc-seg-lbl{font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.38);margin-top:3px;}
+.enc-seg-n{font-size:.68rem;color:rgba(255,255,255,.22);margin-top:2px;}
+.enc-seg.promo .enc-seg-pct{color:#10b981;}
+.enc-seg.pasi  .enc-seg-pct{color:#f59e0b;}
+.enc-seg.detr  .enc-seg-pct{color:#ef4444;}
+.enc-hero-meta{display:flex;gap:10px;flex-wrap:wrap;}
+.enc-meta-pill{padding:6px 13px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:.74rem;color:rgba(255,255,255,.55);}
+.enc-meta-pill b{color:#fff;}
+
+/* ── BARI UNAVAIL ── */
+.enc-unavail{text-align:center;padding:56px 24px;}
+.enc-unavail-icon{font-size:3.2rem;margin-bottom:14px;}
+.enc-unavail-title{font-size:1.05rem;font-weight:800;color:#64748b;margin-bottom:8px;}
+.enc-unavail-sub{font-size:.83rem;color:#94a3b8;line-height:1.75;max-width:440px;margin:0 auto;}
+.enc-unavail-code{font-family:monospace;background:#f1f5f9;padding:2px 8px;border-radius:4px;font-size:.78rem;color:#475569;}
 </style>
 </head>
 <body>
@@ -382,6 +419,9 @@ tr:hover td{background:#fafbfc;}
             </div>
             <div class="nav-item" onclick="go('bajas')">
                 <i class="fas fa-door-open"></i> An&aacute;lisis de Bajas
+            </div>
+            <div class="nav-item" onclick="go('bari-enc')">
+                <i class="fas fa-mountain"></i> Bariloche &mdash; Encuestas
             </div>
         </div>
     </div>
@@ -553,106 +593,95 @@ tr:hover td{background:#fafbfc;}
 
         <!-- ═══ SECTION: ENCUESTAS ═══ -->
         <div class="section" id="section-encuestas">
-            <div class="alert">
-                <i class="fas fa-info-circle"></i>
-                <span>Datos de encuestas de bienvenida. El NPS mide la probabilidad de recomendaci&oacute;n (0&ndash;10). Promotores: 9&ndash;10. Detractores: 0&ndash;6.</span>
-            </div>
+            <div class="alert"><i class="fas fa-info-circle"></i> <span>Encuestas de bienvenida — Bolsón &amp; Lago Puelo. NPS: Promotores ≥9 · Detractores ≤6.</span></div>
             <div id="encWarn" style="display:none" class="alert"></div>
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-label">Respuestas</div>
-                    <div class="kpi-value" id="e-total">--</div>
-                    <div class="kpi-sub">Total encuestas recibidas</div>
+
+            <!-- NPS Hero -->
+            <div class="enc-hero">
+                <div>
+                    <div class="enc-hero-score" id="e-nps">--</div>
+                    <div class="enc-hero-label">NPS &middot; <span id="e-total">--</span> encuestas</div>
+                    <div class="enc-hero-badge green" id="e-nps-badge">--</div>
                 </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">NPS</div>
-                    <div class="kpi-value" id="e-nps">--</div>
-                    <div class="kpi-sub" id="e-nps-lbl">Net Promoter Score</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">&Iacute;ndice Servicio</div>
-                    <div class="kpi-value" id="e-serv">--</div>
-                    <div class="kpi-sub">Acompa&ntilde;amiento + Plan + Entrevista</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Experiencia</div>
-                    <div class="kpi-value" id="e-exp">--</div>
-                    <div class="kpi-sub">Promedio (0&ndash;10)</div>
-                </div>
-            </div>
-            <div class="row c2">
-                <div class="card">
-                    <div class="card-hd">
-                        <div class="card-title"><i class="fas fa-tachometer-alt"></i> NPS General</div>
+                <div>
+                    <div class="enc-brk-bar">
+                        <div id="encBrkPromo" style="background:#10b981;width:0%"></div>
+                        <div id="encBrkPasi"  style="background:#f59e0b;width:0%"></div>
+                        <div id="encBrkDetr"  style="background:#ef4444;width:0%"></div>
                     </div>
-                    <div class="nps-dial-wrap">
-                        <canvas id="chNpsDial" style="max-width:180px;max-height:180px !important;"></canvas>
-                        <div style="margin-top:-58px;text-align:center;pointer-events:none;">
-                            <div style="font-size:2rem;font-weight:800;color:#0f172a;" id="npsDialVal">--</div>
-                            <div style="font-size:.7rem;color:#94a3b8;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-top:2px;">NPS</div>
+                    <div class="enc-segs">
+                        <div class="enc-seg promo">
+                            <div class="enc-seg-pct" id="e-promo-pct">--</div>
+                            <div class="enc-seg-lbl">Promotores</div>
+                            <div class="enc-seg-n"   id="e-promo-n">--</div>
+                        </div>
+                        <div class="enc-seg pasi">
+                            <div class="enc-seg-pct" id="e-pasi-pct">--</div>
+                            <div class="enc-seg-lbl">Pasivos</div>
+                            <div class="enc-seg-n"   id="e-pasi-n">--</div>
+                        </div>
+                        <div class="enc-seg detr">
+                            <div class="enc-seg-pct" id="e-detr-pct">--</div>
+                            <div class="enc-seg-lbl">Detractores</div>
+                            <div class="enc-seg-n"   id="e-detr-n">--</div>
                         </div>
                     </div>
+                    <div class="enc-hero-meta">
+                        <div class="enc-meta-pill">&Iacute;ndice Servicio <b id="e-serv">--</b>/100</div>
+                        <div class="enc-meta-pill">Exp. General <b id="e-exp">--</b>/10</div>
+                        <div class="enc-meta-pill" id="e-nps-lbl">--</div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- NPS per profe + Onboarding dims -->
+            <div class="row c2">
                 <div class="card">
                     <div class="card-hd">
                         <div class="card-title"><i class="fas fa-user-tie"></i> NPS por Profesional</div>
                     </div>
                     <canvas id="chNpsProf"></canvas>
                 </div>
-            </div>
-            <div class="card">
-                <div class="card-hd">
-                    <div class="card-title"><i class="fas fa-clock"></i> Experiencia por Horario</div>
-                </div>
-                <canvas id="chHorario"></canvas>
-            </div>
-            <div class="card">
-                <div class="card-hd">
-                    <div class="card-title"><i class="fas fa-list"></i> Detalle por Profesional</div>
-                </div>
-                <div class="tw">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Profesional</th><th>Sede</th><th>NPS</th><th>Exp. Gral</th><th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="encTabBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- NPS Breakdown + 5-Dim Radar -->
-            <div class="row c2">
                 <div class="card">
                     <div class="card-hd">
-                        <div class="card-title"><i class="fas fa-chart-bar"></i> Distribuci&oacute;n NPS &mdash; Nuevos Socios</div>
-                        <span class="card-badge">Promotores &middot; Pasivos &middot; Detractores</span>
-                    </div>
-                    <canvas id="chBienvNpsDist" style="height:100px !important;max-height:100px !important;margin-bottom:16px;"></canvas>
-                    <div id="bienvNpsDistDetail"></div>
-                </div>
-                <div class="card">
-                    <div class="card-hd">
-                        <div class="card-title"><i class="fas fa-medal"></i> Dimensiones de Calidad — Onboarding</div>
+                        <div class="card-title"><i class="fas fa-star"></i> Dimensiones de Onboarding</div>
                         <span class="card-badge">Escala 0&ndash;10</span>
                     </div>
                     <canvas id="chBienvDims" style="max-height:280px;"></canvas>
                 </div>
             </div>
 
-            <!-- Insight estratégico bienvenida -->
+            <!-- Horario + tabla -->
+            <div class="row c2">
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-clock"></i> Experiencia por Horario</div>
+                    </div>
+                    <canvas id="chHorario"></canvas>
+                </div>
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-list"></i> Detalle por Profesional</div>
+                    </div>
+                    <div class="tw">
+                        <table>
+                            <thead><tr><th>Profesional</th><th>Sede</th><th>NPS</th><th>Exp.</th><th>Estado</th></tr></thead>
+                            <tbody id="encTabBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insight estratégico -->
             <div class="expert-card" id="bienvInsight" style="display:none"></div>
 
-            <!-- Sugerencias de nuevos socios -->
+            <!-- Sugerencias -->
             <div class="card">
                 <div class="card-hd">
                     <div class="card-title"><i class="fas fa-comment-dots"></i> Sugerencias de los Nuevos Socios</div>
-                    <span class="card-badge">Si pudieras mejorar una sola cosa...</span>
+                    <span class="card-badge">Si pudieras mejorar una sola cosa&hellip;</span>
                 </div>
-                <div class="quotes-grid" id="encSugerencias">
-                    <div class="quote-empty">Sin datos</div>
-                </div>
+                <div class="quotes-grid" id="encSugerencias"><div class="quote-empty">Sin datos</div></div>
             </div>
         </div>
 
@@ -814,6 +843,127 @@ tr:hover td{background:#fafbfc;}
             </div>
 
         </div><!-- /section-bajas -->
+
+        <!-- ═══ SECTION: BARILOCHE ENCUESTAS ═══ -->
+        <div class="section" id="section-bari-enc">
+            <div class="insight-banner" style="margin-bottom:18px;">
+                <div class="ib-icon">🏔️</div>
+                <div>
+                    <div class="ib-title">Sede Bariloche</div>
+                    <div class="ib-sub">Bienvenida &amp; An&aacute;lisis de Bajas &mdash; datos exclusivos de la sede Bariloche</div>
+                </div>
+            </div>
+
+            <div id="bariEncAlert" style="display:none" class="alert"></div>
+
+            <div class="enc-tabs">
+                <button class="enc-tab active" id="bariTabBtnBienv" onclick="setBariTab('bienv')">⭐ Bienvenida</button>
+                <button class="enc-tab" id="bariTabBtnBajas" onclick="setBariTab('bajas')">📉 An&aacute;lisis de Bajas</button>
+            </div>
+
+            <!-- ── BIENVENIDA PANEL ── -->
+            <div id="bariPanelBienv">
+                <div class="enc-hero">
+                    <div>
+                        <div class="enc-hero-score" id="bw-nps">--</div>
+                        <div class="enc-hero-label">NPS &middot; <span id="bw-total">--</span> encuestas</div>
+                        <div class="enc-hero-badge green" id="bw-nps-badge">--</div>
+                    </div>
+                    <div>
+                        <div class="enc-brk-bar">
+                            <div id="bwBrkPromo" style="background:#10b981;width:0%"></div>
+                            <div id="bwBrkPasi"  style="background:#f59e0b;width:0%"></div>
+                            <div id="bwBrkDetr"  style="background:#ef4444;width:0%"></div>
+                        </div>
+                        <div class="enc-segs">
+                            <div class="enc-seg promo"><div class="enc-seg-pct" id="bw-promo-pct">--</div><div class="enc-seg-lbl">Promotores</div><div class="enc-seg-n" id="bw-promo-n">--</div></div>
+                            <div class="enc-seg pasi"><div class="enc-seg-pct" id="bw-pasi-pct">--</div><div class="enc-seg-lbl">Pasivos</div><div class="enc-seg-n" id="bw-pasi-n">--</div></div>
+                            <div class="enc-seg detr"><div class="enc-seg-pct" id="bw-detr-pct">--</div><div class="enc-seg-lbl">Detractores</div><div class="enc-seg-n" id="bw-detr-n">--</div></div>
+                        </div>
+                        <div class="enc-hero-meta">
+                            <div class="enc-meta-pill">&Iacute;ndice Servicio <b id="bw-serv">--</b>/100</div>
+                            <div class="enc-meta-pill">Exp. General <b id="bw-exp">--</b>/10</div>
+                            <div class="enc-meta-pill" id="bw-nps-lbl">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row c2">
+                    <div class="card">
+                        <div class="card-hd"><div class="card-title"><i class="fas fa-user-tie"></i> NPS por Profesional</div></div>
+                        <canvas id="chBwNpsProf"></canvas>
+                    </div>
+                    <div class="card">
+                        <div class="card-hd">
+                            <div class="card-title"><i class="fas fa-star"></i> Dimensiones de Onboarding</div>
+                            <span class="card-badge">Escala 0&ndash;10</span>
+                        </div>
+                        <canvas id="chBwDims" style="max-height:280px;"></canvas>
+                    </div>
+                </div>
+
+                <div class="row c2">
+                    <div class="card">
+                        <div class="card-hd"><div class="card-title"><i class="fas fa-clock"></i> Experiencia por Horario</div></div>
+                        <canvas id="chBwHorario"></canvas>
+                    </div>
+                    <div class="card">
+                        <div class="card-hd"><div class="card-title"><i class="fas fa-list"></i> Detalle por Profesional</div></div>
+                        <div class="tw"><table><thead><tr><th>Profesional</th><th>NPS</th><th>Exp.</th><th>Estado</th></tr></thead><tbody id="bwTabBody"></tbody></table></div>
+                    </div>
+                </div>
+
+                <div class="expert-card" id="bwInsight" style="display:none"></div>
+
+                <div class="card">
+                    <div class="card-hd"><div class="card-title"><i class="fas fa-comment-dots"></i> Sugerencias &mdash; Nuevos Socios Bariloche</div></div>
+                    <div class="quotes-grid" id="bwSugerencias"><div class="quote-empty">Sin datos</div></div>
+                </div>
+            </div>
+
+            <!-- ── BAJAS PANEL ── -->
+            <div id="bariPanelBajas" style="display:none">
+                <div class="kpi-grid">
+                    <div class="kpi-card"><div class="kpi-label">Respuestas</div><div class="kpi-value" id="bb-total">--</div><div class="kpi-sub">Ex-socios encuestados</div></div>
+                    <div class="kpi-card"><div class="kpi-label">NPS Ex-Socios</div><div class="kpi-value" id="bb-nps">--</div><div class="kpi-sub" id="bb-nps-lbl">--</div></div>
+                    <div class="kpi-card"><div class="kpi-label">% Promotores</div><div class="kpi-value" style="color:#10b981" id="bb-prom">--</div><div class="kpi-sub">Recomendar&iacute;an MOVE</div></div>
+                    <div class="kpi-card"><div class="kpi-label">Experiencia</div><div class="kpi-value" id="bb-exp">--</div><div class="kpi-sub">Prom. / 10</div></div>
+                </div>
+
+                <div class="row c2">
+                    <div class="card">
+                        <div class="card-hd"><div class="card-title"><i class="fas fa-chart-bar"></i> Distribuci&oacute;n NPS</div><span class="card-badge">Promotores &middot; Pasivos &middot; Detractores</span></div>
+                        <canvas id="chBbNpsDist" style="height:110px !important;max-height:110px !important;margin-bottom:16px;"></canvas>
+                        <div id="bbNpsDistDetail"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-hd"><div class="card-title"><i class="fas fa-list-ul"></i> Motivos de Baja &mdash; Ranking</div></div>
+                        <canvas id="chBbMotivos" style="max-height:280px;"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-hd">
+                        <div class="card-title"><i class="fas fa-star-half-alt"></i> Calidad del Servicio &mdash; 5 Dimensiones</div>
+                        <span class="card-badge">Promedio 0&ndash;10 &middot; ex-socios</span>
+                    </div>
+                    <canvas id="chBbServDims" style="max-height:240px;"></canvas>
+                </div>
+
+                <div class="expert-card" id="bbExpert" style="display:none"></div>
+
+                <div class="row c2">
+                    <div class="card">
+                        <div class="card-hd"><div class="card-title"><i class="fas fa-thumbs-up"></i> Lo que MOVE hace bien</div></div>
+                        <div class="quotes-grid" id="bbBien"><div class="quote-empty">Sin datos</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-hd"><div class="card-title"><i class="fas fa-tools"></i> &Aacute;reas a mejorar</div></div>
+                        <div class="quotes-grid" id="bbMejorar"><div class="quote-empty">Sin datos</div></div>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /section-bari-enc -->
 
     </div><!-- /content -->
 </div><!-- /main -->
@@ -1140,6 +1290,7 @@ const META = {
     versus:    {title:'2025 vs 2026',          sub:'Comparaci\u00f3n de altas \u2014 Bols\u00f3n y Lago Puelo'},
     encuestas: {title:'Encuestas de Bienvenida', sub:'NPS & satisfacci\u00f3n de nuevos socios'},
     bajas:     {title:'An\u00e1lisis de Bajas',  sub:'Encuestas de ex-socios'},
+    'bari-enc':{title:'Bariloche \u2014 Encuestas', sub:'Bienvenida & An\u00e1lisis de Bajas sede Bariloche'},
 };
 function go(sec){
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -1151,6 +1302,8 @@ function go(sec){
         if(oc.includes("'"+sec+"'"))n.classList.add('active');
     });
     if(META[sec]){set('topTitle',META[sec].title);set('topSub',META[sec].sub);}
+    if(sec==='encuestas'||sec==='bajas') loadEncuestas();
+    if(sec==='bari-enc') loadEncuestasBari();
     closeSb();
 }
 function toggleSb(){
@@ -1695,6 +1848,169 @@ function makeInterpCard(info){
     return `<div class="iblock"><div class="ihead">\uD83C\uDFAF C\u00f3mo interpretar el resultado</div>${rows}</div><div class="obsblock" style="border-color:${info.color}">${info.obs}</div>`;
 }
 
+// ── BARILOCHE ENCUESTAS ──────────────────────────────────────
+const SHEET_BARI_ENC_ID = '12lT64vo5ejA5fpLiUUHWsJccQN6fVkQF_lhHfeLuiCc';
+const SHEET_BARI_BIENV_GID = '1063429005';
+const SHEET_BARI_BAJAS_GID = '0'; // update with correct gid when known
+let bwData=[], bbData=[];
+
+function setBariTab(tab){
+    ['bienv','bajas'].forEach(t=>{
+        document.getElementById('bariPanelB'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = t===tab?'':'none';
+        document.getElementById('bariTabBtn'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
+    });
+}
+
+function loadEncuestasBari(){
+    const alert=document.getElementById('bariEncAlert');
+    Promise.all([
+        sheetLoad(SHEET_BARI_ENC_ID, SHEET_BARI_BIENV_GID, 'bari-bienv'),
+        sheetLoad(SHEET_BARI_ENC_ID, SHEET_BARI_BAJAS_GID, 'bari-bajas')
+    ]).then(([w,c])=>{
+        bwData=w||[]; bbData=c||[];
+        if(!bwData.length && !bbData.length){
+            if(alert){ alert.style.display='';
+                alert.innerHTML='<i class="fas fa-lock"></i> <span>La planilla de Bariloche está privada. Para ver los datos, hacé público el archivo en Google Sheets (Compartir → Cualquiera con el enlace puede ver). ID: <code>12lT64vo5ejA5fpLiUUHWsJccQN6fVkQF_lhHfeLuiCc</code></span>'; }
+        } else {
+            if(alert) alert.style.display='none';
+            renderEncBariHero(bwData,'bw');
+            renderEncBariCharts(bwData,'bw','Bw');
+            renderEncBariBajas(bbData);
+        }
+    });
+}
+
+// Reusable: render NPS hero for any dataset + prefix
+function renderEncBariHero(W, px){
+    const recs=W.map(r=>parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar'))).filter(n=>!isNaN(n));
+    const nps=calcNPS(recs);
+    const prom=recs.filter(n=>n>=9).length, pas=recs.filter(n=>n>=7&&n<=8).length, det=recs.filter(n=>n<=6).length;
+    const T=recs.length||1;
+    const pp=Math.round(prom/T*100), np=Math.round(pas/T*100), dp=Math.max(0,100-pp-np);
+    let sS=0,cS=0,sE=0,cE=0;
+    W.forEach(r=>{
+        const e=parseFloat(getCol(r,'calific')); if(!isNaN(e)){sE+=e;cE++;}
+        const a=parseFloat(getCol(r,'acompa')), cl=parseFloat(getCol(r,'plan')), ev=parseFloat(getCol(r,'escuchado')||getCol(r,'entrevista'));
+        if(!isNaN(a)&&!isNaN(cl)&&!isNaN(ev)){sS+=((a+cl+ev)/3)*20;cS++;}
+        else if(!isNaN(a)&&!isNaN(cl)){sS+=((a+cl)/2)*20;cS++;}
+        else if(!isNaN(a)){sS+=a*20;cS++;}
+    });
+    const nbCls=nps>=50?'green':nps>=30?'blue':nps>=10?'amber':'red';
+    const nbLbl=nps>=50?'🔥 Excelente':nps>=30?'👍 Muy bueno':nps>=10?'⚠️ Aceptable':'🚨 Bajo';
+    set(px+'-nps',nps); set(px+'-total',W.length);
+    set(px+'-serv', cS>0?Math.round(sS/cS):'--');
+    set(px+'-exp',  cE>0?(sE/cE).toFixed(1):'--');
+    set(px+'-nps-lbl', nbLbl);
+    const badge=document.getElementById(px+'-nps-badge');
+    if(badge){badge.className='enc-hero-badge '+nbCls;badge.textContent=nbLbl;}
+    const ids={Promo:pp,Pasi:np,Detr:dp};
+    Object.entries(ids).forEach(([k,v])=>{
+        const el=document.getElementById(px[0].toUpperCase()+px.slice(1)+'Brk'+k);
+        if(el)el.style.width=v+'%';
+    });
+    set(px+'-promo-pct',pp+'%'); set(px+'-promo-n',prom+' resp.');
+    set(px+'-pasi-pct', np+'%'); set(px+'-pasi-n', pas+' resp.');
+    set(px+'-detr-pct', dp+'%'); set(px+'-detr-n', det+' resp.');
+}
+
+function renderEncBariCharts(W, px, chartPfx){
+    const byProf={}, expByProf={};
+    W.forEach(r=>{
+        const p=getCol(r,'profesor')||getCol(r,'profesional')||getCol(r,'profe');
+        const rc=parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar'));
+        const ex=parseFloat(getCol(r,'calific'));
+        if(p&&!isNaN(rc)){byProf[p]=byProf[p]||[];byProf[p].push(rc);}
+        if(p&&!isNaN(ex)){expByProf[p]=expByProf[p]||[];expByProf[p].push(ex);}
+    });
+    const profs=Object.keys(byProf);
+    const npsV=profs.map(p=>calcNPS(byProf[p]));
+    barNPSProfe('ch'+chartPfx+'NpsProf', profs.map(p=>p.split(' ')[0]), npsV, npsV.map(v=>v>=50?'#10b981cc':v>=30?'#3b82f6cc':v>=0?'#f59e0bcc':'#ef4444cc'));
+    // Horario
+    const horMap={};
+    W.forEach(r=>{
+        const h=(getCol(r,'horario')||'').trim(), e=parseFloat(getCol(r,'calific'));
+        if(h&&!isNaN(e)){if(!horMap[h])horMap[h]=[];horMap[h].push(e);}
+    });
+    const hL=Object.keys(horMap), hV=hL.map(k=>+(horMap[k].reduce((a,b)=>a+b)/horMap[k].length).toFixed(2));
+    if(hL.length>=3) radar('ch'+chartPfx+'Horario',hL,hV);
+    else if(hL.length>0) bar('ch'+chartPfx+'Horario',hL,[{l:'Exp.',d:hV,c:'#6366f1'}]);
+    else {const el=document.getElementById('ch'+chartPfx+'Horario'); if(el)el.style.display='none';}
+    // 5-dim radar
+    const dims=[
+        {label:'Entrevista inicial', vals:W.map(r=>textToScore(getCol(r,'escuchado')||getCol(r,'entrevista'))).filter(v=>v!==null)},
+        {label:'Claridad del plan',  vals:W.map(r=>textToScore(getCol(r,'plan'))).filter(v=>v!==null)},
+        {label:'Acompañamiento',     vals:W.map(r=>textToScore(getCol(r,'acompa'))).filter(v=>v!==null)},
+        {label:'Experiencia general',vals:W.map(r=>{const v=parseFloat(getCol(r,'calific'));return isNaN(v)?null:v;}).filter(v=>v!==null)},
+        {label:'Confianza en proceso',vals:W.map(r=>textToScore(getCol(r,'confianza'))).filter(v=>v!==null)},
+    ];
+    const avgs=dims.map(d=>d.vals.length?+(d.vals.reduce((a,b)=>a+b)/d.vals.length).toFixed(2):0);
+    if(avgs.some(v=>v>0)) radar('ch'+chartPfx+'Dims', dims.map(d=>d.label), avgs);
+    // Table
+    let tb='';
+    profs.forEach((p,i)=>{
+        const nv=npsV[i], ea=expByProf[p]||[];
+        const ep=ea.length?(ea.reduce((a,b)=>a+b)/ea.length).toFixed(1):'--';
+        const cls=nv>=50?'bg':nv>=30?'bb':nv>=10?'by':'br';
+        tb+=`<tr><td><b>${p.split(' ')[0]}</b></td><td><span class="badge ${cls}">${nv}</span></td><td>${ep}/10</td><td>${nv>=50?'🏆 Excelente':nv>=30?'👍 Bueno':'⚠️ Mejorable'}</td></tr>`;
+    });
+    document.getElementById(chartPfx.toLowerCase()+'TabBody').innerHTML=tb||'<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:20px">Sin datos</td></tr>';
+    // Sugerencias
+    const sug=W.map(r=>{
+        const txt=(getCol(r,'mejorar una')||getCol(r,'mejorar')||'').trim();
+        const prof=(getCol(r,'profesor')||getCol(r,'profesional')||'').trim();
+        const date=fmtDate(getCol(r,'temporal'));
+        return txt?renderQuoteCard(txt,prof,'neg',date):'';
+    }).filter(Boolean).join('');
+    const sugEl=document.getElementById(chartPfx.toLowerCase()+'Sugerencias');
+    if(sugEl) sugEl.innerHTML=sug||'<div class="quote-empty">Sin sugerencias registradas</div>';
+}
+
+function renderEncBariBajas(C){
+    if(!C.length) return;
+    const recsC=C.map(r=>parseFloat(getCol(r,'recomendarías')||getCol(r,'recomendar'))).filter(n=>!isNaN(n));
+    const npsC=calcNPS(recsC);
+    const nProm=recsC.filter(n=>n>=9).length, totalNps=recsC.length||1;
+    set('bb-total',C.length); set('bb-nps',npsC);
+    set('bb-nps-lbl', npsC>=50?'🔥 Excelente':npsC>=30?'👍 Bueno':'⚠️ Regular');
+    set('bb-prom', Math.round(nProm/totalNps*100)+'%');
+    const recsExp=C.map(r=>parseFloat(getCol(r,'experiencia'))).filter(n=>!isNaN(n));
+    set('bb-exp', recsExp.length?(recsExp.reduce((a,b)=>a+b)/recsExp.length).toFixed(1):'--');
+    // NPS dist
+    const nPas=recsC.filter(n=>n>=7&&n<=8).length, nDet=recsC.filter(n=>n<=6).length;
+    const pPct=Math.round(nProm/totalNps*100), nPct=Math.round(nPas/totalNps*100), dPct=Math.max(0,100-pPct-nPct);
+    if(document.getElementById('chBbNpsDist')) npsDistBar('chBbNpsDist',pPct,nPct,dPct);
+    const detailEl=document.getElementById('bbNpsDistDetail');
+    if(detailEl) detailEl.innerHTML=
+        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#10b981"></div><div class="nps-seg-label">Promotores (9–10)</div><div class="nps-seg-pct">${pPct}%</div><span class="nps-seg-n">${nProm}</span></div>`+
+        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#f59e0b"></div><div class="nps-seg-label">Pasivos (7–8)</div><div class="nps-seg-pct">${nPct}%</div><span class="nps-seg-n">${nPas}</span></div>`+
+        `<div class="nps-seg"><div class="nps-seg-dot" style="background:#ef4444"></div><div class="nps-seg-label">Detractores (0–6)</div><div class="nps-seg-pct">${dPct}%</div><span class="nps-seg-n">${nDet}</span></div>`;
+    // Motivos
+    const motKey=Object.keys(C[0]||{}).find(k=>k.toLowerCase().includes('motivo'))||'';
+    if(motKey){
+        const motCount={};
+        C.forEach(r=>{const m=r[motKey];if(m){motCount[m]=(motCount[m]||0)+1;}});
+        const sorted=Object.entries(motCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+        if(sorted.length) hbar('chBbMotivos',sorted.map(([m])=>m.length>35?m.slice(0,35)+'…':m),sorted.map(([,n])=>n),sorted.map((_,i)=>['#6366f1cc','#8b5cf6cc','#3b82f6cc','#10b981cc','#f59e0bcc','#ef4444cc'][i%6]));
+    }
+    // 5-dim servicio
+    const sdDef=[{label:'Atención y trato',key:'atenci'},{label:'Profesionalismo',key:'profesionalismo'},{label:'Acompañamiento',key:'acompa'},{label:'Organización',key:'organiz'},{label:'Ambiente',key:'ambiente'}];
+    const sdVals=sdDef.map(d=>{const vs=C.map(r=>parseFloat(getCol(r,d.key))).filter(n=>!isNaN(n));return vs.length?+(vs.reduce((a,b)=>a+b)/vs.length).toFixed(2):0;});
+    const sdCols=['#10b981cc','#6366f1cc','#3b82f6cc','#f59e0bcc','#8b5cf6cc'];
+    if(sdVals.some(v=>v>0)) hbarScore('chBbServDims',sdDef.map(d=>d.label),sdVals,sdCols);
+    // Quotes
+    const bienEl=document.getElementById('bbBien');
+    if(bienEl){
+        const bc=C.map(r=>{const t=(getCol(r,'hace muy bien')||getCol(r,'hace bien')||getCol(r,'muy bien')||'').trim();const p=(getCol(r,'profesor')||'').trim();const d=fmtDate(getCol(r,'temporal'));return t?renderQuoteCard(t,p,'pos',d):'';}).filter(Boolean).join('');
+        bienEl.innerHTML=bc||'<div class="quote-empty">Sin respuestas</div>';
+    }
+    const mejEl=document.getElementById('bbMejorar');
+    if(mejEl){
+        const mc=C.map(r=>{const t=(getCol(r,'mejorar para')||getCol(r,'debería mejorar')||getCol(r,'mejorar')||'').trim();const p=(getCol(r,'profesor')||'').trim();const d=fmtDate(getCol(r,'temporal'));return t?renderQuoteCard(t,p,'neg',d):'';}).filter(Boolean).join('');
+        mejEl.innerHTML=mc||'<div class="quote-empty">Sin respuestas</div>';
+    }
+}
+// ── END BARILOCHE ────────────────────────────────────────────
+
 function renderEnc(){
     const W=wData,C=cData;
 
@@ -1723,10 +2039,20 @@ function renderEnc(){
     set('e-serv', cS>0 ? Math.round(sS/cS) : '--');
     set('e-exp',  cE>0 ? (sE/cE).toFixed(1) : '--');
 
-    // NPS dial
-    const nc=nps>=50?'#10b981':nps>=30?'#3b82f6':'#ef4444';
-    doughnut('chNpsDial',[Math.max(0,Math.min(100,nps+50)),100-Math.max(0,Math.min(100,nps+50))],[nc,'#e2e8f0']);
-    set('npsDialVal',nps);
+    // NPS Hero — breakdown bar + segments
+    const wProm=recs.filter(n=>n>=9).length, wPas=recs.filter(n=>n>=7&&n<=8).length, wDet=recs.filter(n=>n<=6).length;
+    const wT=recs.length||1;
+    const wPP=Math.round(wProm/wT*100), wNP=Math.round(wPas/wT*100), wDP=Math.max(0,100-wPP-wNP);
+    const nbCls = nps>=50?'green':nps>=30?'blue':nps>=10?'amber':'red';
+    const nbLbl = nps>=50?'🔥 Excelente':nps>=30?'👍 Muy bueno':nps>=10?'⚠️ Aceptable':'🚨 Bajo';
+    const badgeEl=document.getElementById('e-nps-badge');
+    if(badgeEl){badgeEl.className='enc-hero-badge '+nbCls;badgeEl.textContent=nbLbl;}
+    const setW=id=>{ const el=document.getElementById(id); if(el) el.style.width=id.includes('Promo')?wPP+'%':id.includes('Pasi')?wNP+'%':wDP+'%'; };
+    ['encBrkPromo','encBrkPasi','encBrkDetr'].forEach(setW);
+    set('e-promo-pct',wPP+'%'); set('e-promo-n',wProm+' resp.');
+    set('e-pasi-pct', wNP+'%'); set('e-pasi-n', wPas+' resp.');
+    set('e-detr-pct', wDP+'%'); set('e-detr-n', wDet+' resp.');
+    set('e-nps-lbl', nbLbl);
 
     // NPS por profesor (bienvenida)
     const byProf={},expByProf={};
@@ -1764,19 +2090,6 @@ function renderEnc(){
         tb+=`<tr><td><b>${p}</b></td><td>${sede}</td><td><span class="badge ${cls}">${nv}</span></td><td>${ep}/10</td><td>${nv>=50?'\uD83C\uDFC6 Excelente':nv>=30?'\uD83D\uDC4D Bueno':'\u26A0\uFE0F Mejorable'}</td></tr>`;
     });
     document.getElementById('encTabBody').innerHTML=tb||`<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:20px">Sin datos por profesional</td></tr>`;
-
-    // ── Bienvenida: NPS breakdown ──
-    const wRecs = W.map(r => parseFloat(getCol(r,'probable')||getCol(r,'recomiendes')||getCol(r,'recomendar'))).filter(n=>!isNaN(n));
-    const wProm=wRecs.filter(n=>n>=9).length, wPas=wRecs.filter(n=>n>=7&&n<=8).length, wDet=wRecs.filter(n=>n<=6).length;
-    const wT=wRecs.length||1;
-    const wPP=Math.round(wProm/wT*100), wNP=Math.round(wPas/wT*100), wDP=Math.max(0,100-wPP-wNP);
-    if(document.getElementById('chBienvNpsDist')) {
-        npsDistBar('chBienvNpsDist', wPP, wNP, wDP);
-        document.getElementById('bienvNpsDistDetail').innerHTML=
-            `<div class="nps-seg"><div class="nps-seg-dot" style="background:#10b981"></div><div class="nps-seg-label">Promotores (9–10)</div><div class="nps-seg-pct">${wPP}%</div><span class="nps-seg-n">${wProm} resp.</span></div>`+
-            `<div class="nps-seg"><div class="nps-seg-dot" style="background:#f59e0b"></div><div class="nps-seg-label">Pasivos (7–8)</div><div class="nps-seg-pct">${wNP}%</div><span class="nps-seg-n">${wPas} resp.</span></div>`+
-            `<div class="nps-seg"><div class="nps-seg-dot" style="background:#ef4444"></div><div class="nps-seg-label">Detractores (0–6)</div><div class="nps-seg-pct">${wDP}%</div><span class="nps-seg-n">${wDet} resp.</span></div>`;
-    }
 
     // ── Bienvenida: 5-Dimensiones calidad onboarding ──
     const bienvDims = [
