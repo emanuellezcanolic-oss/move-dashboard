@@ -1213,7 +1213,8 @@ function sheetLoad(id, gid, reqId) {
         _sheetCBs[reqId]=r=>{ clearTimeout(timer); resolve(parseSheet(r)); };
         const s=document.createElement('script');
         s.onerror=()=>{ clearTimeout(timer); delete _sheetCBs[reqId]; resolve([]); };
-        s.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;reqId:${reqId}&gid=${gid}`;
+        const qp = String(gid).startsWith('sheet:') ? `sheet=${encodeURIComponent(gid.slice(6))}` : `gid=${gid}`;
+        s.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:json;reqId:${reqId}&${qp}`;
         document.body.appendChild(s);
     });
 }
@@ -1850,8 +1851,8 @@ function makeInterpCard(info){
 
 // ── BARILOCHE ENCUESTAS ──────────────────────────────────────
 const SHEET_BARI_ENC_ID = '12lT64vo5ejA5fpLiUUHWsJccQN6fVkQF_lhHfeLuiCc';
-const SHEET_BARI_BIENV_GID = '1063429005';
-const SHEET_BARI_BAJAS_GID = '0'; // update with correct gid when known
+const SHEET_BARI_BIENV_GID = '1297311567';
+const SHEET_BARI_BAJAS_GID = 'sheet:Baja';
 let bwData=[], bbData=[];
 
 function setBariTab(tab){
@@ -1967,13 +1968,13 @@ function renderEncBariCharts(W, px, chartPfx){
 
 function renderEncBariBajas(C){
     if(!C.length) return;
-    const recsC=C.map(r=>parseFloat(getCol(r,'recomendarías')||getCol(r,'recomendar'))).filter(n=>!isNaN(n));
+    const recsC=C.map(r=>parseFloat(getCol(r,'recomendar')||getCol(r,'recomendari'))).filter(n=>!isNaN(n));
     const npsC=calcNPS(recsC);
     const nProm=recsC.filter(n=>n>=9).length, totalNps=recsC.length||1;
     set('bb-total',C.length); set('bb-nps',npsC);
     set('bb-nps-lbl', npsC>=50?'🔥 Excelente':npsC>=30?'👍 Bueno':'⚠️ Regular');
     set('bb-prom', Math.round(nProm/totalNps*100)+'%');
-    const recsExp=C.map(r=>parseFloat(getCol(r,'experiencia'))).filter(n=>!isNaN(n));
+    const recsExp=C.map(r=>parseFloat(getCol(r,'calific'))).filter(n=>!isNaN(n));
     set('bb-exp', recsExp.length?(recsExp.reduce((a,b)=>a+b)/recsExp.length).toFixed(1):'--');
     // NPS dist
     const nPas=recsC.filter(n=>n>=7&&n<=8).length, nDet=recsC.filter(n=>n<=6).length;
